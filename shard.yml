@@ -13,5 +13,7 @@ development_dependencies:
     github: crystal-ameba/ameba
 
 dependencies:
+  terminfo:
+    github: docelic/terminfo
   uniwidth:
     github: naqvis/uni_char_width

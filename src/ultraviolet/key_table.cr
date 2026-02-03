@@ -1,3 +1,5 @@
+require "terminfo"
+
 module Ultraviolet
   # Legacy key encoding flags.
   FLAG_CTRL_AT           = 1_u32 << 0
@@ -399,8 +401,266 @@ module Ultraviolet
     table
   end
 
-  def self.build_terminfo_keys(_flags : LegacyKeyEncoding, _term : String) : Hash(String, Key)
-    # TODO: implement terminfo support for Crystal.
-    {} of String => Key
+  def self.build_terminfo_keys(flags : LegacyKeyEncoding, term : String) : Hash(String, Key)
+    table = {} of String => Key
+    return table if term.empty? || term == "dumb"
+
+    ti = begin
+      Terminfo::Data.new term: term, extended: false
+    rescue
+      nil
+    end
+    return table unless ti
+
+    ti_table = default_terminfo_keys(flags)
+    add_terminfo_caps(table, ti_table, ti.strings)
+    add_terminfo_caps(table, ti_table, ti.extended_strings)
+    table
+  end
+
+  private def self.add_terminfo_caps(table : Hash(String, Key), ti_table : Hash(String, Key), caps : Hash(String, String))
+    caps.each do |name, seq|
+      next unless name.starts_with?("k")
+      next if seq.empty?
+      if key = ti_table[name]?
+        table[seq] = key
+      end
+    end
+  end
+
+  def self.default_terminfo_keys(flags : LegacyKeyEncoding) : Hash(String, Key)
+    keys = {
+      "kcuu1" => Key.new(code: KeyUp),
+      "kUP"   => Key.new(code: KeyUp, mod: ModShift),
+      "kUP3"  => Key.new(code: KeyUp, mod: ModAlt),
+      "kUP4"  => Key.new(code: KeyUp, mod: ModShift | ModAlt),
+      "kUP5"  => Key.new(code: KeyUp, mod: ModCtrl),
+      "kUP6"  => Key.new(code: KeyUp, mod: ModShift | ModCtrl),
+      "kUP7"  => Key.new(code: KeyUp, mod: ModAlt | ModCtrl),
+      "kUP8"  => Key.new(code: KeyUp, mod: ModShift | ModAlt | ModCtrl),
+      "kcud1" => Key.new(code: KeyDown),
+      "kDN"   => Key.new(code: KeyDown, mod: ModShift),
+      "kDN3"  => Key.new(code: KeyDown, mod: ModAlt),
+      "kDN4"  => Key.new(code: KeyDown, mod: ModShift | ModAlt),
+      "kDN5"  => Key.new(code: KeyDown, mod: ModCtrl),
+      "kDN6"  => Key.new(code: KeyDown, mod: ModShift | ModCtrl),
+      "kDN7"  => Key.new(code: KeyDown, mod: ModAlt | ModCtrl),
+      "kDN8"  => Key.new(code: KeyDown, mod: ModShift | ModAlt | ModCtrl),
+      "kcub1" => Key.new(code: KeyLeft),
+      "kLFT"  => Key.new(code: KeyLeft, mod: ModShift),
+      "kLFT3" => Key.new(code: KeyLeft, mod: ModAlt),
+      "kLFT4" => Key.new(code: KeyLeft, mod: ModShift | ModAlt),
+      "kLFT5" => Key.new(code: KeyLeft, mod: ModCtrl),
+      "kLFT6" => Key.new(code: KeyLeft, mod: ModShift | ModCtrl),
+      "kLFT7" => Key.new(code: KeyLeft, mod: ModAlt | ModCtrl),
+      "kLFT8" => Key.new(code: KeyLeft, mod: ModShift | ModAlt | ModCtrl),
+      "kcuf1" => Key.new(code: KeyRight),
+      "kRIT"  => Key.new(code: KeyRight, mod: ModShift),
+      "kRIT3" => Key.new(code: KeyRight, mod: ModAlt),
+      "kRIT4" => Key.new(code: KeyRight, mod: ModShift | ModAlt),
+      "kRIT5" => Key.new(code: KeyRight, mod: ModCtrl),
+      "kRIT6" => Key.new(code: KeyRight, mod: ModShift | ModCtrl),
+      "kRIT7" => Key.new(code: KeyRight, mod: ModAlt | ModCtrl),
+      "kRIT8" => Key.new(code: KeyRight, mod: ModShift | ModAlt | ModCtrl),
+      "kich1" => Key.new(code: KeyInsert),
+      "kIC"   => Key.new(code: KeyInsert, mod: ModShift),
+      "kIC3"  => Key.new(code: KeyInsert, mod: ModAlt),
+      "kIC4"  => Key.new(code: KeyInsert, mod: ModShift | ModAlt),
+      "kIC5"  => Key.new(code: KeyInsert, mod: ModCtrl),
+      "kIC6"  => Key.new(code: KeyInsert, mod: ModShift | ModCtrl),
+      "kIC7"  => Key.new(code: KeyInsert, mod: ModAlt | ModCtrl),
+      "kIC8"  => Key.new(code: KeyInsert, mod: ModShift | ModAlt | ModCtrl),
+      "kdch1" => Key.new(code: KeyDelete),
+      "kDC"   => Key.new(code: KeyDelete, mod: ModShift),
+      "kDC3"  => Key.new(code: KeyDelete, mod: ModAlt),
+      "kDC4"  => Key.new(code: KeyDelete, mod: ModShift | ModAlt),
+      "kDC5"  => Key.new(code: KeyDelete, mod: ModCtrl),
+      "kDC6"  => Key.new(code: KeyDelete, mod: ModShift | ModCtrl),
+      "kDC7"  => Key.new(code: KeyDelete, mod: ModAlt | ModCtrl),
+      "kDC8"  => Key.new(code: KeyDelete, mod: ModShift | ModAlt | ModCtrl),
+      "khome" => Key.new(code: KeyHome),
+      "kHOM"  => Key.new(code: KeyHome, mod: ModShift),
+      "kHOM3" => Key.new(code: KeyHome, mod: ModAlt),
+      "kHOM4" => Key.new(code: KeyHome, mod: ModShift | ModAlt),
+      "kHOM5" => Key.new(code: KeyHome, mod: ModCtrl),
+      "kHOM6" => Key.new(code: KeyHome, mod: ModShift | ModCtrl),
+      "kHOM7" => Key.new(code: KeyHome, mod: ModAlt | ModCtrl),
+      "kHOM8" => Key.new(code: KeyHome, mod: ModShift | ModAlt | ModCtrl),
+      "kend"  => Key.new(code: KeyEnd),
+      "kEND"  => Key.new(code: KeyEnd, mod: ModShift),
+      "kEND3" => Key.new(code: KeyEnd, mod: ModAlt),
+      "kEND4" => Key.new(code: KeyEnd, mod: ModShift | ModAlt),
+      "kEND5" => Key.new(code: KeyEnd, mod: ModCtrl),
+      "kEND6" => Key.new(code: KeyEnd, mod: ModShift | ModCtrl),
+      "kEND7" => Key.new(code: KeyEnd, mod: ModAlt | ModCtrl),
+      "kEND8" => Key.new(code: KeyEnd, mod: ModShift | ModAlt | ModCtrl),
+      "kpp"   => Key.new(code: KeyPgUp),
+      "kprv"  => Key.new(code: KeyPgUp),
+      "kPRV"  => Key.new(code: KeyPgUp, mod: ModShift),
+      "kPRV3" => Key.new(code: KeyPgUp, mod: ModAlt),
+      "kPRV4" => Key.new(code: KeyPgUp, mod: ModShift | ModAlt),
+      "kPRV5" => Key.new(code: KeyPgUp, mod: ModCtrl),
+      "kPRV6" => Key.new(code: KeyPgUp, mod: ModShift | ModCtrl),
+      "kPRV7" => Key.new(code: KeyPgUp, mod: ModAlt | ModCtrl),
+      "kPRV8" => Key.new(code: KeyPgUp, mod: ModShift | ModAlt | ModCtrl),
+      "knp"   => Key.new(code: KeyPgDown),
+      "knxt"  => Key.new(code: KeyPgDown),
+      "kNXT"  => Key.new(code: KeyPgDown, mod: ModShift),
+      "kNXT3" => Key.new(code: KeyPgDown, mod: ModAlt),
+      "kNXT4" => Key.new(code: KeyPgDown, mod: ModShift | ModAlt),
+      "kNXT5" => Key.new(code: KeyPgDown, mod: ModCtrl),
+      "kNXT6" => Key.new(code: KeyPgDown, mod: ModShift | ModCtrl),
+      "kNXT7" => Key.new(code: KeyPgDown, mod: ModAlt | ModCtrl),
+      "kNXT8" => Key.new(code: KeyPgDown, mod: ModShift | ModAlt | ModCtrl),
+      "kbs"   => Key.new(code: KeyBackspace),
+      "kcbt"  => Key.new(code: KeyTab, mod: ModShift),
+      "kf1"   => Key.new(code: KeyF1),
+      "kf2"   => Key.new(code: KeyF2),
+      "kf3"   => Key.new(code: KeyF3),
+      "kf4"   => Key.new(code: KeyF4),
+      "kf5"   => Key.new(code: KeyF5),
+      "kf6"   => Key.new(code: KeyF6),
+      "kf7"   => Key.new(code: KeyF7),
+      "kf8"   => Key.new(code: KeyF8),
+      "kf9"   => Key.new(code: KeyF9),
+      "kf10"  => Key.new(code: KeyF10),
+      "kf11"  => Key.new(code: KeyF11),
+      "kf12"  => Key.new(code: KeyF12),
+      "kf13"  => Key.new(code: KeyF1, mod: ModShift),
+      "kf14"  => Key.new(code: KeyF2, mod: ModShift),
+      "kf15"  => Key.new(code: KeyF3, mod: ModShift),
+      "kf16"  => Key.new(code: KeyF4, mod: ModShift),
+      "kf17"  => Key.new(code: KeyF5, mod: ModShift),
+      "kf18"  => Key.new(code: KeyF6, mod: ModShift),
+      "kf19"  => Key.new(code: KeyF7, mod: ModShift),
+      "kf20"  => Key.new(code: KeyF8, mod: ModShift),
+      "kf21"  => Key.new(code: KeyF9, mod: ModShift),
+      "kf22"  => Key.new(code: KeyF10, mod: ModShift),
+      "kf23"  => Key.new(code: KeyF11, mod: ModShift),
+      "kf24"  => Key.new(code: KeyF12, mod: ModShift),
+      "kf25"  => Key.new(code: KeyF1, mod: ModCtrl),
+      "kf26"  => Key.new(code: KeyF2, mod: ModCtrl),
+      "kf27"  => Key.new(code: KeyF3, mod: ModCtrl),
+      "kf28"  => Key.new(code: KeyF4, mod: ModCtrl),
+      "kf29"  => Key.new(code: KeyF5, mod: ModCtrl),
+      "kf30"  => Key.new(code: KeyF6, mod: ModCtrl),
+      "kf31"  => Key.new(code: KeyF7, mod: ModCtrl),
+      "kf32"  => Key.new(code: KeyF8, mod: ModCtrl),
+      "kf33"  => Key.new(code: KeyF9, mod: ModCtrl),
+      "kf34"  => Key.new(code: KeyF10, mod: ModCtrl),
+      "kf35"  => Key.new(code: KeyF11, mod: ModCtrl),
+      "kf36"  => Key.new(code: KeyF12, mod: ModCtrl),
+      "kf37"  => Key.new(code: KeyF1, mod: ModShift | ModCtrl),
+      "kf38"  => Key.new(code: KeyF2, mod: ModShift | ModCtrl),
+      "kf39"  => Key.new(code: KeyF3, mod: ModShift | ModCtrl),
+      "kf40"  => Key.new(code: KeyF4, mod: ModShift | ModCtrl),
+      "kf41"  => Key.new(code: KeyF5, mod: ModShift | ModCtrl),
+      "kf42"  => Key.new(code: KeyF6, mod: ModShift | ModCtrl),
+      "kf43"  => Key.new(code: KeyF7, mod: ModShift | ModCtrl),
+      "kf44"  => Key.new(code: KeyF8, mod: ModShift | ModCtrl),
+      "kf45"  => Key.new(code: KeyF9, mod: ModShift | ModCtrl),
+      "kf46"  => Key.new(code: KeyF10, mod: ModShift | ModCtrl),
+      "kf47"  => Key.new(code: KeyF11, mod: ModShift | ModCtrl),
+      "kf48"  => Key.new(code: KeyF12, mod: ModShift | ModCtrl),
+      "kf49"  => Key.new(code: KeyF1, mod: ModAlt),
+      "kf50"  => Key.new(code: KeyF2, mod: ModAlt),
+      "kf51"  => Key.new(code: KeyF3, mod: ModAlt),
+      "kf52"  => Key.new(code: KeyF4, mod: ModAlt),
+      "kf53"  => Key.new(code: KeyF5, mod: ModAlt),
+      "kf54"  => Key.new(code: KeyF6, mod: ModAlt),
+      "kf55"  => Key.new(code: KeyF7, mod: ModAlt),
+      "kf56"  => Key.new(code: KeyF8, mod: ModAlt),
+      "kf57"  => Key.new(code: KeyF9, mod: ModAlt),
+      "kf58"  => Key.new(code: KeyF10, mod: ModAlt),
+      "kf59"  => Key.new(code: KeyF11, mod: ModAlt),
+      "kf60"  => Key.new(code: KeyF12, mod: ModAlt),
+      "kf61"  => Key.new(code: KeyF1, mod: ModShift | ModAlt),
+      "kf62"  => Key.new(code: KeyF2, mod: ModShift | ModAlt),
+      "kf63"  => Key.new(code: KeyF3, mod: ModShift | ModAlt),
+    }
+
+    if flags.contains?(FLAG_FKEYS)
+      keys["kf13"] = Key.new(code: KeyF13)
+      keys["kf14"] = Key.new(code: KeyF14)
+      keys["kf15"] = Key.new(code: KeyF15)
+      keys["kf16"] = Key.new(code: KeyF16)
+      keys["kf17"] = Key.new(code: KeyF17)
+      keys["kf18"] = Key.new(code: KeyF18)
+      keys["kf19"] = Key.new(code: KeyF19)
+      keys["kf20"] = Key.new(code: KeyF20)
+      keys["kf21"] = Key.new(code: KeyF21)
+      keys["kf22"] = Key.new(code: KeyF22)
+      keys["kf23"] = Key.new(code: KeyF23)
+      keys["kf24"] = Key.new(code: KeyF24)
+      keys["kf25"] = Key.new(code: KeyF25)
+      keys["kf26"] = Key.new(code: KeyF26)
+      keys["kf27"] = Key.new(code: KeyF27)
+      keys["kf28"] = Key.new(code: KeyF28)
+      keys["kf29"] = Key.new(code: KeyF29)
+      keys["kf30"] = Key.new(code: KeyF30)
+      keys["kf31"] = Key.new(code: KeyF31)
+      keys["kf32"] = Key.new(code: KeyF32)
+      keys["kf33"] = Key.new(code: KeyF33)
+      keys["kf34"] = Key.new(code: KeyF34)
+      keys["kf35"] = Key.new(code: KeyF35)
+      keys["kf36"] = Key.new(code: KeyF36)
+      keys["kf37"] = Key.new(code: KeyF37)
+      keys["kf38"] = Key.new(code: KeyF38)
+      keys["kf39"] = Key.new(code: KeyF39)
+      keys["kf40"] = Key.new(code: KeyF40)
+      keys["kf41"] = Key.new(code: KeyF41)
+      keys["kf42"] = Key.new(code: KeyF42)
+      keys["kf43"] = Key.new(code: KeyF43)
+      keys["kf44"] = Key.new(code: KeyF44)
+      keys["kf45"] = Key.new(code: KeyF45)
+      keys["kf46"] = Key.new(code: KeyF46)
+      keys["kf47"] = Key.new(code: KeyF47)
+      keys["kf48"] = Key.new(code: KeyF48)
+      keys["kf49"] = Key.new(code: KeyF49)
+      keys["kf50"] = Key.new(code: KeyF50)
+      keys["kf51"] = Key.new(code: KeyF51)
+      keys["kf52"] = Key.new(code: KeyF52)
+      keys["kf53"] = Key.new(code: KeyF53)
+      keys["kf54"] = Key.new(code: KeyF54)
+      keys["kf55"] = Key.new(code: KeyF55)
+      keys["kf56"] = Key.new(code: KeyF56)
+      keys["kf57"] = Key.new(code: KeyF57)
+      keys["kf58"] = Key.new(code: KeyF58)
+      keys["kf59"] = Key.new(code: KeyF59)
+      keys["kf60"] = Key.new(code: KeyF60)
+      keys["kf61"] = Key.new(code: KeyF61)
+      keys["kf62"] = Key.new(code: KeyF62)
+      keys["kf63"] = Key.new(code: KeyF63)
+    end
+
+    alias_map = {
+      "key_up"        => "kcuu1",
+      "key_down"      => "kcud1",
+      "key_left"      => "kcub1",
+      "key_right"     => "kcuf1",
+      "key_home"      => "khome",
+      "key_end"       => "kend",
+      "key_npage"     => "knp",
+      "key_ppage"     => "kpp",
+      "key_ic"        => "kich1",
+      "key_dc"        => "kdch1",
+      "key_backspace" => "kbs",
+      "key_btab"      => "kcbt",
+    }
+
+    alias_map.each do |alias_name, short_name|
+      if key = keys[short_name]?
+        keys[alias_name] = key
+      end
+    end
+
+    1.upto(63) do |idx|
+      short_name = "kf#{idx}"
+      if key = keys[short_name]?
+        keys["key_f#{idx}"] = key
+      end
+    end
+
+    keys
   end
 end
