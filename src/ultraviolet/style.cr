@@ -54,11 +54,11 @@ module Ultraviolet
   end
 
   struct Style
-    getter fg : Color?
-    getter bg : Color?
-    getter underline_color : Color?
-    getter underline : Underline
-    getter attrs : UInt8
+    property fg : Color?
+    property bg : Color?
+    property underline_color : Color?
+    property underline : Underline
+    property attrs : UInt8
 
     def initialize(
       @fg : Color? = nil,

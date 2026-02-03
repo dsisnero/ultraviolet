@@ -8,8 +8,8 @@ module Ultraviolet
   DEFAULT_WIDTH_METHOD = ->(str : String) { UnicodeCharWidth.width(str) }
 
   struct Link
-    getter url : String
-    getter params : String
+    property url : String
+    property params : String
 
     def initialize(@url : String = "", @params : String = "")
     end
