@@ -1,6 +1,9 @@
 # Ultraviolet: terminal primitives and rendering structures.
 
 require "./ultraviolet/geometry"
+require "./ultraviolet/utils"
+require "./ultraviolet/environ"
+require "./ultraviolet/logger"
 require "./ultraviolet/style"
 require "./ultraviolet/cell"
 require "./ultraviolet/buffer"
