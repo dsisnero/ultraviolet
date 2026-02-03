@@ -1,13 +1,13 @@
 module Ultraviolet
   # Legacy key encoding flags.
-  FLAG_CTRL_AT           = 1 << 0
-  FLAG_CTRL_I            = 1 << 1
-  FLAG_CTRL_M            = 1 << 2
-  FLAG_CTRL_OPEN_BRACKET = 1 << 3
-  FLAG_BACKSPACE         = 1 << 4
-  FLAG_FIND              = 1 << 5
-  FLAG_SELECT            = 1 << 6
-  FLAG_FKEYS             = 1 << 7
+  FLAG_CTRL_AT           = 1_u32 << 0
+  FLAG_CTRL_I            = 1_u32 << 1
+  FLAG_CTRL_M            = 1_u32 << 2
+  FLAG_CTRL_OPEN_BRACKET = 1_u32 << 3
+  FLAG_BACKSPACE         = 1_u32 << 4
+  FLAG_FIND              = 1_u32 << 5
+  FLAG_SELECT            = 1_u32 << 6
+  FLAG_FKEYS             = 1_u32 << 7
 
   struct LegacyKeyEncoding
     property value : UInt32
@@ -84,41 +84,41 @@ module Ultraviolet
     sel = Key.new(code: KeySelect) if flags.contains?(FLAG_SELECT)
 
     table = {
-      Ansi::NUL.chr => nul,
-      Ansi::SOH.chr => Key.new(code: 'a'.ord, mod: ModCtrl),
-      Ansi::STX.chr => Key.new(code: 'b'.ord, mod: ModCtrl),
-      Ansi::ETX.chr => Key.new(code: 'c'.ord, mod: ModCtrl),
-      Ansi::EOT.chr => Key.new(code: 'd'.ord, mod: ModCtrl),
-      Ansi::ENQ.chr => Key.new(code: 'e'.ord, mod: ModCtrl),
-      Ansi::ACK.chr => Key.new(code: 'f'.ord, mod: ModCtrl),
-      Ansi::BEL.chr => Key.new(code: 'g'.ord, mod: ModCtrl),
-      Ansi::BS.chr  => Key.new(code: 'h'.ord, mod: ModCtrl),
-      Ansi::HT.chr  => tab,
-      Ansi::LF.chr  => Key.new(code: 'j'.ord, mod: ModCtrl),
-      Ansi::VT.chr  => Key.new(code: 'k'.ord, mod: ModCtrl),
-      Ansi::FF.chr  => Key.new(code: 'l'.ord, mod: ModCtrl),
-      Ansi::CR.chr  => enter,
-      Ansi::SO.chr  => Key.new(code: 'n'.ord, mod: ModCtrl),
-      Ansi::SI.chr  => Key.new(code: 'o'.ord, mod: ModCtrl),
-      Ansi::DLE.chr => Key.new(code: 'p'.ord, mod: ModCtrl),
-      Ansi::DC1.chr => Key.new(code: 'q'.ord, mod: ModCtrl),
-      Ansi::DC2.chr => Key.new(code: 'r'.ord, mod: ModCtrl),
-      Ansi::DC3.chr => Key.new(code: 's'.ord, mod: ModCtrl),
-      Ansi::DC4.chr => Key.new(code: 't'.ord, mod: ModCtrl),
-      Ansi::NAK.chr => Key.new(code: 'u'.ord, mod: ModCtrl),
-      Ansi::SYN.chr => Key.new(code: 'v'.ord, mod: ModCtrl),
-      Ansi::ETB.chr => Key.new(code: 'w'.ord, mod: ModCtrl),
-      Ansi::CAN.chr => Key.new(code: 'x'.ord, mod: ModCtrl),
-      Ansi::EM.chr  => Key.new(code: 'y'.ord, mod: ModCtrl),
-      Ansi::SUB.chr => Key.new(code: 'z'.ord, mod: ModCtrl),
-      Ansi::ESC.chr => esc,
-      Ansi::FS.chr  => Key.new(code: '\\'.ord, mod: ModCtrl),
-      Ansi::GS.chr  => Key.new(code: ']'.ord, mod: ModCtrl),
-      Ansi::RS.chr  => Key.new(code: '^'.ord, mod: ModCtrl),
-      Ansi::US.chr  => Key.new(code: '_'.ord, mod: ModCtrl),
+      Ansi::NUL.chr.to_s => nul,
+      Ansi::SOH.chr.to_s => Key.new(code: 'a'.ord, mod: ModCtrl),
+      Ansi::STX.chr.to_s => Key.new(code: 'b'.ord, mod: ModCtrl),
+      Ansi::ETX.chr.to_s => Key.new(code: 'c'.ord, mod: ModCtrl),
+      Ansi::EOT.chr.to_s => Key.new(code: 'd'.ord, mod: ModCtrl),
+      Ansi::ENQ.chr.to_s => Key.new(code: 'e'.ord, mod: ModCtrl),
+      Ansi::ACK.chr.to_s => Key.new(code: 'f'.ord, mod: ModCtrl),
+      Ansi::BEL.chr.to_s => Key.new(code: 'g'.ord, mod: ModCtrl),
+      Ansi::BS.chr.to_s  => Key.new(code: 'h'.ord, mod: ModCtrl),
+      Ansi::HT.chr.to_s  => tab,
+      Ansi::LF.chr.to_s  => Key.new(code: 'j'.ord, mod: ModCtrl),
+      Ansi::VT.chr.to_s  => Key.new(code: 'k'.ord, mod: ModCtrl),
+      Ansi::FF.chr.to_s  => Key.new(code: 'l'.ord, mod: ModCtrl),
+      Ansi::CR.chr.to_s  => enter,
+      Ansi::SO.chr.to_s  => Key.new(code: 'n'.ord, mod: ModCtrl),
+      Ansi::SI.chr.to_s  => Key.new(code: 'o'.ord, mod: ModCtrl),
+      Ansi::DLE.chr.to_s => Key.new(code: 'p'.ord, mod: ModCtrl),
+      Ansi::DC1.chr.to_s => Key.new(code: 'q'.ord, mod: ModCtrl),
+      Ansi::DC2.chr.to_s => Key.new(code: 'r'.ord, mod: ModCtrl),
+      Ansi::DC3.chr.to_s => Key.new(code: 's'.ord, mod: ModCtrl),
+      Ansi::DC4.chr.to_s => Key.new(code: 't'.ord, mod: ModCtrl),
+      Ansi::NAK.chr.to_s => Key.new(code: 'u'.ord, mod: ModCtrl),
+      Ansi::SYN.chr.to_s => Key.new(code: 'v'.ord, mod: ModCtrl),
+      Ansi::ETB.chr.to_s => Key.new(code: 'w'.ord, mod: ModCtrl),
+      Ansi::CAN.chr.to_s => Key.new(code: 'x'.ord, mod: ModCtrl),
+      Ansi::EM.chr.to_s  => Key.new(code: 'y'.ord, mod: ModCtrl),
+      Ansi::SUB.chr.to_s => Key.new(code: 'z'.ord, mod: ModCtrl),
+      Ansi::ESC.chr.to_s => esc,
+      Ansi::FS.chr.to_s  => Key.new(code: '\\'.ord, mod: ModCtrl),
+      Ansi::GS.chr.to_s  => Key.new(code: ']'.ord, mod: ModCtrl),
+      Ansi::RS.chr.to_s  => Key.new(code: '^'.ord, mod: ModCtrl),
+      Ansi::US.chr.to_s  => Key.new(code: '_'.ord, mod: ModCtrl),
 
-      Ansi::SP.chr  => Key.new(code: KeySpace, text: " "),
-      Ansi::DEL.chr => del,
+      Ansi::SP.chr.to_s  => Key.new(code: KeySpace, text: " "),
+      Ansi::DEL.chr.to_s => del,
 
       "\e[Z" => Key.new(code: KeyTab, mod: ModShift),
 

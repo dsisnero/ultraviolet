@@ -1,5 +1,38 @@
 module Ultraviolet
-  alias Event = ::Object
+  alias EventSingle = UnknownEvent |
+                      UnknownCsiEvent |
+                      UnknownSs3Event |
+                      UnknownOscEvent |
+                      UnknownDcsEvent |
+                      UnknownSosEvent |
+                      UnknownPmEvent |
+                      UnknownApcEvent |
+                      Size |
+                      Key |
+                      Mouse |
+                      CursorPositionEvent |
+                      FocusEvent |
+                      BlurEvent |
+                      DarkColorSchemeEvent |
+                      LightColorSchemeEvent |
+                      PasteEvent |
+                      PasteStartEvent |
+                      PasteEndEvent |
+                      TerminalVersionEvent |
+                      ModifyOtherKeysEvent |
+                      KittyGraphicsEvent |
+                      KeyboardEnhancementsEvent |
+                      ModeReportEvent |
+                      ForegroundColorEvent |
+                      BackgroundColorEvent |
+                      CursorColorEvent |
+                      WindowOpEvent |
+                      CapabilityEvent |
+                      ClipboardEvent |
+                      String |
+                      Array(Int32)
+
+  alias Event = EventSingle | Array(EventSingle)
 
   module EventStreamer
     abstract def stream_events(ctx, ch)
@@ -93,7 +126,7 @@ module Ultraviolet
     end
   end
 
-  alias MultiEvent = Array(Event)
+  alias MultiEvent = Array(EventSingle)
 
   struct Size
     property width : Int32

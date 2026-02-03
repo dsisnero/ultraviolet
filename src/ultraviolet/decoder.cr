@@ -37,7 +37,7 @@ module Ultraviolet
       end
     end
 
-    private def decode_escape(buf : Bytes) : {Int32, Event}
+    private def decode_escape(buf : Bytes) : {Int32, Event?}
       return {1, Key.new(code: KeyEscape)} if buf.size == 1
 
       case buf[1]
@@ -67,7 +67,7 @@ module Ultraviolet
       end
     end
 
-    private def decode_other(buf : Bytes) : {Int32, Event}
+    private def decode_other(buf : Bytes) : {Int32, Event?}
       b = buf[0]
       if b <= Ansi::US || b == Ansi::DEL || b == Ansi::SP
         return {1, parse_control(b)}
@@ -155,21 +155,21 @@ module Ultraviolet
       case cmd
       when ('y'.ord | ('?'.ord << Ansi::Parser::PrefixShift) | ('$'.ord << Ansi::Parser::IntermedShift))
         mode, _, ok = pa.param(0, -1)
-        break unless ok && mode != -1
-        value, _, ok = pa.param(1, 0)
-        break unless ok
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mode != -1
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size < 2
+        value, _, _ = pa.param(1, Ansi::ModeNotRecognized)
         return {i, ModeReportEvent.new(mode, value)}
       when ('c'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
         return {i, parse_primary_dev_attrs(pa)}
       when ('c'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
         return {i, parse_secondary_dev_attrs(pa)}
       when ('u'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
-        flags, _, _ = pa.param(0, -1)
+        flags, _, _ = pa.param(0, 0)
         return {i, KeyboardEnhancementsEvent.new(flags)}
       when ('R'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
         row, _, _ = pa.param(0, 1)
         col, _, ok = pa.param(1, 1)
-        break unless ok
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok
         return {i, CursorPositionEvent.new(row - 1, col - 1)}
       when ('m'.ord | ('<'.ord << Ansi::Parser::PrefixShift)), ('M'.ord | ('<'.ord << Ansi::Parser::PrefixShift))
         if params.size == 3
@@ -177,9 +177,9 @@ module Ultraviolet
         end
       when ('m'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
         mok, _, ok = pa.param(0, 0)
-        break unless ok && mok == 4
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mok == 4
         val, _, ok = pa.param(1, -1)
-        break unless ok && val != -1
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && val != -1
         return {i, ModifyOtherKeysEvent.new(val)}
       when ('n'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
         report, _, _ = pa.param(0, -1)
@@ -193,18 +193,24 @@ module Ultraviolet
       when 'O'.ord
         return {i, BlurEvent.new}
       when 'R'.ord
+        if params.empty?
+          return {i, Key.new(code: KeyF3)}
+        end
         row, _, row_ok = pa.param(0, 1)
         col, _, col_ok = pa.param(1, 1)
         if params.size == 2 && row_ok && col_ok
           m = CursorPositionEvent.new(row - 1, col - 1)
           if row == 1 && (col - 1) <= (ModMeta | ModShift | ModAlt | ModCtrl)
-            return {i, [Key.new(code: KeyF3, mod: col - 1), m]}
+            events = [] of EventSingle
+            events << Key.new(code: KeyF3, mod: col - 1)
+            events << m
+            return {i, events}
           end
           return {i, m}
         end
 
         if params.size != 0
-          break
+          return {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
         end
       when 'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord, 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord, 'E'.ord, 'F'.ord, 'H'.ord, 'P'.ord, 'Q'.ord, 'S'.ord, 'Z'.ord
         key = Key.new
@@ -228,7 +234,7 @@ module Ultraviolet
         id, _, _ = pa.param(0, 1)
         mod, _, _ = pa.param(1, 1)
         if params.size > 2 && !pa[1].has_more? || id != 1
-          break
+          return {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
         end
         if params.size > 1 && id == 1 && mod != -1
           key.mod |= (mod - 1)
@@ -241,13 +247,13 @@ module Ultraviolet
         end
         data = Bytes.new(i + 3)
         data.copy_from(buf[0, i])
-        data.copy_from(buf[i, 3], i)
+        data[i, 3].copy_from(buf[i, 3])
         return {i + 3, parse_x10_mouse_event(data)}
       when ('y'.ord | ('$'.ord << Ansi::Parser::IntermedShift))
         mode, _, ok = pa.param(0, -1)
-        break unless ok && mode != -1
-        val, _, ok = pa.param(1, 0)
-        break unless ok
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mode != -1
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size < 2
+        val, _, _ = pa.param(1, Ansi::ModeNotRecognized)
         return {i, ModeReportEvent.new(mode, val)}
       when 'u'.ord
         return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.empty?
@@ -328,28 +334,28 @@ module Ultraviolet
         end
       when 't'.ord
         param, _, ok = pa.param(0, 0)
-        break unless ok
+        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok
 
         case param
         when 4
           if params.size == 3
             height, _, h_ok = pa.param(1, 0)
             width, _, w_ok = pa.param(2, 0)
-            break unless h_ok && w_ok
+            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
             return {i, PixelSizeEvent.new(width, height)}
           end
         when 6
           if params.size == 3
             height, _, h_ok = pa.param(1, 0)
             width, _, w_ok = pa.param(2, 0)
-            break unless h_ok && w_ok
+            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
             return {i, CellSizeEvent.new(width, height)}
           end
         when 8
           if params.size == 3
             height, _, h_ok = pa.param(1, 0)
             width, _, w_ok = pa.param(2, 0)
-            break unless h_ok && w_ok
+            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
             return {i, WindowSizeEvent.new(width, height)}
           end
         when 48
@@ -358,8 +364,11 @@ module Ultraviolet
             cell_width, _, cw_ok = pa.param(2, 0)
             pixel_height, _, ph_ok = pa.param(3, 0)
             pixel_width, _, pw_ok = pa.param(4, 0)
-            break unless ch_ok && cw_ok && ph_ok && pw_ok
-            return {i, [WindowSizeEvent.new(cell_width, cell_height), PixelSizeEvent.new(pixel_width, pixel_height)]}
+            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ch_ok && cw_ok && ph_ok && pw_ok
+            events = [] of EventSingle
+            events << WindowSizeEvent.new(cell_width, cell_height)
+            events << PixelSizeEvent.new(pixel_width, pixel_height)
+            return {i, events}
           end
         end
 
@@ -381,7 +390,7 @@ module Ultraviolet
     # ameba:disable Metrics/CyclomaticComplexity
     private def parse_ss3(buf : Bytes) : {Int32, Event}
       if buf.size == 2 && buf[0] == Ansi::ESC
-        return {2, Key.new(code: buf[1].to_i, mod: ModShift | ModAlt)}
+        return {2, key_from_byte(buf[1], ModShift | ModAlt)}
       end
 
       i = 0
@@ -506,15 +515,15 @@ module Ultraviolet
           return {i, ClipboardEvent.new}
         end
 
+        selection = parts[0][0]
         b64 = parts[1]
         begin
           decoded = Base64.decode_string(b64)
         rescue
-          return {i, ClipboardEvent.new(parts[1], '\0')}
+          return {i, ClipboardEvent.new(parts[1], selection)}
         end
 
-        selection = parts[0][0]
-        return {i, ClipboardEvent.new(String.new(decoded), selection)}
+        return {i, ClipboardEvent.new(decoded, selection)}
       end
 
       {i, UnknownOscEvent.new(String.new(buf[0, i]))}
@@ -523,20 +532,20 @@ module Ultraviolet
     # ameba:enable Metrics/CyclomaticComplexity
 
     # ameba:disable Metrics/CyclomaticComplexity
-    private def parse_st_terminated(intro8 : Int32, intro7 : Int32, fn : (Bytes -> Event?)?)
+    private def parse_st_terminated(intro8 : Int32, intro7 : Int32, fn : (Bytes -> Event?)?) : Proc(Bytes, {Int32, Event?})
       default_key = ->(bytes : Bytes) do
         case intro8
         when Ansi::SOS
-          {2, Key.new(code: bytes[1].to_i, mod: ModShift | ModAlt)}
+          {2, key_from_byte(bytes[1], ModShift | ModAlt)}
         when Ansi::PM, Ansi::APC
-          {2, Key.new(code: bytes[1].to_i, mod: ModAlt)}
+          {2, key_from_byte(bytes[1], ModAlt)}
         else
           {0, nil}
         end
       end
 
       # ameba:disable Metrics/CyclomaticComplexity
-      ->(bytes : Bytes) do
+      ->(bytes : Bytes) : {Int32, Event?} do
         if bytes.size == 2 && bytes[0] == Ansi::ESC
           return default_key.call(bytes)
         end
@@ -597,7 +606,7 @@ module Ultraviolet
     # ameba:disable Metrics/CyclomaticComplexity
     private def parse_dcs(buf : Bytes) : {Int32, Event}
       if buf.size == 2 && buf[0] == Ansi::ESC
-        return {2, Key.new(code: buf[1].to_i, mod: ModShift | ModAlt)}
+        return {2, key_from_byte(buf[1], ModShift | ModAlt)}
       end
 
       params = [] of Ansi::Param
@@ -686,9 +695,9 @@ module Ultraviolet
 
     # ameba:enable Metrics/CyclomaticComplexity
 
-    private def parse_apc(buf : Bytes) : {Int32, Event}
+    private def parse_apc(buf : Bytes) : {Int32, Event?}
       if buf.size == 2 && buf[0] == Ansi::ESC
-        return {2, Key.new(code: buf[1].to_i, mod: ModAlt)}
+        return {2, key_from_byte(buf[1], ModAlt)}
       end
 
       parse_st_terminated(Ansi::APC, '_'.ord, ->(bytes : Bytes) {
@@ -705,7 +714,7 @@ module Ultraviolet
       }).call(buf)
     end
 
-    private def parse_utf8(buf : Bytes) : {Int32, Event}
+    private def parse_utf8(buf : Bytes) : {Int32, Event?}
       return {0, nil} if buf.empty?
 
       c = buf[0]
@@ -725,7 +734,7 @@ module Ultraviolet
       begin
         string = String.new(buf, "UTF-8")
       rescue
-        return {1, UnknownEvent.new(buf[0].chr)}
+        return {1, UnknownEvent.new(buf[0].chr.to_s)}
       end
 
       cluster = ""
@@ -735,7 +744,7 @@ module Ultraviolet
       end
 
       if cluster.empty?
-        return {1, UnknownEvent.new(buf[0].chr)}
+        return {1, UnknownEvent.new(buf[0].chr.to_s)}
       end
 
       codepoint = cluster.each_char.first.ord
@@ -781,7 +790,17 @@ module Ultraviolet
         code = b + 0x40
         return Key.new(code: code, mod: ModCtrl)
       end
-      UnknownEvent.new(b.chr)
+      UnknownEvent.new(b.chr.to_s)
+    end
+
+    private def key_from_byte(byte : UInt8, mod : KeyMod) : Key
+      code = byte.to_i
+      key = Key.new(code: code, mod: mod)
+      char = code.chr
+      if Ultraviolet.mod_contains?(mod, ModShift) && char.uppercase?
+        key.code = char.downcase.ord
+      end
+      key
     end
 
     # ameba:enable Metrics/CyclomaticComplexity
@@ -824,7 +843,7 @@ module Ultraviolet
           when 0
             code = param.param(1)
             mapped = kitty_key_map[code]?
-            key = mapped ? mapped.clone : Key.new(code: code)
+            key = mapped || Key.new(code: code)
           when 2
             shifted = param.param(1)
             if Ultraviolet.printable_char?(shifted)
@@ -924,10 +943,10 @@ module Ultraviolet
       y -= 1
 
       mouse = Mouse.new(x, y, btn, mod)
-      return MouseWheelEvent.new(mouse) if wheel?(btn)
-      return MouseReleaseEvent.new(mouse) if !is_motion && release
-      return MouseMotionEvent.new(mouse) if is_motion
-      MouseClickEvent.new(mouse)
+      return mouse if wheel?(btn)
+      return mouse if !is_motion && release
+      return mouse if is_motion
+      mouse
     end
 
     private def parse_x10_mouse_event(buf : Bytes) : Event
@@ -940,10 +959,10 @@ module Ultraviolet
       y = v[2] - 32 - 1
 
       mouse = Mouse.new(x, y, btn, mod)
-      return MouseWheelEvent.new(mouse) if wheel?(btn)
-      return MouseMotionEvent.new(mouse) if is_motion
-      return MouseReleaseEvent.new(mouse) if is_release
-      MouseClickEvent.new(mouse)
+      return mouse if wheel?(btn)
+      return mouse if is_motion
+      return mouse if is_release
+      mouse
     end
 
     private def parse_mouse_button(value : Int32) : {KeyMod, MouseButton, Bool, Bool}
@@ -993,7 +1012,7 @@ module Ultraviolet
         next if segments.empty?
 
         begin
-          name = hex_decode(String.new(segments[0]))
+          name = hex_decode(segments[0])
         rescue
           next
         end
@@ -1001,7 +1020,7 @@ module Ultraviolet
         value = Bytes.empty
         if segments.size > 1
           begin
-            value = hex_decode(String.new(segments[1]))
+            value = hex_decode(segments[1])
           rescue
             next
           end
@@ -1230,11 +1249,11 @@ module Ultraviolet
     private def hex_value(byte : UInt8) : Int32
       case byte
       when '0'.ord..'9'.ord
-        byte - '0'.ord
+        byte.to_i - '0'.ord
       when 'a'.ord..'f'.ord
-        10 + (byte - 'a'.ord)
+        10 + (byte.to_i - 'a'.ord)
       when 'A'.ord..'F'.ord
-        10 + (byte - 'A'.ord)
+        10 + (byte.to_i - 'A'.ord)
       else
         raise ArgumentError.new("invalid hex")
       end
