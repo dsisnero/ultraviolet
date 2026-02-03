@@ -53,7 +53,7 @@ living checklist for parity and test coverage.
 ## Status
 - Implemented in Crystal: `cell`, `style`, `geometry`, `buffer` (Line/Lines/Buffer/RenderBuffer/ScreenBuffer),
   `colorprofile`, `ansi_color`, `layout`, `border`, `tabstop`, `styled`,
-  input/event scaffolding (`ansi`, `key`, `key_table` (partial), `mouse`, `event`).
+  input/event scaffolding (`ansi`, `key`, `key_table` (partial), `mouse`, `event`, `decoder` (partial)).
 - Specs ported: `buffer`, `border`, `layout`, `style`, `tabstop`, `styled`.
 - Pending: input/events (event/key/mouse/decoder), cursor, window/screen, terminal stack,
   utils/environ/logger/cancelreader, platform backends, terminal renderer tests (may need golden fixtures).
