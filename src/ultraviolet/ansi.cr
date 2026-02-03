@@ -37,15 +37,16 @@ module Ultraviolet
     SP  = 0x20
     DEL = 0x7f
 
-    # Escape sequence introducers
-    SS3 = 0x4f
-    DCS = 0x50
-    CSI = 0x5b
-    ST  = 0x5c
-    OSC = 0x5d
-    PM  = 0x5e
-    APC = 0x5f
-    SOS = 0x58
+    # C1 control codes
+    PAD = 0x80
+    SS3 = 0x8f
+    DCS = 0x90
+    SOS = 0x98
+    CSI = 0x9b
+    ST  = 0x9c
+    OSC = 0x9d
+    PM  = 0x9e
+    APC = 0x9f
 
     # Kitty keyboard enhancement flags
     KittyDisambiguateEscapeCodes    = 1 << 0

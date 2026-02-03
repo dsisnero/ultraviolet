@@ -12,6 +12,7 @@ require "./ultraviolet/key"
 require "./ultraviolet/key_table"
 require "./ultraviolet/mouse"
 require "./ultraviolet/event"
+require "./ultraviolet/decoder"
 require "./ultraviolet/ansi_color"
 require "./ultraviolet/styled"
 
