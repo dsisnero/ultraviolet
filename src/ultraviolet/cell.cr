@@ -1,4 +1,5 @@
 require "./style"
+require "./colorprofile"
 
 module Ultraviolet
   alias WidthMethod = Proc(String, Int32)
@@ -81,5 +82,32 @@ module Ultraviolet
 
   def self.new_link(url : String, params : Array(String) = [] of String) : Link
     Link.new(url, params.join(":"))
+  end
+
+  def self.convert_style(style : Style, profile : ColorProfile) : Style
+    case profile
+    when ColorProfile::TrueColor
+      style
+    when ColorProfile::ANSI, ColorProfile::ANSI256
+      fg = style.fg
+      bg = style.bg
+      underline = style.underline_color
+      Style.new(
+        fg: fg ? ColorProfileUtil.convert(profile, fg) : nil,
+        bg: bg ? ColorProfileUtil.convert(profile, bg) : nil,
+        underline_color: underline ? ColorProfileUtil.convert(profile, underline) : nil,
+        underline: style.underline,
+        attrs: style.attrs,
+      )
+    when ColorProfile::Ascii
+      Style.new(underline: style.underline, attrs: style.attrs)
+    when ColorProfile::NoTTY
+      Style.new
+    end
+  end
+
+  def self.convert_link(link : Link, profile : ColorProfile) : Link
+    return Link.new if profile == ColorProfile::NoTTY
+    link
   end
 end
