@@ -120,7 +120,8 @@ module Ultraviolet
       Ansi::SP.chr  => Key.new(code: KeySpace, text: " "),
       Ansi::DEL.chr => del,
 
-      "\e[Z"  => Key.new(code: KeyTab, mod: ModShift),
+      "\e[Z" => Key.new(code: KeyTab, mod: ModShift),
+
       "\e[1~" => find,
       "\e[2~" => Key.new(code: KeyInsert),
       "\e[3~" => Key.new(code: KeyDelete),
@@ -227,76 +228,179 @@ module Ultraviolet
     }
 
     # URxvt key sequences
-    urxvt_table = {
-      "\e[7~"  => Key.new(code: KeyHome),
-      "\e[8~"  => Key.new(code: KeyEnd),
-      "\e[11~" => Key.new(code: KeyF1),
-      "\e[12~" => Key.new(code: KeyF2),
-      "\e[13~" => Key.new(code: KeyF3),
-      "\e[14~" => Key.new(code: KeyF4),
-      "\e[15~" => Key.new(code: KeyF5),
-      "\e[17~" => Key.new(code: KeyF6),
-      "\e[18~" => Key.new(code: KeyF7),
-      "\e[19~" => Key.new(code: KeyF8),
-      "\e[20~" => Key.new(code: KeyF9),
-      "\e[21~" => Key.new(code: KeyF10),
-      "\e[23~" => Key.new(code: KeyF11),
-      "\e[24~" => Key.new(code: KeyF12),
+    table["\e[a"] = Key.new(code: KeyUp, mod: ModShift)
+    table["\e[b"] = Key.new(code: KeyDown, mod: ModShift)
+    table["\e[c"] = Key.new(code: KeyRight, mod: ModShift)
+    table["\e[d"] = Key.new(code: KeyLeft, mod: ModShift)
+    table["\eOa"] = Key.new(code: KeyUp, mod: ModCtrl)
+    table["\eOb"] = Key.new(code: KeyDown, mod: ModCtrl)
+    table["\eOc"] = Key.new(code: KeyRight, mod: ModCtrl)
+    table["\eOd"] = Key.new(code: KeyLeft, mod: ModCtrl)
+
+    csi_tilde_keys.each do |key, value|
+      base = value
+      base.mod = ModShift
+      table["\e[#{key}$"] = base
+      base = value
+      base.mod = ModCtrl
+      table["\e[#{key}^"] = base
+      base = value
+      base.mod = ModShift | ModCtrl
+      table["\e[#{key}@"] = base
+    end
+
+    table["\e[23$"] = Key.new(code: KeyF11, mod: ModShift)
+    table["\e[24$"] = Key.new(code: KeyF12, mod: ModShift)
+    table["\e[25$"] = Key.new(code: KeyF13, mod: ModShift)
+    table["\e[26$"] = Key.new(code: KeyF14, mod: ModShift)
+    table["\e[28$"] = Key.new(code: KeyF15, mod: ModShift)
+    table["\e[29$"] = Key.new(code: KeyF16, mod: ModShift)
+    table["\e[31$"] = Key.new(code: KeyF17, mod: ModShift)
+    table["\e[32$"] = Key.new(code: KeyF18, mod: ModShift)
+    table["\e[33$"] = Key.new(code: KeyF19, mod: ModShift)
+    table["\e[34$"] = Key.new(code: KeyF20, mod: ModShift)
+    table["\e[11^"] = Key.new(code: KeyF1, mod: ModCtrl)
+    table["\e[12^"] = Key.new(code: KeyF2, mod: ModCtrl)
+    table["\e[13^"] = Key.new(code: KeyF3, mod: ModCtrl)
+    table["\e[14^"] = Key.new(code: KeyF4, mod: ModCtrl)
+    table["\e[15^"] = Key.new(code: KeyF5, mod: ModCtrl)
+    table["\e[17^"] = Key.new(code: KeyF6, mod: ModCtrl)
+    table["\e[18^"] = Key.new(code: KeyF7, mod: ModCtrl)
+    table["\e[19^"] = Key.new(code: KeyF8, mod: ModCtrl)
+    table["\e[20^"] = Key.new(code: KeyF9, mod: ModCtrl)
+    table["\e[21^"] = Key.new(code: KeyF10, mod: ModCtrl)
+    table["\e[23^"] = Key.new(code: KeyF11, mod: ModCtrl)
+    table["\e[24^"] = Key.new(code: KeyF12, mod: ModCtrl)
+    table["\e[25^"] = Key.new(code: KeyF13, mod: ModCtrl)
+    table["\e[26^"] = Key.new(code: KeyF14, mod: ModCtrl)
+    table["\e[28^"] = Key.new(code: KeyF15, mod: ModCtrl)
+    table["\e[29^"] = Key.new(code: KeyF16, mod: ModCtrl)
+    table["\e[31^"] = Key.new(code: KeyF17, mod: ModCtrl)
+    table["\e[32^"] = Key.new(code: KeyF18, mod: ModCtrl)
+    table["\e[33^"] = Key.new(code: KeyF19, mod: ModCtrl)
+    table["\e[34^"] = Key.new(code: KeyF20, mod: ModCtrl)
+    table["\e[23@"] = Key.new(code: KeyF11, mod: ModShift | ModCtrl)
+    table["\e[24@"] = Key.new(code: KeyF12, mod: ModShift | ModCtrl)
+    table["\e[25@"] = Key.new(code: KeyF13, mod: ModShift | ModCtrl)
+    table["\e[26@"] = Key.new(code: KeyF14, mod: ModShift | ModCtrl)
+    table["\e[28@"] = Key.new(code: KeyF15, mod: ModShift | ModCtrl)
+    table["\e[29@"] = Key.new(code: KeyF16, mod: ModShift | ModCtrl)
+    table["\e[31@"] = Key.new(code: KeyF17, mod: ModShift | ModCtrl)
+    table["\e[32@"] = Key.new(code: KeyF18, mod: ModShift | ModCtrl)
+    table["\e[33@"] = Key.new(code: KeyF19, mod: ModShift | ModCtrl)
+    table["\e[34@"] = Key.new(code: KeyF20, mod: ModShift | ModCtrl)
+
+    alt_map = {} of String => Key
+    table.each do |seq, key|
+      alt_key = key
+      alt_key.mod |= ModAlt
+      alt_key.text = ""
+      alt_map["\e#{seq}"] = alt_key
+    end
+    alt_map.each do |seq, key|
+      table[seq] = key
+    end
+
+    modifiers = [
+      ModShift,
+      ModAlt,
+      ModShift | ModAlt,
+      ModCtrl,
+      ModShift | ModCtrl,
+      ModAlt | ModCtrl,
+      ModShift | ModAlt | ModCtrl,
+      ModMeta,
+      ModMeta | ModShift,
+      ModMeta | ModAlt,
+      ModMeta | ModShift | ModAlt,
+      ModMeta | ModCtrl,
+      ModMeta | ModShift | ModCtrl,
+      ModMeta | ModAlt | ModCtrl,
+      ModMeta | ModShift | ModAlt | ModCtrl,
+    ]
+
+    ss3_func_keys = {
+      "M" => Key.new(code: KeyKpEnter),
+      "X" => Key.new(code: KeyKpEqual),
+      "j" => Key.new(code: KeyKpMultiply),
+      "k" => Key.new(code: KeyKpPlus),
+      "l" => Key.new(code: KeyKpComma),
+      "m" => Key.new(code: KeyKpMinus),
+      "n" => Key.new(code: KeyKpDecimal),
+      "o" => Key.new(code: KeyKpDivide),
+      "p" => Key.new(code: KeyKp0),
+      "q" => Key.new(code: KeyKp1),
+      "r" => Key.new(code: KeyKp2),
+      "s" => Key.new(code: KeyKp3),
+      "t" => Key.new(code: KeyKp4),
+      "u" => Key.new(code: KeyKp5),
+      "v" => Key.new(code: KeyKp6),
+      "w" => Key.new(code: KeyKp7),
+      "x" => Key.new(code: KeyKp8),
+      "y" => Key.new(code: KeyKp9),
     }
 
-    # XTerm keys
-    xterm_table = {
-      "\e[1~" => Key.new(code: KeyHome),
-      "\e[4~" => Key.new(code: KeyEnd),
-      "\e[7~" => Key.new(code: KeyHome),
-      "\e[8~" => Key.new(code: KeyEnd),
-      "\eOH"  => Key.new(code: KeyHome),
-      "\eOF"  => Key.new(code: KeyEnd),
+    csi_func_keys = {
+      "A" => Key.new(code: KeyUp),
+      "B" => Key.new(code: KeyDown),
+      "C" => Key.new(code: KeyRight),
+      "D" => Key.new(code: KeyLeft),
+      "E" => Key.new(code: KeyBegin),
+      "F" => Key.new(code: KeyEnd),
+      "H" => Key.new(code: KeyHome),
+      "P" => Key.new(code: KeyF1),
+      "Q" => Key.new(code: KeyF2),
+      "R" => Key.new(code: KeyF3),
+      "S" => Key.new(code: KeyF4),
     }
 
-    # Merge tables in priority order
-    urxvt_table.each { |k, v| table[k] = v }
-    xterm_table.each { |k, v| table[k] = v }
+    modify_other_keys = {
+      Ansi::BS  => Key.new(code: KeyBackspace),
+      Ansi::HT  => Key.new(code: KeyTab),
+      Ansi::CR  => Key.new(code: KeyEnter),
+      Ansi::ESC => Key.new(code: KeyEscape),
+      Ansi::DEL => Key.new(code: KeyBackspace),
+    }
 
-    # CSI ~ with modifiers
-    csi_tilde_keys.each do |code, key|
-      table["\e[#{code}~"] = key
-      (2..8).each do |mod|
-        table["\e[#{code};#{mod}~"] = Key.new(code: key.code, mod: mod - 1)
+    modifiers.each do |mod|
+      xterm_mod = (mod + 1).to_s
+      csi_func_keys.each do |key, value|
+        seq = "\e[1;#{xterm_mod}#{key}"
+        mapped = value
+        mapped.mod = mod
+        table[seq] = mapped
+      end
+      ss3_func_keys.each do |key, value|
+        seq = "\eO#{xterm_mod}#{key}"
+        mapped = value
+        mapped.mod = mod
+        table[seq] = mapped
+      end
+      csi_tilde_keys.each do |key, value|
+        seq = "\e[#{key};#{xterm_mod}~"
+        mapped = value
+        mapped.mod = mod
+        table[seq] = mapped
+      end
+      modify_other_keys.each do |code, value|
+        seq = "\e[27;#{xterm_mod};#{code}~"
+        mapped = value
+        mapped.mod = mod
+        table[seq] = mapped
       end
     end
 
-    # CSI letter with modifiers
-    {
-      "A" => KeyUp,
-      "B" => KeyDown,
-      "C" => KeyRight,
-      "D" => KeyLeft,
-      "E" => KeyBegin,
-      "F" => KeyEnd,
-      "H" => KeyHome,
-      "P" => KeyF1,
-      "Q" => KeyF2,
-      "R" => KeyF3,
-      "S" => KeyF4,
-    }.each do |letter, code|
-      (2..8).each do |mod|
-        table["\e[1;#{mod}#{letter}"] = Key.new(code: code, mod: mod - 1)
+    if use_terminfo
+      build_terminfo_keys(flags, term).each do |seq, key|
+        table[seq] = key
       end
     end
-
-    # XTerm modifyOtherKeys
-    (2..8).each do |mod|
-      table["\e[27;#{mod};13~"] = Key.new(code: KeyEnter, mod: mod - 1)
-      table["\e[27;#{mod};9~"] = Key.new(code: KeyTab, mod: mod - 1)
-      table["\e[27;#{mod};27~"] = Key.new(code: KeyEscape, mod: mod - 1)
-      table["\e[27;#{mod};127~"] = Key.new(code: KeyBackspace, mod: mod - 1)
-    end
-
-    # Terminfo overrides are skipped for now; the dumb term has no custom entries.
-    _ = term
-    _ = use_terminfo
 
     table
+  end
+
+  def self.build_terminfo_keys(_flags : LegacyKeyEncoding, _term : String) : Hash(String, Key)
+    # TODO: implement terminfo support for Crystal.
+    {} of String => Key
   end
 end

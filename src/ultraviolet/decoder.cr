@@ -1180,7 +1180,36 @@ module Ultraviolet
     end
 
     private def parse_win32_input_key_event(vkc : UInt16, _scan : UInt16, rune_value : Int32, key_down : Bool, cks : UInt32, repeat_count : UInt16) : Event
-      Key.new(code: rune_value, base_code: rune_value, mod: 0)
+      base_code = rune_value
+      code = rune_value
+      text = ""
+
+      if Ultraviolet.printable_char?(code)
+        text = Ultraviolet.safe_char(code).to_s
+      end
+
+      key = Key.new(code: code, base_code: base_code, text: text, mod: translate_control_key_state(cks))
+      key
+    end
+
+    private def translate_control_key_state(cks : UInt32) : KeyMod
+      left_ctrl = 1_u32 << 0
+      right_ctrl = 1_u32 << 1
+      left_alt = 1_u32 << 2
+      right_alt = 1_u32 << 3
+      shift = 1_u32 << 4
+      caps = 1_u32 << 5
+      num = 1_u32 << 6
+      scroll = 1_u32 << 7
+
+      mod = 0
+      mod |= ModCtrl if (cks & (left_ctrl | right_ctrl)) != 0
+      mod |= ModAlt if (cks & (left_alt | right_alt)) != 0
+      mod |= ModShift if (cks & shift) != 0
+      mod |= ModCapsLock if (cks & caps) != 0
+      mod |= ModNumLock if (cks & num) != 0
+      mod |= ModScrollLock if (cks & scroll) != 0
+      mod
     end
 
     private def hex_decode(value : String) : Bytes
