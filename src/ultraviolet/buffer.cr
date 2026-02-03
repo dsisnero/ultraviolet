@@ -538,4 +538,152 @@ module Ultraviolet
       end
     end
   end
+
+  struct LineData
+    property first_cell : Int32
+    property last_cell : Int32
+
+    def initialize(@first_cell : Int32, @last_cell : Int32)
+    end
+  end
+
+  class RenderBuffer < Buffer
+    getter touched : Array(LineData?)
+
+    def initialize(width : Int32, height : Int32)
+      super(width, height)
+      @touched = Array(LineData?).new(height, nil)
+    end
+
+    def touch_line(x : Int32, y : Int32, n : Int32) : Nil
+      return if y < 0 || y >= @lines.size
+
+      if y >= @touched.size
+        @touched += Array(LineData?).new(y - @touched.size + 1, nil)
+      end
+      return if y >= @touched.size
+
+      current = @touched[y]
+      if current.nil?
+        @touched[y] = LineData.new(x, x + n)
+      else
+        current.first_cell = {current.first_cell, x}.min
+        current.last_cell = {current.last_cell, x + n}.max
+      end
+    end
+
+    def touch(x : Int32, y : Int32) : Nil
+      touch_line(x, y, 0)
+    end
+
+    def touched_lines : Int32
+      count = 0
+      @touched.each do |line|
+        count += 1 unless line.nil?
+      end
+      count
+    end
+
+    def set_cell(x : Int32, y : Int32, cell : Cell?) : Nil
+      unless Ultraviolet.cell_equal?(cell_at(x, y), cell)
+        width = 1
+        width = cell.width if cell && cell.width > 0
+        touch_line(x, y, width)
+      end
+      super
+    end
+
+    def insert_line(y : Int32, n : Int32, cell : Cell?) : Nil
+      insert_line_area(y, n, cell, bounds)
+    end
+
+    def insert_line_area(y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
+      super
+      i = area.min.y
+      while i < area.max.y
+        touch_line(area.min.x, i, area.max.x - area.min.x)
+        touch_line(area.min.x, i - n, area.max.x - area.min.x)
+        i += 1
+      end
+    end
+
+    def delete_line(y : Int32, n : Int32, cell : Cell?) : Nil
+      delete_line_area(y, n, cell, bounds)
+    end
+
+    def delete_line_area(y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
+      super
+      i = area.min.y
+      while i < area.max.y
+        touch_line(area.min.x, i, area.max.x - area.min.x)
+        touch_line(area.min.x, i + n, area.max.x - area.min.x)
+        i += 1
+      end
+    end
+
+    def insert_cell(x : Int32, y : Int32, n : Int32, cell : Cell?) : Nil
+      insert_cell_area(x, y, n, cell, bounds)
+    end
+
+    def insert_cell_area(x : Int32, y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
+      super
+      count = n
+      count = area.max.x - x if x + count > area.max.x
+      touch_line(x, y, count)
+    end
+
+    def delete_cell(x : Int32, y : Int32, n : Int32, cell : Cell?) : Nil
+      delete_cell_area(x, y, n, cell, bounds)
+    end
+
+    def delete_cell_area(x : Int32, y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
+      super
+      remaining = area.max.x - x
+      count = n
+      count = remaining if count > remaining
+      touch_line(x, y, count)
+    end
+  end
+
+  class ScreenBuffer < RenderBuffer
+    include Screen
+
+    getter method : WidthMethod
+
+    def initialize(width : Int32, height : Int32, @method : WidthMethod = DEFAULT_WIDTH_METHOD)
+      super(width, height)
+    end
+
+    def width_method : WidthMethod
+      @method
+    end
+  end
+
+  def self.new_render_buffer(width : Int32, height : Int32) : RenderBuffer
+    RenderBuffer.new(width, height)
+  end
+
+  def self.new_screen_buffer(width : Int32, height : Int32) : ScreenBuffer
+    ScreenBuffer.new(width, height)
+  end
+
+  def self.trim_space(value : String) : String
+    lines = value.split('\n', remove_empty: false)
+    lines.map! do |line|
+      has_cr = line.ends_with?("\r")
+      line = line[0...-1] if has_cr
+      while line.ends_with?(' ')
+        line = line[0...-1]
+      end
+      line += "\r" if has_cr
+      line
+    end
+    lines.join("\n")
+  end
+
+  def self.cell_equal?(a : Cell?, b : Cell?) : Bool
+    return true if a == b
+    return false if a.nil? || b.nil?
+    a == b
+  end
 end

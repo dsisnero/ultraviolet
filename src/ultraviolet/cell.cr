@@ -1,14 +1,11 @@
+require "uniwidth"
 require "./style"
 require "./colorprofile"
 
 module Ultraviolet
   alias WidthMethod = Proc(String, Int32)
 
-  DEFAULT_WIDTH_METHOD = ->(str : String) do
-    count = 0
-    str.each_grapheme { count += 1 }
-    count
-  end
+  DEFAULT_WIDTH_METHOD = ->(str : String) { UnicodeCharWidth.width(str) }
 
   struct Link
     getter url : String
