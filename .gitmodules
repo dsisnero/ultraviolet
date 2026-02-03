@@ -1,0 +1,3 @@
+[submodule "ultraviolet_go"]
+	path = ultraviolet_go
+	url = https://github.com/charmbracelet/ultraviolet
