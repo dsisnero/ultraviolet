@@ -29,65 +29,18 @@ module Ultraviolet
     def set(x : Int32, cell : Cell?) : Nil
       return if x < 0 || x >= @cells.size
 
-      prev = at(x)
-      if prev
-        prev_width = prev.width
-        if prev_width > 1
-          j = 0
-          while j < prev_width && x + j < @cells.size
-            @cells[x + j] = prev.clone
-            @cells[x + j].empty!
-            j += 1
-          end
-        elsif prev_width == 0
-          j = 1
-          while j < MAX_CELL_WIDTH && x - j >= 0
-            wide = at(x - j)
-            if wide
-              wide_width = wide.width
-              if wide_width > 1 && j < wide_width
-                k = 0
-                while k < wide_width && x - j + k < @cells.size
-                  @cells[x - j + k] = wide.clone
-                  @cells[x - j + k].empty!
-                  k += 1
-                end
-                break
-              end
-            end
-            j += 1
-          end
-        end
-      end
+      clear_prev_cells(x)
 
       if cell.nil?
         @cells[x] = EMPTY_CELL
         return
       end
 
-      @cells[x] = cell.clone
-      cell_width = cell.width
-      if x + cell_width > @cells.size
-        i = 0
-        while i < cell_width && x + i < @cells.size
-          @cells[x + i] = cell.clone
-          @cells[x + i].empty!
-          i += 1
-        end
-        return
-      end
-
-      if cell_width > 1
-        j = 1
-        while j < cell_width && x + j < @cells.size
-          @cells[x + j] = Cell.new
-          j += 1
-        end
-      end
+      place_cell(x, cell)
     end
 
     def at(x : Int32) : Cell?
-      return nil if x < 0 || x >= @cells.size
+      return if x < 0 || x >= @cells.size
       @cells[x]
     end
 
@@ -129,43 +82,13 @@ module Ultraviolet
       @cells.each do |cell|
         next if cell.zero?
         if cell == EMPTY_CELL
-          if !pen.zero?
-            buf << "\e[0m"
-            pen = Style.new
-          end
-          if !link.empty?
-            buf << link.end_sequence
-            link = Link.new
-          end
-          pending << ' '
-          pending_count += 1
+          pen, link, pending_count = append_empty_cell(buf, pen, link, pending, pending_count)
           next
         end
 
-        if pending_count > 0
-          buf << pending.to_s
-          pending = String::Builder.new
-          pending_count = 0
-        end
-
-        if cell.style.zero? && !pen.zero?
-          buf << "\e[0m"
-          pen = Style.new
-        end
-        if cell.style != pen
-          buf << cell.style.diff(pen)
-          pen = cell.style
-        end
-
-        if cell.link != link && !link.empty?
-          buf << link.end_sequence
-          link = Link.new
-        end
-        if cell.link != link
-          buf << cell.link.start_sequence
-          link = cell.link
-        end
-
+        pending, pending_count = flush_pending(buf, pending, pending_count)
+        pen = apply_style(buf, cell, pen)
+        link = apply_link(buf, cell, link)
         buf << cell.string
       end
 
@@ -175,6 +98,125 @@ module Ultraviolet
       if !pen.zero?
         buf << "\e[0m"
       end
+    end
+
+    private def clear_prev_cells(x : Int32) : Nil
+      prev = at(x)
+      return unless prev
+
+      prev_width = prev.width
+      if prev_width > 1
+        clear_wide_right(x, prev_width)
+      elsif prev_width == 0
+        clear_wide_left(x)
+      end
+    end
+
+    private def clear_wide_right(x : Int32, width : Int32) : Nil
+      j = 0
+      while j < width && x + j < @cells.size
+        @cells[x + j] = @cells[x + j].clone
+        @cells[x + j].empty!
+        j += 1
+      end
+    end
+
+    private def clear_wide_left(x : Int32) : Nil
+      j = 1
+      while j < MAX_CELL_WIDTH && x - j >= 0
+        wide = at(x - j)
+        if wide && wide.width > 1 && j < wide.width
+          clear_wide_span(x - j, wide.width)
+          break
+        end
+        j += 1
+      end
+    end
+
+    private def clear_wide_span(start : Int32, width : Int32) : Nil
+      k = 0
+      while k < width && start + k < @cells.size
+        @cells[start + k] = @cells[start + k].clone
+        @cells[start + k].empty!
+        k += 1
+      end
+    end
+
+    private def place_cell(x : Int32, cell : Cell) : Nil
+      @cells[x] = cell.clone
+      cell_width = cell.width
+      if x + cell_width > @cells.size
+        i = 0
+        while i < cell_width && x + i < @cells.size
+          @cells[x + i] = cell.clone
+          @cells[x + i].empty!
+          i += 1
+        end
+        return
+      end
+
+      if cell_width > 1
+        j = 1
+        while j < cell_width && x + j < @cells.size
+          @cells[x + j] = Cell.new
+          j += 1
+        end
+      end
+    end
+
+    private def append_empty_cell(
+      buf : String::Builder,
+      pen : Style,
+      link : Link,
+      pending : String::Builder,
+      pending_count : Int32,
+    ) : {Style, Link, Int32}
+      unless pen.zero?
+        buf << "\e[0m"
+        pen = Style.new
+      end
+      unless link.empty?
+        buf << link.end_sequence
+        link = Link.new
+      end
+      pending << ' '
+      pending_count += 1
+      {pen, link, pending_count}
+    end
+
+    private def flush_pending(
+      buf : String::Builder,
+      pending : String::Builder,
+      pending_count : Int32,
+    ) : {String::Builder, Int32}
+      return {pending, pending_count} if pending_count == 0
+
+      buf << pending.to_s
+      {String::Builder.new, 0}
+    end
+
+    private def apply_style(buf : String::Builder, cell : Cell, pen : Style) : Style
+      if cell.style.zero? && !pen.zero?
+        buf << "\e[0m"
+        return Style.new
+      end
+      if cell.style != pen
+        buf << cell.style.diff(pen)
+        return cell.style
+      end
+      pen
+    end
+
+    private def apply_link(buf : String::Builder, cell : Cell, link : Link) : Link
+      if cell.link != link && !link.empty?
+        buf << link.end_sequence
+        link = Link.new
+      end
+      if cell.link != link
+        buf << cell.link.start_sequence
+        return cell.link
+      end
+      link
     end
   end
 
@@ -238,12 +280,12 @@ module Ultraviolet
     end
 
     def line(y : Int32) : Line?
-      return nil if y < 0 || y >= @lines.size
+      return if y < 0 || y >= @lines.size
       @lines[y]
     end
 
     def cell_at(x : Int32, y : Int32) : Cell?
-      return nil if y < 0 || y >= @lines.size
+      return if y < 0 || y >= @lines.size
       @lines[y].at(x)
     end
 
@@ -297,7 +339,7 @@ module Ultraviolet
 
     def fill_area(cell : Cell?, area : Rectangle) : Nil
       cell_width = 1
-      cell_width = cell.not_nil!.width if cell && cell.width > 1
+      cell_width = cell.width if cell && cell.width > 1
       y = area.min.y
       while y < area.max.y
         x = area.min.x
@@ -318,7 +360,7 @@ module Ultraviolet
     end
 
     def clone_area(area : Rectangle) : Buffer?
-      return nil unless area.in?(bounds)
+      return unless area.in?(bounds)
       result = Buffer.new(area.dx, area.dy)
       y = area.min.y
       while y < area.max.y
@@ -427,23 +469,13 @@ module Ultraviolet
     end
 
     def insert_cell_area(x : Int32, y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
-      return if n <= 0 || y < area.min.y || y >= area.max.y || y >= height ||
-        x < area.min.x || x >= area.max.x || x >= width
+      return unless valid_insert_cell_area?(x, y, n, area)
 
       count = n
       count = area.max.x - x if x + count > area.max.x
 
-      i = area.max.x - 1
-      while i >= x + count && i - count >= area.min.x
-        @lines[y].cells[i] = @lines[y].cells[i - count]
-        i -= 1
-      end
-
-      i = x
-      while i < x + count && i < area.max.x
-        set_cell(i, y, cell)
-        i += 1
-      end
+      shift_cells_right(y, x, count, area)
+      fill_inserted_cells(y, x, count, cell, area)
     end
 
     def delete_cell(x : Int32, y : Int32, n : Int32, cell : Cell?) : Nil
@@ -452,7 +484,7 @@ module Ultraviolet
 
     def delete_cell_area(x : Int32, y : Int32, n : Int32, cell : Cell?, area : Rectangle) : Nil
       return if n <= 0 || y < area.min.y || y >= area.max.y || y >= height ||
-        x < area.min.x || x >= area.max.x || x >= width
+                x < area.min.x || x >= area.max.x || x >= width
 
       count = n
       remaining = area.max.x - x
@@ -468,6 +500,39 @@ module Ultraviolet
 
       i = area.max.x - count
       while i < area.max.x
+        set_cell(i, y, cell)
+        i += 1
+      end
+    end
+
+    private def valid_insert_cell_area?(x : Int32, y : Int32, n : Int32, area : Rectangle) : Bool
+      return false if n <= 0
+      return false if y < area.min.y
+      return false if y >= area.max.y
+      return false if y >= height
+      return false if x < area.min.x
+      return false if x >= area.max.x
+      return false if x >= width
+      true
+    end
+
+    private def shift_cells_right(y : Int32, x : Int32, count : Int32, area : Rectangle) : Nil
+      i = area.max.x - 1
+      while i >= x + count && i - count >= area.min.x
+        @lines[y].cells[i] = @lines[y].cells[i - count]
+        i -= 1
+      end
+    end
+
+    private def fill_inserted_cells(
+      y : Int32,
+      x : Int32,
+      count : Int32,
+      cell : Cell?,
+      area : Rectangle,
+    ) : Nil
+      i = x
+      while i < x + count && i < area.max.x
         set_cell(i, y, cell)
         i += 1
       end

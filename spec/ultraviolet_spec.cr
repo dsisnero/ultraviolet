@@ -7,8 +7,11 @@ describe Ultraviolet do
     buffer.set_cell(1, 0, cell)
 
     fetched = buffer.cell_at(1, 0)
-    fetched.should_not be_nil
-    fetched.not_nil!.string.should eq("A")
+    if fetched
+      fetched.string.should eq("A")
+    else
+      fail "expected cell at (1, 0)"
+    end
   end
 
   it "renders lines without styles" do
@@ -27,8 +30,22 @@ describe Ultraviolet do
 
     area = Ultraviolet.rect(0, 0, 2, 2)
     clone = buffer.clone_area(area)
-    clone.should_not be_nil
-    clone.not_nil!.cell_at(0, 0).not_nil!.string.should eq("X")
-    clone.not_nil!.cell_at(1, 1).not_nil!.string.should eq("Y")
+    if clone
+      cell = clone.cell_at(0, 0)
+      if cell
+        cell.string.should eq("X")
+      else
+        fail "expected cloned cell at (0, 0)"
+      end
+
+      cell = clone.cell_at(1, 1)
+      if cell
+        cell.string.should eq("Y")
+      else
+        fail "expected cloned cell at (1, 1)"
+      end
+    else
+      fail "expected cloned buffer"
+    end
   end
 end
