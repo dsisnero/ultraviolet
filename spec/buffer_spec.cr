@@ -2,8 +2,8 @@ require "textseg"
 require "uniwidth"
 require "./spec_helper"
 
-describe Ultraviolet::Buffer do
-  def buffer_width(value : String) : Int32
+module BufferSpecHelper
+  def self.buffer_width(value : String) : Int32
     max = 0
     value.split('\n', remove_empty: false).each do |line|
       max = {max, UnicodeCharWidth.width(line)}.max
@@ -11,10 +11,12 @@ describe Ultraviolet::Buffer do
     max
   end
 
-  def buffer_height(value : String) : Int32
+  def self.buffer_height(value : String) : Int32
     value.count('\n') + 1
   end
+end
 
+describe Ultraviolet::Buffer do
   it "renders graphemes using unicode widths" do
     cases = [
       {name: "empty buffer", input: "", expected: ""},
@@ -27,7 +29,10 @@ describe Ultraviolet::Buffer do
     ]
 
     cases.each do |test_case|
-      buf = Ultraviolet::Buffer.new(buffer_width(test_case[:input]), buffer_height(test_case[:input]))
+      buf = Ultraviolet::Buffer.new(
+        BufferSpecHelper.buffer_width(test_case[:input]),
+        BufferSpecHelper.buffer_height(test_case[:input])
+      )
       test_case[:input].split('\n', remove_empty: false).each_with_index do |line, y|
         x = 0
         TextSegment.each_grapheme(line) do |cluster|

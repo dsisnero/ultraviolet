@@ -84,12 +84,12 @@ module Ultraviolet
   def self.convert_style(style : Style, profile : ColorProfile) : Style
     case profile
     when ColorProfile::TrueColor
-      style
+      return style
     when ColorProfile::ANSI, ColorProfile::ANSI256
       fg = style.fg
       bg = style.bg
       underline = style.underline_color
-      Style.new(
+      return Style.new(
         fg: fg ? ColorProfileUtil.convert(profile, fg) : nil,
         bg: bg ? ColorProfileUtil.convert(profile, bg) : nil,
         underline_color: underline ? ColorProfileUtil.convert(profile, underline) : nil,
@@ -97,10 +97,11 @@ module Ultraviolet
         attrs: style.attrs,
       )
     when ColorProfile::Ascii
-      Style.new(underline: style.underline, attrs: style.attrs)
+      return Style.new(underline: style.underline, attrs: style.attrs)
     when ColorProfile::NoTTY
-      Style.new
+      return Style.new
     end
+    Style.new
   end
 
   def self.convert_link(link : Link, profile : ColorProfile) : Link

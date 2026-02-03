@@ -1,13 +1,15 @@
 require "./spec_helper"
 
-describe Ultraviolet::Style do
-  def color(r : Int32, g : Int32, b : Int32) : Ultraviolet::Color
+module StyleSpecHelper
+  def self.color(r : Int32, g : Int32, b : Int32) : Ultraviolet::Color
     Ultraviolet::Color.new(r.to_u8, g.to_u8, b.to_u8)
   end
+end
 
+describe Ultraviolet::Style do
   it "converts styles and links by color profile" do
-    black = color(0, 0, 0)
-    white = color(255, 255, 255)
+    black = StyleSpecHelper.color(0, 0, 0)
+    white = StyleSpecHelper.color(255, 255, 255)
     style = Ultraviolet::Style.new(fg: black, bg: white, underline_color: black)
 
     Ultraviolet.convert_style(style, Ultraviolet::ColorProfile::TrueColor).should eq(style)
@@ -35,12 +37,12 @@ describe Ultraviolet::Style do
   end
 
   it "matches StyleDiff behavior from Go" do
-    red = color(255, 0, 0)
-    blue = color(0, 0, 255)
-    green = color(0, 255, 0)
-    yellow = color(255, 255, 0)
-    cyan = color(0, 255, 255)
-    magenta = color(255, 0, 255)
+    red = StyleSpecHelper.color(255, 0, 0)
+    blue = StyleSpecHelper.color(0, 0, 255)
+    green = StyleSpecHelper.color(0, 255, 0)
+    yellow = StyleSpecHelper.color(255, 255, 0)
+    cyan = StyleSpecHelper.color(0, 255, 255)
+    magenta = StyleSpecHelper.color(255, 0, 255)
 
     tests = [
       {name: "both nil", from: nil, to: nil, want: ""},

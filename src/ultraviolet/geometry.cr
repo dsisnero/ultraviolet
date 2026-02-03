@@ -5,6 +5,11 @@ module Ultraviolet
 
     def initialize(@x : Int32, @y : Int32)
     end
+
+    def in?(rect : Rectangle) : Bool
+      @x >= rect.min.x && @x < rect.max.x &&
+        @y >= rect.min.y && @y < rect.max.y
+    end
   end
 
   struct Rectangle
@@ -35,6 +40,17 @@ module Ultraviolet
       return false if empty? || other.empty?
       @min.x < other.max.x && @max.x > other.min.x &&
         @min.y < other.max.y && @max.y > other.min.y
+    end
+
+    def intersect(other : Rectangle) : Rectangle
+      min_x = {@min.x, other.min.x}.max
+      min_y = {@min.y, other.min.y}.max
+      max_x = {@max.x, other.max.x}.min
+      max_y = {@max.y, other.max.y}.min
+      if max_x < min_x || max_y < min_y
+        return Rectangle.new(Position.new(0, 0), Position.new(0, 0))
+      end
+      Rectangle.new(Position.new(min_x, min_y), Position.new(max_x, max_y))
     end
   end
 

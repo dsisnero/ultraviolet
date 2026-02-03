@@ -83,19 +83,14 @@ module Ultraviolet
       return "\e[m" if zero?
 
       parts = attr_codes
+      fg = @fg
+      parts << fg.to_fg_code if fg
+      bg = @bg
+      parts << bg.to_bg_code if bg
+      underline = @underline_color
+      parts << underline.to_underline_code if underline
 
-      seq = parts.empty? ? "" : "\e[#{parts.join(';')}m"
-      if color = @fg
-        seq += color.to_fg_ansi
-      end
-      if color = @bg
-        seq += color.to_bg_ansi
-      end
-      if color = @underline_color
-        seq += color.to_underline_ansi
-      end
-
-      seq
+      "\e[#{parts.join(';')}m"
     end
 
     def diff(from : Style?) : String
@@ -135,7 +130,7 @@ module Ultraviolet
       if @underline == Underline::Single
         parts << "4"
       elsif @underline != Underline::None
-        parts << "4:#{Style.underline_code(@underline)}"
+        parts << "4:#{underline_code(@underline)}"
       end
 
       parts
@@ -150,13 +145,16 @@ module Ultraviolet
     private def self.color_diff_codes(from : Style, to : Style) : Array(String)
       codes = [] of String
       unless color_equal(from.fg, to.fg)
-        codes << (to.fg ? to.fg.to_fg_code : "39")
+        fg = to.fg
+        codes << (fg ? fg.to_fg_code : "39")
       end
       unless color_equal(from.bg, to.bg)
-        codes << (to.bg ? to.bg.to_bg_code : "49")
+        bg = to.bg
+        codes << (bg ? bg.to_bg_code : "49")
       end
       unless color_equal(from.underline_color, to.underline_color)
-        codes << (to.underline_color ? to.underline_color.to_underline_code : "59")
+        underline = to.underline_color
+        codes << (underline ? underline.to_underline_code : "59")
       end
       codes
     end
@@ -188,11 +186,12 @@ module Ultraviolet
 
       codes.concat(set_bold_faint_codes(to_flags, bold_faint))
       codes.concat(set_italic_codes(to_flags, italic))
-      codes.concat(set_underline_codes(to, to_flags, underline))
+      codes.concat(set_underline_single_codes(to, to_flags, underline))
       codes.concat(set_blink_codes(to_flags, blink))
       codes.concat(set_toggle_codes("7", to_flags[:reverse], reverse[:changed]))
       codes.concat(set_toggle_codes("8", to_flags[:conceal], conceal[:changed]))
       codes.concat(set_toggle_codes("9", to_flags[:strikethrough], strike[:changed]))
+      codes.concat(set_underline_special_codes(to, to_flags, underline))
 
       codes
     end
@@ -273,15 +272,22 @@ module Ultraviolet
       codes
     end
 
-    private def self.set_underline_codes(to : Style, to_flags, underline)
+    private def self.set_underline_single_codes(to : Style, to_flags, underline)
       codes = [] of String
       return codes unless underline[:changed] && to_flags[:underline]
 
       if to.underline == Underline::Single
         codes << "4"
-      else
-        codes << "4:#{underline_code(to.underline)}"
       end
+      codes
+    end
+
+    private def self.set_underline_special_codes(to : Style, to_flags, underline)
+      codes = [] of String
+      return codes unless underline[:changed] && to_flags[:underline]
+      return codes if to.underline == Underline::Single
+
+      codes << "4:#{underline_code(to.underline)}"
       codes
     end
 
@@ -299,6 +305,21 @@ module Ultraviolet
     end
 
     private def self.underline_code(value : Underline) : Int32
+      case value
+      when Underline::Double
+        2
+      when Underline::Curly
+        3
+      when Underline::Dotted
+        4
+      when Underline::Dashed
+        5
+      else
+        1
+      end
+    end
+
+    private def underline_code(value : Underline) : Int32
       case value
       when Underline::Double
         2

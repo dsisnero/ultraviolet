@@ -8,6 +8,9 @@ module Ultraviolet
   end
 
   module ColorProfileUtil
+    @@ansi16_palette : Array(Color)?
+    @@ansi256_palette : Array(Color)?
+
     def self.convert(profile : ColorProfile, color : Color) : Color
       case profile
       when ColorProfile::ANSI256

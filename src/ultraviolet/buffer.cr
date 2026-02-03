@@ -7,6 +7,7 @@ module Ultraviolet
     abstract def set_cell(x : Int32, y : Int32, cell : Cell?) : Nil
     abstract def width : Int32
     abstract def height : Int32
+    abstract def width_method : WidthMethod
   end
 
   module Drawable
@@ -115,8 +116,10 @@ module Ultraviolet
     private def clear_wide_right(x : Int32, width : Int32) : Nil
       j = 0
       while j < width && x + j < @cells.size
-        @cells[x + j] = @cells[x + j].clone
-        @cells[x + j].empty!
+        idx = x + j
+        cell = @cells[idx].clone
+        cell.empty!
+        @cells[idx] = cell
         j += 1
       end
     end
@@ -136,8 +139,10 @@ module Ultraviolet
     private def clear_wide_span(start : Int32, width : Int32) : Nil
       k = 0
       while k < width && start + k < @cells.size
-        @cells[start + k] = @cells[start + k].clone
-        @cells[start + k].empty!
+        idx = start + k
+        cell = @cells[idx].clone
+        cell.empty!
+        @cells[idx] = cell
         k += 1
       end
     end
@@ -148,8 +153,10 @@ module Ultraviolet
       if x + cell_width > @cells.size
         i = 0
         while i < cell_width && x + i < @cells.size
-          @cells[x + i] = cell.clone
-          @cells[x + i].empty!
+          idx = x + i
+          blank = cell.clone
+          blank.empty!
+          @cells[idx] = blank
           i += 1
         end
         return
