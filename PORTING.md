@@ -51,5 +51,9 @@ living checklist for parity and test coverage.
 - platform APIs (termios, windows console, poll/select/epoll/kqueue)
 
 ## Status
-- Crystal currently implements: `cell`, `style`, `geometry`, `buffer` (partial).
-- Everything else is pending.
+- Implemented in Crystal: `cell`, `style`, `geometry`, `buffer` (Line/Lines/Buffer/RenderBuffer/ScreenBuffer),
+  `colorprofile`, `ansi_color`, `layout`, `border`, `tabstop`, `styled`,
+  input/event scaffolding (`ansi`, `key`, `key_table` (partial), `mouse`, `event`).
+- Specs ported: `buffer`, `border`, `layout`, `style`, `tabstop`, `styled`.
+- Pending: input/events (event/key/mouse/decoder), cursor, window/screen, terminal stack,
+  utils/environ/logger/cancelreader, platform backends, terminal renderer tests (may need golden fixtures).
