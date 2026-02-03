@@ -45,7 +45,7 @@ module Ultraviolet
       @content : String = "",
       @width : Int32 = 0,
       @style : Style = Style.new,
-      @link : Link = Link.new
+      @link : Link = Link.new,
     )
     end
 
