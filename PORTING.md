@@ -49,9 +49,9 @@ Legend:
 - [x] (partial) `ultraviolet_go/terminal_unix.go` → `src/ultraviolet/terminal_unix.cr`
 - [x] (partial) `ultraviolet_go/terminal_windows.go` → `src/ultraviolet/terminal_windows.cr`
 - [ ] `ultraviolet_go/terminal_other.go` → missing non-windows fallback parity
-- [ ] `ultraviolet_go/poll.go` → missing
-- [ ] `ultraviolet_go/poll_default.go` → missing
-- [ ] `ultraviolet_go/poll_fallback.go` → missing
+- [x] (partial) `ultraviolet_go/poll.go` → `src/ultraviolet/poll.cr` (interface + default)
+- [x] (partial) `ultraviolet_go/poll_default.go` → `src/ultraviolet/poll.cr` (select-based reader)
+- [x] (partial) `ultraviolet_go/poll_fallback.go` → `src/ultraviolet/poll.cr` (buffered fallback)
 - [ ] `ultraviolet_go/poll_linux.go` → missing
 - [ ] `ultraviolet_go/poll_bsd.go` → missing
 - [ ] `ultraviolet_go/poll_select.go` → missing
@@ -91,9 +91,9 @@ Legend:
 - [x] `ultraviolet_go/terminal_renderer_test.go` → `spec/terminal_renderer_spec.cr`
 - [x] `ultraviolet_go/terminal_renderer_output_test.go` → `spec/terminal_renderer_output_spec.cr` (may need golden fixtures)
 - [x] `ultraviolet_go/screen/screen_test.go` → `spec/screen_spec.cr`
-- [ ] `ultraviolet_go/poll_test.go` → missing Crystal spec
-- [ ] `ultraviolet_go/poll_default_test.go` → missing Crystal spec
-- [ ] `ultraviolet_go/poll_fallback_test.go` → missing Crystal spec
+- [x] `ultraviolet_go/poll_test.go` → `spec/poll_spec.cr`
+- [x] `ultraviolet_go/poll_default_test.go` → `spec/poll_spec.cr`
+- [x] `ultraviolet_go/poll_fallback_test.go` → `spec/poll_fallback_spec.cr`
 
 ## External Dependencies (Go → Crystal equivalents)
 - [x] `github.com/charmbracelet/colorprofile` → `src/ultraviolet/colorprofile.cr`
@@ -112,5 +112,5 @@ Legend:
   renderer core (hashmap/hardscroll), ansi/colorprofile integration, cursor/window, environ/logger/utils,
   cancelreader, and basic tty/winch/terminal scaffolding.
 - Partially implemented: decoder/key_table, terminal/reader, unix/windows backends, tty/winch platform paths.
-- Missing: poll system, terminal tab/bsd delay helpers, non-windows terminal_other parity,
+- Missing: terminal tab/bsd delay helpers, non-windows terminal_other parity,
   examples/tutorial docs, and poll/cell specs.
