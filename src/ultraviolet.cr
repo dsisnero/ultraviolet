@@ -23,6 +23,7 @@ require "./ultraviolet/styled"
 require "./ultraviolet/cursor"
 require "./ultraviolet/window"
 require "./ultraviolet/terminal"
+require "./ultraviolet/terminal_reader"
 require "./ultraviolet/terminal_renderer"
 
 module Ultraviolet
