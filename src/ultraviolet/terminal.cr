@@ -254,6 +254,25 @@ module Ultraviolet
       @evs.close
     end
 
+    def wait(timeout : Time::Span? = nil) : Bool
+      if timeout
+        select
+        when @evloop.receive
+          true
+        when timeout(timeout)
+          false
+        end
+      else
+        @evloop.receive
+        true
+      end
+    end
+
+    def shutdown(timeout : Time::Span) : Bool
+      teardown
+      wait(timeout)
+    end
+
     def events : Channel(Event)
       @evs
     end
