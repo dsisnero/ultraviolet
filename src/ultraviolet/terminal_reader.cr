@@ -18,6 +18,9 @@ module Ultraviolet
     @lookup : Bool
     @paste : String?
     @logger : Logger?
+    @utf16_half : Array(Bool)
+    @utf16_buf : Array(Array(Int32))
+    @grapheme_buf : Array(Array(Int32))
 
     def initialize(reader : IO, term_type : String, legacy : LegacyKeyEncoding = LegacyKeyEncoding.new, use_terminfo : Bool = false)
       super(legacy, use_terminfo)
@@ -28,6 +31,9 @@ module Ultraviolet
       @table = Ultraviolet.build_keys_table(@legacy, @term, use_terminfo?)
       @paste = nil
       @logger = nil
+      @utf16_half = [false, false]
+      @utf16_buf = [[0, 0], [0, 0]]
+      @grapheme_buf = [Array(Int32).new, Array(Int32).new]
     end
 
     def logger=(logger : Logger?) : Nil
@@ -145,13 +151,16 @@ module Ultraviolet
     private def scan_events(buf : Bytes, expired : Bool) : {Int32, Array(Event)}
       return {0, [] of Event} if buf.empty?
 
+      total = 0
+      dn, buf = deserialize_win32_input(buf)
+      total += dn
+
       if @lookup && buf.size > 2 && buf[0] == Ansi::ESC
         if key = @table[String.new(buf)]?
           return {buf.size, [key.as(Event)]}
         end
       end
 
-      total = 0
       events = [] of Event
       while buf.size > 0
         esc = buf[0] == Ansi::ESC
@@ -234,6 +243,138 @@ module Ultraviolet
       combined.copy_from(buffer)
       combined[buffer.size, data.size].copy_from(data)
       combined
+    end
+
+    private def deserialize_win32_input(buf : Bytes) : {Int32, Bytes}
+      processed = 0
+      out = IO::Memory.new
+      i = 0
+      while i < buf.size
+        if buf[i] == Ansi::ESC && i + 1 < buf.size && buf[i + 1] == '['.ord
+          seq_len, params = parse_win32_sequence(buf, i)
+          if seq_len == 0
+            break
+          end
+          if seq_len == -1
+            out.write(encode_grapheme_bufs)
+            out.write_byte(buf[i])
+            i += 1
+            next
+          end
+
+          if params.size == 6
+            vk = params[0]
+            if vk == 0
+              uc = params[2]
+              kd = params[3]
+              kd = kd.clamp(0, 1)
+              store_grapheme_rune(kd, uc)
+              processed += seq_len
+              i += seq_len
+              next
+            end
+          end
+
+          out.write(encode_grapheme_bufs)
+          out.write(buf[i, seq_len])
+          i += seq_len
+          next
+        end
+
+        out.write(encode_grapheme_bufs)
+        out.write_byte(buf[i])
+        i += 1
+      end
+
+      out.write(encode_grapheme_bufs)
+      result = out.to_slice
+      if i < buf.size
+        result = append_bytes(result, buf[i, buf.size - i])
+      end
+      {processed, result}
+    end
+
+    private def parse_win32_sequence(buf : Bytes, start : Int32) : {Int32, Array(Int32)}
+      return {0, [] of Int32} if start + 2 >= buf.size
+      return {0, [] of Int32} unless buf[start] == Ansi::ESC && buf[start + 1] == '['.ord
+
+      params = [] of Int32
+      value = 0
+      has_value = false
+      i = start + 2
+      while i < buf.size
+        byte = buf[i]
+        if byte >= '0'.ord && byte <= '9'.ord
+          value = value * 10 + (byte - '0'.ord)
+          has_value = true
+        elsif byte == ';'.ord
+          params << (has_value ? value : 0)
+          value = 0
+          has_value = false
+        else
+          if byte == '_'.ord
+            params << (has_value ? value : 0)
+            return {i - start + 1, params}
+          end
+          return {-1, [] of Int32}
+        end
+        i += 1
+      end
+
+      {0, [] of Int32}
+    end
+
+    private def encode_grapheme_bufs : Bytes
+      out = IO::Memory.new
+      @grapheme_buf.each_with_index do |buf, kd|
+        next if buf.empty?
+        if kd == 1
+          buf.each do |code|
+            out << Ultraviolet.safe_char(code).to_s
+          end
+        else
+          graphemes = String.build do |io|
+            buf.each { |code| io << Ultraviolet.safe_char(code) }
+          end
+          TextSegment.each_grapheme(graphemes) do |segment|
+            grapheme = segment.str
+            codes = [] of String
+            grapheme.each_char_with_index do |ch, idx|
+              next if ch.ord == 0
+              codes << ch.ord.to_s
+            end
+            next if codes.empty?
+            seq = "\e[#{buf[0]};1:3;#{codes.join(":")}u"
+            out << seq
+          end
+        end
+        buf.clear
+      end
+      out.to_slice
+    end
+
+    private def store_grapheme_rune(kd : Int32, code : Int32) : Nil
+      idx = kd.clamp(0, 1)
+      if @utf16_half[idx]
+        @utf16_half[idx] = false
+        @utf16_buf[idx][1] = code
+        r = decode_surrogate(@utf16_buf[idx][0], @utf16_buf[idx][1])
+        @grapheme_buf[idx] << r
+      elsif surrogate?(code)
+        @utf16_half[idx] = true
+        @utf16_buf[idx][0] = code
+      else
+        @grapheme_buf[idx] << code
+      end
+    end
+
+    private def surrogate?(code : Int32) : Bool
+      code >= 0xD800 && code <= 0xDFFF
+    end
+
+    private def decode_surrogate(high : Int32, low : Int32) : Int32
+      return 0xFFFD unless high >= 0xD800 && high <= 0xDBFF && low >= 0xDC00 && low <= 0xDFFF
+      0x10000 + ((high - 0xD800) << 10) + (low - 0xDC00)
     end
   end
 end
