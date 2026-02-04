@@ -86,11 +86,19 @@
     end
 
     def self.supports_hard_tabs(oflag : UInt64) : Bool
-      (oflag & LibC::TABDLY.to_u64) == LibC::TAB0.to_u64
+      {% if flag?(:darwin) || flag?(:linux) || flag?(:freebsd) || flag?(:solaris) || flag?(:aix) %}
+        (oflag & LibC::TABDLY.to_u64) == LibC::TAB0.to_u64
+      {% else %}
+        false
+      {% end %}
     end
 
     def self.supports_backspace(lflag : UInt64) : Bool
-      (lflag & LibC::BSDLY.to_u64) == LibC::BS0.to_u64
+      {% if flag?(:darwin) || flag?(:linux) || flag?(:aix) %}
+        (lflag & LibC::BSDLY.to_u64) == LibC::BS0.to_u64
+      {% else %}
+        false
+      {% end %}
     end
   end
 {% end %}

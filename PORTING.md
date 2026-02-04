@@ -57,10 +57,10 @@ Legend:
 - [ ] `ultraviolet_go/poll_select.go` → missing
 - [ ] `ultraviolet_go/poll_solaris.go` → missing
 - [ ] `ultraviolet_go/poll_windows.go` → missing
-- [ ] `ultraviolet_go/terminal_tabdly.go` → missing
-- [ ] `ultraviolet_go/terminal_tabdly_other.go` → missing
-- [ ] `ultraviolet_go/terminal_bsdly.go` → missing
-- [ ] `ultraviolet_go/terminal_bsdly_other.go` → missing
+- [x] `ultraviolet_go/terminal_tabdly.go` → `src/ultraviolet/terminal_unix.cr` (platform guard)
+- [x] `ultraviolet_go/terminal_tabdly_other.go` → `src/ultraviolet/terminal_unix.cr` (fallback false)
+- [x] `ultraviolet_go/terminal_bsdly.go` → `src/ultraviolet/terminal_unix.cr` (platform guard)
+- [x] `ultraviolet_go/terminal_bsdly_other.go` → `src/ultraviolet/terminal_unix.cr` (fallback false)
 
 ### Utilities & Glue
 - [x] `ultraviolet_go/environ.go` → `src/ultraviolet/environ.cr`
@@ -112,5 +112,4 @@ Legend:
   renderer core (hashmap/hardscroll), ansi/colorprofile integration, cursor/window, environ/logger/utils,
   cancelreader, and basic tty/winch/terminal scaffolding.
 - Partially implemented: decoder/key_table, terminal/reader, unix/windows backends, tty/winch platform paths.
-- Missing: terminal tab/bsd delay helpers, non-windows terminal_other parity,
-  examples/tutorial docs, and poll/cell specs.
+- Missing: non-windows terminal_other parity, examples/tutorial docs, and cell specs.
