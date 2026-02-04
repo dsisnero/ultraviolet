@@ -10,6 +10,10 @@ module Ultraviolet
                       Size |
                       Key |
                       Mouse |
+                      MouseClickEvent |
+                      MouseReleaseEvent |
+                      MouseWheelEvent |
+                      MouseMotionEvent |
                       CursorPositionEvent |
                       FocusEvent |
                       BlurEvent |
@@ -128,6 +132,30 @@ module Ultraviolet
 
   alias MultiEvent = Array(EventSingle)
 
+  def self.multi_event_string(events : MultiEvent) : String
+    String.build do |builder|
+      events.each do |event|
+        case event
+        when Key
+          builder << event.string
+        when Mouse
+          builder << event.string
+        when MouseClickEvent
+          builder << event.string
+        when MouseReleaseEvent
+          builder << event.string
+        when MouseWheelEvent
+          builder << event.string
+        when MouseMotionEvent
+          builder << event.string
+        else
+          builder << event.to_s
+        end
+        builder << '\n'
+      end
+    end
+  end
+
   struct Size
     property width : Int32
     property height : Int32
@@ -147,10 +175,54 @@ module Ultraviolet
   alias KeyPressEvent = Key
   alias KeyReleaseEvent = Key
 
-  alias MouseClickEvent = Mouse
-  alias MouseReleaseEvent = Mouse
-  alias MouseWheelEvent = Mouse
-  alias MouseMotionEvent = Mouse
+  struct MouseClickEvent
+    property mouse : Mouse
+
+    def initialize(@mouse : Mouse)
+    end
+
+    def string : String
+      @mouse.string
+    end
+  end
+
+  struct MouseReleaseEvent
+    property mouse : Mouse
+
+    def initialize(@mouse : Mouse)
+    end
+
+    def string : String
+      @mouse.string
+    end
+  end
+
+  struct MouseWheelEvent
+    property mouse : Mouse
+
+    def initialize(@mouse : Mouse)
+    end
+
+    def string : String
+      @mouse.string
+    end
+  end
+
+  struct MouseMotionEvent
+    property mouse : Mouse
+
+    def initialize(@mouse : Mouse)
+    end
+
+    def string : String
+      base = @mouse.string
+      if @mouse.button != MouseButton::None
+        "#{base}+motion"
+      else
+        "#{base}motion"
+      end
+    end
+  end
 
   struct CursorPositionEvent
     property y : Int32
@@ -343,7 +415,47 @@ module Ultraviolet
   end
 
   def self.dark_color?(color : Color) : Bool
-    luminance = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b)
-    luminance < 128.0
+    _, _, lightness = rgb_to_hsl(color.r, color.g, color.b)
+    lightness < 0.5
+  end
+
+  def self.rgb_to_hsl(r : UInt8, g : UInt8, b : UInt8) : {Float64, Float64, Float64}
+    rf = r.to_f64 / 255.0
+    gf = g.to_f64 / 255.0
+    bf = b.to_f64 / 255.0
+    max, min = max_min(rf, gf, bf)
+    lightness = (max + min) / 2.0
+
+    if max == min
+      return {0.0, 0.0, lightness}
+    end
+
+    delta = max - min
+    saturation = delta / (1.0 - (2.0 * lightness - 1.0).abs)
+    hue = if max == rf
+            (gf - bf) / delta
+          elsif max == gf
+            (bf - rf) / delta + 2.0
+          else
+            (rf - gf) / delta + 4.0
+          end
+    hue *= 60.0
+    hue += 360.0 if hue < 0.0
+
+    {round2(hue), round2(saturation), round2(lightness)}
+  end
+
+  private def self.max_min(r : Float64, g : Float64, b : Float64) : {Float64, Float64}
+    max = r
+    max = g if g > max
+    max = b if b > max
+    min = r
+    min = g if g < min
+    min = b if b < min
+    {max, min}
+  end
+
+  private def self.round2(value : Float64) : Float64
+    (value * 100.0).round / 100.0
   end
 end

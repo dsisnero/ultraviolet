@@ -209,6 +209,10 @@ module Ultraviolet
       parts.join
     end
 
+    def key : Key
+      self
+    end
+
     private def modifier_prefixes : Array(String)
       parts = [] of String
       parts << "ctrl+" if mod_active?(ModCtrl, KeyLeftCtrl, KeyRightCtrl)

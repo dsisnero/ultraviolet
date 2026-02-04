@@ -66,6 +66,18 @@ module DecoderSpecHelper
       "KittyGraphics(options=#{event.options.inspect} payload_size=#{event.payload.size})"
     when Ultraviolet::Mouse
       "Mouse(x=#{event.x} y=#{event.y} button=#{event.button} mod=#{event.mod})"
+    when Ultraviolet::MouseClickEvent
+      mouse = event.mouse
+      "Mouse(x=#{mouse.x} y=#{mouse.y} button=#{mouse.button} mod=#{mouse.mod})"
+    when Ultraviolet::MouseReleaseEvent
+      mouse = event.mouse
+      "Mouse(x=#{mouse.x} y=#{mouse.y} button=#{mouse.button} mod=#{mouse.mod})"
+    when Ultraviolet::MouseWheelEvent
+      mouse = event.mouse
+      "Mouse(x=#{mouse.x} y=#{mouse.y} button=#{mouse.button} mod=#{mouse.mod})"
+    when Ultraviolet::MouseMotionEvent
+      mouse = event.mouse
+      "Mouse(x=#{mouse.x} y=#{mouse.y} button=#{mouse.button} mod=#{mouse.mod})"
     when Ultraviolet::UnknownEvent
       "Unknown(#{event.value.inspect})"
     when Ultraviolet::UnknownCsiEvent

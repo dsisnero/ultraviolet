@@ -1197,10 +1197,10 @@ module Ultraviolet
       y -= 1
 
       mouse = Mouse.new(x, y, btn, mod)
-      return mouse if wheel?(btn)
-      return mouse if !is_motion && release
-      return mouse if is_motion
-      mouse
+      return MouseWheelEvent.new(mouse) if wheel?(btn)
+      return MouseReleaseEvent.new(mouse) if !is_motion && release
+      return MouseMotionEvent.new(mouse) if is_motion
+      MouseClickEvent.new(mouse)
     end
 
     private def parse_x10_mouse_event(buf : Bytes) : Event
@@ -1213,10 +1213,10 @@ module Ultraviolet
       y = v[2] - 32 - 1
 
       mouse = Mouse.new(x, y, btn, mod)
-      return mouse if wheel?(btn)
-      return mouse if is_motion
-      return mouse if is_release
-      mouse
+      return MouseWheelEvent.new(mouse) if wheel?(btn)
+      return MouseMotionEvent.new(mouse) if is_motion
+      return MouseReleaseEvent.new(mouse) if is_release
+      MouseClickEvent.new(mouse)
     end
 
     private def parse_mouse_button(value : Int32) : {KeyMod, MouseButton, Bool, Bool}
