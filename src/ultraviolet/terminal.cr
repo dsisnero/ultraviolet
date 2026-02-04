@@ -187,6 +187,13 @@ module Ultraviolet
         @scr.erase
       end
       @scr.resize(@buf.width, @buf.height)
+      begin
+        make_raw
+      rescue ex
+        restore
+        raise ex
+      end
+      optimize_movements
       configure_renderer
 
       @running = true
@@ -202,6 +209,9 @@ module Ultraviolet
     def resume : Nil
       raise ErrRunning if @running
       @running = true
+      make_raw
+      optimize_movements
+      configure_renderer
       initialize_state
     end
 
@@ -330,6 +340,7 @@ module Ultraviolet
     end
 
     private def restore : Nil
+      restore_tty
       if last = @last_state
         set_alt_screen(false) if last.altscreen?
         @scr.write_string("\e[?25h") if last.cur_hidden?

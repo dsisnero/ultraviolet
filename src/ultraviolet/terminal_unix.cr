@@ -1,6 +1,32 @@
 {% unless flag?(:win32) %}
   module Ultraviolet
     class Terminal
+      private def optimize_movements : Nil
+        state = @in_tty_state || @out_tty_state
+        unless state
+          {@in_tty, @out_tty}.each do |tty|
+            next unless tty
+            candidate = TtyState.new
+            if LibC.tcgetattr(tty.fd, pointerof(candidate)) == 0
+              state = candidate
+              break
+            end
+          end
+        end
+        return unless state
+
+        @use_tabs = supports_hard_tabs(state.c_oflag)
+        @use_bspace = supports_backspace(state.c_lflag)
+      end
+
+      private def supports_hard_tabs(oflag : LibC::TcflagT) : Bool
+        (oflag & LibC::TABDLY) == LibC::TAB0
+      end
+
+      private def supports_backspace(lflag : LibC::TcflagT) : Bool
+        (lflag & LibC::BSDLY) == LibC::BS0
+      end
+
       private def make_raw : Nil
         raise ErrNotTerminal if @in_tty.nil? && @out_tty.nil?
 
