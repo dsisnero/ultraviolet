@@ -37,6 +37,8 @@ module Ultraviolet
     @evs : Channel(Event)
     @evch : Channel(Event)
     @evloop : Channel(Nil)
+    @winch : SizeNotifier?
+    @winch_stop : Channel(Nil)?
     @logger : Logger
 
     struct TerminalState
@@ -67,6 +69,7 @@ module Ultraviolet
       @evs = Channel(Event).new
       @evch = Channel(Event).new
       @evloop = Channel(Nil).new(1)
+      @winch_stop = nil
       @running = false
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
@@ -75,6 +78,11 @@ module Ultraviolet
       @out_tty = @out.as?(IO::FileDescriptor)
       @in_tty_state = nil
       @out_tty_state = nil
+      {% unless flag?(:win32) %}
+        @winch = SizeNotifier.new(@in_tty || @out_tty)
+      {% else %}
+        @winch = nil
+      {% end %}
     end
 
     def logger=(logger : Logger) : Nil
@@ -161,6 +169,12 @@ module Ultraviolet
       {width, height}
     end
 
+    def fetch_size : {Int32, Int32}
+      width, height = platform_size
+      @size = Size.new(width, height)
+      {width, height}
+    end
+
     def size : Size
       @size
     end
@@ -180,7 +194,7 @@ module Ultraviolet
         @state.cur = Position.new(-1, -1)
       end
 
-      width, height = size_now
+      width, height = fetch_size
       @size = Size.new(width, height)
       if @buf.width == 0 && @buf.height == 0
         @buf.resize(@size.width, @size.height)
@@ -198,6 +212,7 @@ module Ultraviolet
 
       @running = true
       spawn { event_loop }
+      start_winch
     end
 
     def pause : Nil
@@ -212,6 +227,7 @@ module Ultraviolet
       make_raw
       optimize_movements
       configure_renderer
+      start_winch
       initialize_state
     end
 
@@ -340,6 +356,7 @@ module Ultraviolet
     end
 
     private def restore : Nil
+      stop_winch
       restore_tty
       if last = @last_state
         set_alt_screen(false) if last.altscreen?
@@ -347,6 +364,51 @@ module Ultraviolet
       end
       @scr.flush
       @scr.set_position(-1, -1)
+    end
+
+    private def start_winch : Nil
+      winch = @winch
+      return unless winch
+
+      winch.start
+      send_resize_event
+
+      stop = Channel(Nil).new(1)
+      @winch_stop = stop
+      spawn { winch_loop(winch, stop) }
+    end
+
+    private def stop_winch : Nil
+      winch = @winch
+      return unless winch
+      winch.stop
+      @winch_stop.try &.try_send(nil)
+      @winch_stop = nil
+    end
+
+    private def winch_loop(winch : SizeNotifier, stop : Channel(Nil)) : Nil
+      loop do
+        select
+        when stop.receive
+          break
+        when winch.sig.receive
+          break unless @running
+          send_resize_event
+        end
+      end
+    end
+
+    private def send_resize_event : Nil
+      if winch = @winch
+        cells, pixels = winch.window_size
+        @evch.send(WindowSizeEvent.new(cells.width, cells.height))
+        if pixels.width > 0 && pixels.height > 0
+          @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
+        end
+      else
+        width, height = size_now
+        @evch.send(WindowSizeEvent.new(width, height))
+      end
     end
 
     private def event_loop : Nil

@@ -79,6 +79,18 @@
 
         raise last_error if last_error
       end
+
+      private def platform_size : {Int32, Int32}
+        tty = @in_tty || @out_tty
+        raise ErrNotTerminal unless tty
+
+        winsize = uninitialized LibC::Winsize
+        if LibC.ioctl(tty.fd, TIOCGWINSZ, pointerof(winsize).as(Void*)) != 0
+          raise Errno.new("ioctl")
+        end
+
+        {winsize.ws_col.to_i, winsize.ws_row.to_i}
+      end
     end
   end
 {% end %}
