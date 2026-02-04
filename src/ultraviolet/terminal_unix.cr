@@ -15,16 +15,8 @@
         end
         return unless state
 
-        @use_tabs = supports_hard_tabs(state.c_oflag)
-        @use_bspace = supports_backspace(state.c_lflag)
-      end
-
-      private def supports_hard_tabs(oflag : LibC::TcflagT) : Bool
-        (oflag & LibC::TABDLY) == LibC::TAB0
-      end
-
-      private def supports_backspace(lflag : LibC::TcflagT) : Bool
-        (lflag & LibC::BSDLY) == LibC::BS0
+        @use_tabs = Ultraviolet.supports_hard_tabs(state.c_oflag.to_u64)
+        @use_bspace = Ultraviolet.supports_backspace(state.c_lflag.to_u64)
       end
 
       private def make_raw : Nil
@@ -91,6 +83,14 @@
 
         {winsize.ws_col.to_i, winsize.ws_row.to_i}
       end
+    end
+
+    def self.supports_hard_tabs(oflag : UInt64) : Bool
+      (oflag & LibC::TABDLY.to_u64) == LibC::TAB0.to_u64
+    end
+
+    def self.supports_backspace(lflag : UInt64) : Bool
+      (lflag & LibC::BSDLY.to_u64) == LibC::BS0.to_u64
     end
   end
 {% end %}

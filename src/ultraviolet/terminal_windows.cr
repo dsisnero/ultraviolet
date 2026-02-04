@@ -26,6 +26,14 @@
   end
 
   module Ultraviolet
+    def self.supports_hard_tabs(oflag : UInt64) : Bool
+      true
+    end
+
+    def self.supports_backspace(lflag : UInt64) : Bool
+      true
+    end
+
     class Terminal
       DISABLE_NEWLINE_AUTO_RETURN = 0x0008_u32
 
