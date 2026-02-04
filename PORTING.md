@@ -76,7 +76,7 @@ Legend:
 
 ## Tests (Parity Required)
 - [x] `ultraviolet_go/buffer_test.go` → `spec/buffer_spec.cr`
-- [ ] `ultraviolet_go/cell_test.go` → missing Crystal spec
+- [x] `ultraviolet_go/cell_test.go` → `spec/style_spec.cr`
 - [x] `ultraviolet_go/style` coverage → `spec/style_spec.cr`
 - [x] `ultraviolet_go/border_test.go` → `spec/border_spec.cr`
 - [x] `ultraviolet_go/layout_test.go` → `spec/layout_spec.cr`
@@ -112,4 +112,4 @@ Legend:
   renderer core (hashmap/hardscroll), ansi/colorprofile integration, cursor/window, environ/logger/utils,
   cancelreader, and basic tty/winch/terminal scaffolding.
 - Partially implemented: decoder/key_table, terminal/reader, unix/windows backends, tty/winch platform paths.
-- Missing: non-windows terminal_other parity, examples/tutorial docs, and cell specs.
+- Missing: non-windows terminal_other parity and examples/tutorial docs.
