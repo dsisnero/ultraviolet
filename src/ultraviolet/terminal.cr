@@ -366,13 +366,19 @@ module Ultraviolet
     private def restore : Nil
       stop_winch
       stop_input
-      restore_tty
       if last = @last_state
-        set_alt_screen(false) if last.altscreen?
+        if last.altscreen?
+          set_alt_screen(false)
+        else
+          bottom = @buf.height > 0 ? @buf.height - 1 : 0
+          @scr.move_to(0, bottom)
+          @scr.write_string("\r\e[J")
+        end
         @scr.write_string("\e[?25h") if last.cur_hidden?
       end
       @scr.flush
       @scr.set_position(-1, -1)
+      restore_tty
     end
 
     private def start_winch : Nil
