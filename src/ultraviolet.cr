@@ -20,6 +20,8 @@ require "./ultraviolet/event"
 require "./ultraviolet/decoder"
 require "./ultraviolet/ansi_color"
 require "./ultraviolet/styled"
+require "./ultraviolet/cursor"
+require "./ultraviolet/window"
 require "./ultraviolet/terminal_renderer"
 
 module Ultraviolet
