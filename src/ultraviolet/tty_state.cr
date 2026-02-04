@@ -1,6 +1,8 @@
 {% if flag?(:win32) %}
+  require "c/consoleapi"
+
   module Ultraviolet
-    alias TtyState = Nil
+    alias TtyState = LibC::DWORD
   end
 {% else %}
   require "c/termios"

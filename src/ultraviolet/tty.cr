@@ -1,11 +1,12 @@
 module Ultraviolet
   {% if flag?(:win32) %}
     def self.open_tty : {File, File}
-      raise ErrPlatformNotSupported
+      in_tty = File.open("CONIN$", "r+")
+      out_tty = File.open("CONOUT$", "r+")
+      {in_tty, out_tty}
     end
 
     def self.suspend : Nil
-      raise ErrPlatformNotSupported
     end
   {% else %}
     def self.open_tty : {File, File}
