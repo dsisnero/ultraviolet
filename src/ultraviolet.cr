@@ -22,6 +22,7 @@ require "./ultraviolet/ansi_color"
 require "./ultraviolet/styled"
 require "./ultraviolet/cursor"
 require "./ultraviolet/window"
+require "./ultraviolet/terminal"
 require "./ultraviolet/terminal_renderer"
 
 module Ultraviolet

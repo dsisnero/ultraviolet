@@ -183,6 +183,31 @@ module Ultraviolet
       @buf.write(bytes)
     end
 
+    def render(buffer : RenderBuffer) : Nil
+      if @clear
+        @buf << "\e[2J"
+        @clear = false
+      end
+      @buf << buffer.render
+    end
+
+    def prepend_string(buffer : RenderBuffer, value : String) : Nil
+      @buf << value
+      @buf << "\n" unless value.ends_with?("\n")
+    end
+
+    def move_to(x : Int32, y : Int32) : Nil
+      @buf << "\e[#{y + 1};#{x + 1}H"
+    end
+
+    def buffered : Int32
+      @buf.size
+    end
+
+    def touched(buffer : RenderBuffer) : Int32
+      buffer.touched_lines
+    end
+
     def flush : Nil
       @writer.write(@buf.to_slice)
       @buf.clear
