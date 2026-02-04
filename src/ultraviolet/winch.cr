@@ -1,3 +1,31 @@
+{% if flag?(:win32) %}
+  require "c/consoleapi"
+
+  lib LibC
+    struct Coord
+      x : Int16
+      y : Int16
+    end
+
+    struct SmallRect
+      left : Int16
+      top : Int16
+      right : Int16
+      bottom : Int16
+    end
+
+    struct ConsoleScreenBufferInfo
+      dwSize : Coord
+      dwCursorPosition : Coord
+      wAttributes : UInt16
+      srWindow : SmallRect
+      dwMaximumWindowSize : Coord
+    end
+
+    fun GetConsoleScreenBufferInfo(hConsoleOutput : HANDLE, lpConsoleScreenBufferInfo : ConsoleScreenBufferInfo*) : BOOL
+  end
+{% end %}
+
 module Ultraviolet
   class SizeNotifier
     getter sig : Channel(Nil)
@@ -35,7 +63,8 @@ module Ultraviolet
 
     def window_size : {Size, Size}
       {% if flag?(:win32) %}
-        raise ErrPlatformNotSupported
+        width, height = console_size
+        {Size.new(width, height), Size.new(0, 0)}
       {% else %}
         raise ErrNotTerminal unless terminal?(@tty)
 
@@ -52,11 +81,25 @@ module Ultraviolet
 
     private def terminal?(tty : IO::FileDescriptor?) : Bool
       {% if flag?(:win32) %}
-        false
+        return false unless tty
+        LibC.GetConsoleMode(LibC::HANDLE.new(tty.fd), out _) != 0
       {% else %}
         return false unless tty
         LibC.isatty(tty.fd) == 1
       {% end %}
+    end
+
+    private def console_size : {Int32, Int32}
+      tty = @tty
+      raise ErrNotTerminal unless tty
+      handle = LibC::HANDLE.new(tty.fd)
+      info = uninitialized LibC::ConsoleScreenBufferInfo
+      if LibC.GetConsoleScreenBufferInfo(handle, pointerof(info)) == 0
+        raise IO::Error.from_winerror("GetConsoleScreenBufferInfo")
+      end
+      width = info.srWindow.right.to_i - info.srWindow.left.to_i + 1
+      height = info.srWindow.bottom.to_i - info.srWindow.top.to_i + 1
+      {width, height}
     end
   end
 end
