@@ -1,3 +1,5 @@
+require "uniwidth"
+
 module Ultraviolet
   ErrInvalidDimensions = Exception.new("invalid dimensions")
 
@@ -192,12 +194,36 @@ module Ultraviolet
     end
 
     def prepend_string(buffer : RenderBuffer, value : String) : Nil
-      @buf << value
-      @buf << "\n" unless value.ends_with?("\n")
+      return if value.empty?
+
+      width = buffer.width
+      height = buffer.height
+      move_to(0, height - 1)
+
+      lines = value.split("\n")
+      offset = 0
+      lines.each do |line|
+        line_width = UnicodeCharWidth.width(line)
+        if width > 0 && line_width > width
+          offset += line_width // width
+        end
+        if line_width == 0 || width == 0 || (line_width % width) != 0
+          offset += 1
+        end
+      end
+
+      @buf << ("\n" * offset) if offset > 0
+      move_to(0, 0)
+      @buf << "\e[#{offset}L" if offset > 0
+      lines.each do |line|
+        @buf << line
+        @buf << "\r\n"
+      end
     end
 
     def move_to(x : Int32, y : Int32) : Nil
       @buf << "\e[#{y + 1};#{x + 1}H"
+      @cur.position = Position.new(x, y)
     end
 
     def buffered : Int32
