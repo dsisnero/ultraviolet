@@ -4,6 +4,7 @@ require "./cell"
 module Ultraviolet
   module Screen
     abstract def bounds : Rectangle
+    abstract def cell_at(x : Int32, y : Int32) : Cell?
     abstract def set_cell(x : Int32, y : Int32, cell : Cell?) : Nil
     abstract def width : Int32
     abstract def height : Int32
