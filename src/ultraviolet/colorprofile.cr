@@ -40,6 +40,30 @@ module Ultraviolet
       best
     end
 
+    def self.closest_ansi16_index(color : Color) : Int32
+      closest_index(color, ansi16_palette)
+    end
+
+    def self.closest_ansi256_index(color : Color) : Int32
+      closest_index(color, ansi256_palette)
+    end
+
+    private def self.closest_index(color : Color, palette : Array(Color)) : Int32
+      best_idx = 0
+      best_dist = Int32::MAX
+      palette.each_with_index do |candidate, idx|
+        dr = color.r.to_i - candidate.r.to_i
+        dg = color.g.to_i - candidate.g.to_i
+        db = color.b.to_i - candidate.b.to_i
+        dist = dr * dr + dg * dg + db * db
+        if dist < best_dist
+          best_dist = dist
+          best_idx = idx
+        end
+      end
+      best_idx
+    end
+
     private def self.ansi16_palette : Array(Color)
       @@ansi16_palette ||= [
         Color.new(0_u8, 0_u8, 0_u8),       # black

@@ -182,5 +182,143 @@ module Ultraviolet
       scaled = (value * 255) // max
       scaled.to_u8
     end
+
+    def self.cursor_position(col : Int32, row : Int32) : String
+      return "\e[H" if row == 1 && col == 1
+      "\e[#{row};#{col}H"
+    end
+
+    def self.vertical_position_absolute(row : Int32) : String
+      "\e[#{row}d"
+    end
+
+    def self.horizontal_position_absolute(col : Int32) : String
+      "\e[#{col}`"
+    end
+
+    def self.cursor_horizontal_absolute(col : Int32) : String
+      "\e[#{col}G"
+    end
+
+    def self.cursor_forward(count : Int32) : String
+      "\e[#{count}C"
+    end
+
+    def self.cursor_backward(count : Int32) : String
+      "\e[#{count}D"
+    end
+
+    def self.cursor_up(count : Int32) : String
+      "\e[#{count}A"
+    end
+
+    def self.cursor_down(count : Int32) : String
+      "\e[#{count}B"
+    end
+
+    def self.cursor_horizontal_forward_tab(count : Int32) : String
+      "\e[#{count}I"
+    end
+
+    def self.cursor_horizontal_backward_tab(count : Int32) : String
+      "\e[#{count}Z"
+    end
+
+    def self.erase_character(count : Int32) : String
+      "\e[#{count}X"
+    end
+
+    def self.repeat_previous_character(count : Int32) : String
+      "\e[#{count}b"
+    end
+
+    def self.erase_line_right : String
+      "\e[K"
+    end
+
+    def self.erase_line_left : String
+      "\e[1K"
+    end
+
+    def self.erase_screen_below : String
+      "\e[J"
+    end
+
+    def self.erase_entire_screen : String
+      "\e[2J"
+    end
+
+    def self.cursor_home_position : String
+      "\e[H"
+    end
+
+    def self.delete_line(count : Int32) : String
+      return "\e[M" if count == 1
+      "\e[#{count}M"
+    end
+
+    def self.insert_line(count : Int32) : String
+      return "\e[L" if count == 1
+      "\e[#{count}L"
+    end
+
+    def self.scroll_up(count : Int32) : String
+      "\e[#{count}S"
+    end
+
+    def self.scroll_down(count : Int32) : String
+      "\e[#{count}T"
+    end
+
+    def self.reverse_index : String
+      "\eM"
+    end
+
+    def self.set_top_bottom_margins(top : Int32, bottom : Int32) : String
+      "\e[#{top};#{bottom}r"
+    end
+
+    def self.delete_character(count : Int32) : String
+      return "\e[P" if count == 1
+      "\e[#{count}P"
+    end
+
+    def self.insert_character(count : Int32) : String
+      return "\e[@" if count == 1
+      "\e[#{count}@"
+    end
+
+    def self.set_mode_insert_replace : String
+      "\e[4h"
+    end
+
+    def self.reset_mode_insert_replace : String
+      "\e[4l"
+    end
+
+    def self.set_mode_auto_wrap : String
+      "\e[?7h"
+    end
+
+    def self.reset_mode_auto_wrap : String
+      "\e[?7l"
+    end
+
+    def self.reset_style : String
+      "\e[m"
+    end
+
+    def self.set_hyperlink(url : String, params : String) : String
+      return reset_hyperlink if url.empty?
+      "\e]8;#{params};#{url}\a"
+    end
+
+    def self.reset_hyperlink : String
+      "\e]8;;\a"
+    end
+
+    def self.string_width(value : String) : Int32
+      UnicodeCharWidth.width(Ultraviolet.strip_ansi(value))
+    end
   end
 end

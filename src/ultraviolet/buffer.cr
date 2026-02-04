@@ -292,6 +292,10 @@ module Ultraviolet
       @lines[y]
     end
 
+    def line_at(y : Int32) : Line
+      @lines[y]
+    end
+
     def cell_at(x : Int32, y : Int32) : Cell?
       return if y < 0 || y >= @lines.size
       @lines[y].at(x)
@@ -550,13 +554,14 @@ module Ultraviolet
   struct LineData
     property first_cell : Int32
     property last_cell : Int32
+    property old_index : Int32
 
-    def initialize(@first_cell : Int32, @last_cell : Int32)
+    def initialize(@first_cell : Int32 = -1, @last_cell : Int32 = -1, @old_index : Int32 = 0)
     end
   end
 
   class RenderBuffer < Buffer
-    getter touched : Array(LineData?)
+    property touched : Array(LineData?)
 
     def initialize(width : Int32, height : Int32)
       super(width, height)
@@ -577,6 +582,7 @@ module Ultraviolet
       else
         current.first_cell = {current.first_cell, x}.min
         current.last_cell = {current.last_cell, x + n}.max
+        @touched[y] = current
       end
     end
 

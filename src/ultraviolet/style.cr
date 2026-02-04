@@ -93,8 +93,21 @@ module Ultraviolet
       "\e[#{parts.join(';')}m"
     end
 
+    def string(profile : ColorProfile) : String
+      return "\e[m" if zero? || profile == ColorProfile::NoTTY
+
+      parts = attr_codes
+      parts.concat(color_codes_profile(profile))
+      return "\e[m" if parts.empty?
+      "\e[#{parts.join(';')}m"
+    end
+
     def diff(from : Style?) : String
       Style.diff(from, self)
+    end
+
+    def diff(from : Style?, profile : ColorProfile) : String
+      Style.diff(from, self, profile)
     end
 
     def self.diff(from : Style?, to : Style?) : String
@@ -107,6 +120,22 @@ module Ultraviolet
       return "\e[m" if to.nil? || to.zero?
 
       codes = color_diff_codes(from, to)
+      codes.concat(attr_diff_codes(from, to))
+      return "" if codes.empty?
+      "\e[#{codes.join(';')}m"
+    end
+
+    def self.diff(from : Style?, to : Style?, profile : ColorProfile) : String
+      return "" if profile == ColorProfile::NoTTY
+      return "" if from.nil? && to.nil?
+      return "" if !from.nil? && !to.nil? && from == to
+      if from.nil?
+        return "" if to.nil?
+        return to.string(profile)
+      end
+      return "\e[m" if to.nil? || to.zero?
+
+      codes = color_diff_codes_profile(from, to, profile)
       codes.concat(attr_diff_codes(from, to))
       return "" if codes.empty?
       "\e[#{codes.join(';')}m"
@@ -157,6 +186,88 @@ module Ultraviolet
         codes << (underline ? underline.to_underline_code : "59")
       end
       codes
+    end
+
+    private def color_codes_profile(profile : ColorProfile) : Array(String)
+      return [] of String if profile == ColorProfile::NoTTY || profile == ColorProfile::Ascii
+
+      codes = [] of String
+      fg = @fg
+      codes << Style.color_code(profile, fg, :fg) if fg
+      bg = @bg
+      codes << Style.color_code(profile, bg, :bg) if bg
+      underline = @underline_color
+      codes << Style.color_code(profile, underline, :underline) if underline
+      codes
+    end
+
+    private def self.color_diff_codes_profile(from : Style, to : Style, profile : ColorProfile) : Array(String)
+      return [] of String if profile == ColorProfile::NoTTY || profile == ColorProfile::Ascii
+
+      codes = [] of String
+      unless color_equal(from.fg, to.fg)
+        fg = to.fg
+        codes << (fg ? color_code(profile, fg, :fg) : "39")
+      end
+      unless color_equal(from.bg, to.bg)
+        bg = to.bg
+        codes << (bg ? color_code(profile, bg, :bg) : "49")
+      end
+      unless color_equal(from.underline_color, to.underline_color)
+        underline = to.underline_color
+        codes << (underline ? color_code(profile, underline, :underline) : "59")
+      end
+      codes
+    end
+
+    def self.color_code(profile : ColorProfile, color : Color, kind : Symbol) : String
+      case profile
+      when ColorProfile::TrueColor
+        color_code_truecolor(color, kind)
+      when ColorProfile::ANSI256
+        idx = ColorProfileUtil.closest_ansi256_index(color)
+        color_code_ansi256(idx, kind)
+      when ColorProfile::ANSI
+        idx = ColorProfileUtil.closest_ansi16_index(color)
+        color_code_ansi16(idx, kind)
+      else
+        color_code_truecolor(color, kind)
+      end
+    end
+
+    private def self.color_code_truecolor(color : Color, kind : Symbol) : String
+      case kind
+      when :fg
+        color.to_fg_code
+      when :bg
+        color.to_bg_code
+      else
+        color.to_underline_code
+      end
+    end
+
+    private def self.color_code_ansi256(index : Int32, kind : Symbol) : String
+      if index < 16 && kind != :underline
+        return color_code_ansi16(index, kind)
+      end
+      case kind
+      when :fg
+        "38;5;#{index}"
+      when :bg
+        "48;5;#{index}"
+      else
+        "58;5;#{index}"
+      end
+    end
+
+    private def self.color_code_ansi16(index : Int32, kind : Symbol) : String
+      if kind == :fg
+        return (index < 8 ? 30 + index : 90 + (index - 8)).to_s
+      end
+      if kind == :bg
+        return (index < 8 ? 40 + index : 100 + (index - 8)).to_s
+      end
+      "58;5;#{index}"
     end
 
     private def self.attr_diff_codes(from : Style, to : Style) : Array(String)
