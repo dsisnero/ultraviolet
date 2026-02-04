@@ -49,14 +49,14 @@ module Ultraviolet
       end
 
       buffer = Bytes.empty
-      deadline = Time.monotonic + @esc_timeout
+      deadline = Time.instant + @esc_timeout
       loop do
         if buffer.empty?
           if stop
             select
             when data = readc.receive
               buffer = append_bytes(buffer, data)
-              deadline = Time.monotonic + @esc_timeout
+              deadline = Time.instant + @esc_timeout
               processed = send_events(buffer, false, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
@@ -71,7 +71,7 @@ module Ultraviolet
             select
             when data = readc.receive
               buffer = append_bytes(buffer, data)
-              deadline = Time.monotonic + @esc_timeout
+              deadline = Time.instant + @esc_timeout
               processed = send_events(buffer, false, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
@@ -81,13 +81,13 @@ module Ultraviolet
             end
           end
         else
-          wait = deadline - Time.monotonic
+          wait = deadline - Time.instant
           wait = 0.seconds if wait < 0.seconds
           if stop
             select
             when data = readc.receive
               buffer = append_bytes(buffer, data)
-              deadline = Time.monotonic + @esc_timeout
+              deadline = Time.instant + @esc_timeout
               processed = send_events(buffer, false, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
@@ -97,7 +97,7 @@ module Ultraviolet
             when timeout(wait)
               processed = send_events(buffer, true, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
-              deadline = Time.monotonic + @esc_timeout unless buffer.empty?
+              deadline = Time.instant + @esc_timeout unless buffer.empty?
             when _ = stop.receive?
               send_events(buffer, true, eventc)
               break
@@ -106,7 +106,7 @@ module Ultraviolet
             select
             when data = readc.receive
               buffer = append_bytes(buffer, data)
-              deadline = Time.monotonic + @esc_timeout
+              deadline = Time.instant + @esc_timeout
               processed = send_events(buffer, false, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
@@ -116,7 +116,7 @@ module Ultraviolet
             when timeout(wait)
               processed = send_events(buffer, true, eventc)
               buffer = buffer[processed, buffer.size - processed] if processed > 0
-              deadline = Time.monotonic + @esc_timeout unless buffer.empty?
+              deadline = Time.instant + @esc_timeout unless buffer.empty?
             end
           end
         end

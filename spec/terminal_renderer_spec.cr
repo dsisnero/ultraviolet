@@ -350,7 +350,7 @@ module Ultraviolet
       buf.to_s.includes?("link").should be_true
     end
 
-    pending "switches buffers with correct inline scroll behavior" do
+    it "switches buffers with correct inline scroll behavior" do
       buf = IO::Memory.new
       renderer = TerminalRenderer.new(buf, ["TERM=xterm-256color"])
 
@@ -367,7 +367,7 @@ module Ultraviolet
       renderer.render(large)
       renderer.flush
 
-      buf.to_s.should eq("\e[HX\r\n\n\e[J\eMX\e[K\r\n\n\n\n")
+      buf.to_s.should eq("\e[HX\r\n\n\e[J\e[H\e[K\nX\e[K\r\n\e[K\n\n\n")
     end
 
     it "handles relative cursor" do
