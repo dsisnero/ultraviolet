@@ -21,6 +21,10 @@ module Ultraviolet
 
     @in : IO
     @out : IO
+    @in_tty : IO::FileDescriptor?
+    @out_tty : IO::FileDescriptor?
+    @in_tty_state : TtyState?
+    @out_tty_state : TtyState?
     @buf : RenderBuffer
     @scr : TerminalRenderer
     @method : WidthMethod
@@ -67,6 +71,10 @@ module Ultraviolet
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
       @logger = Logger.new
+      @in_tty = @in.as?(IO::FileDescriptor)
+      @out_tty = @out.as?(IO::FileDescriptor)
+      @in_tty_state = nil
+      @out_tty_state = nil
     end
 
     def logger=(logger : Logger) : Nil
