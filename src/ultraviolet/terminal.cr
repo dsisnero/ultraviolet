@@ -39,6 +39,9 @@ module Ultraviolet
     @evloop : Channel(Nil)
     @winch : SizeNotifier?
     @winch_stop : Channel(Nil)?
+    @reader : TerminalReader?
+    @reader_stop : Channel(Nil)?
+    @reader_done : Channel(Nil)?
     @logger : Logger
 
     struct TerminalState
@@ -70,6 +73,9 @@ module Ultraviolet
       @evch = Channel(Event).new
       @evloop = Channel(Nil).new(1)
       @winch_stop = nil
+      @reader = nil
+      @reader_stop = nil
+      @reader_done = nil
       @running = false
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
@@ -212,6 +218,7 @@ module Ultraviolet
 
       @running = true
       spawn { event_loop }
+      start_input
       start_winch
     end
 
@@ -227,6 +234,7 @@ module Ultraviolet
       make_raw
       optimize_movements
       configure_renderer
+      start_input
       start_winch
       initialize_state
     end
@@ -357,6 +365,7 @@ module Ultraviolet
 
     private def restore : Nil
       stop_winch
+      stop_input
       restore_tty
       if last = @last_state
         set_alt_screen(false) if last.altscreen?
@@ -406,8 +415,46 @@ module Ultraviolet
           @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
         end
       else
-        width, height = size_now
+        width, height = platform_size
         @evch.send(WindowSizeEvent.new(width, height))
+      end
+    end
+
+    private def start_input : Nil
+      return if @reader
+
+      reader = TerminalReader.new(@in, @termtype)
+      reader.logger = @logger
+      @reader = reader
+
+      stop = Channel(Nil).new(1)
+      done = Channel(Nil).new(1)
+      @reader_stop = stop
+      @reader_done = done
+
+      spawn do
+        begin
+          reader.stream_events(@evch, stop)
+        rescue ex
+          @logger.printf("terminal reader error: %s\n", ex.message) if @logger
+        ensure
+          done.try_send(nil)
+        end
+      end
+    end
+
+    private def stop_input : Nil
+      stop = @reader_stop
+      done = @reader_done
+      @reader_stop = nil
+      @reader_done = nil
+      @reader = nil
+      return unless stop && done
+
+      stop.try_send(nil)
+      select
+      when done.receive
+      when timeout(500.milliseconds)
       end
     end
 
