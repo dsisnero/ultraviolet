@@ -8,6 +8,29 @@ module Ultraviolet
 
     @last_cks : UInt32 = 0
 
+    private UNHANDLED_EVENT = UnknownEvent.new("")
+
+    private struct CsiResult
+      getter consumed : Int32
+      getter event : Event
+      getter? handled : Bool
+
+      def initialize(@consumed : Int32, @event : Event, @handled : Bool)
+      end
+
+      def self.handled(consumed : Int32, event : Event) : CsiResult
+        new(consumed, event, true)
+      end
+
+      def self.unhandled : CsiResult
+        new(0, UNHANDLED_EVENT, false)
+      end
+    end
+
+    private def handled_csi(consumed : Int32, event : Event) : CsiResult
+      CsiResult.handled(consumed, event)
+    end
+
     def initialize(@legacy : LegacyKeyEncoding = LegacyKeyEncoding.new, @use_terminfo : Bool = false)
     end
 
@@ -79,61 +102,13 @@ module Ultraviolet
       parse_utf8(buf)
     end
 
-    # ameba:disable Metrics/CyclomaticComplexity
     private def parse_csi(buf : Bytes) : {Int32, Event}
       if buf.size == 2 && buf[0] == Ansi::ESC
         return {2, Key.new(code: buf[1].to_i, mod: ModAlt)}
       end
 
-      cmd = 0
-      params = [] of Ansi::Param
-      i = 0
-
-      if buf[i] == Ansi::CSI || buf[i] == Ansi::ESC
-        i += 1
-      end
-      if i < buf.size && buf[i - 1] == Ansi::ESC && buf[i] == '['.ord
-        i += 1
-      end
-
-      if i < buf.size && buf[i] >= '<'.ord && buf[i] <= '?'.ord
-        cmd |= (buf[i].to_i << Ansi::Parser::PrefixShift)
-      end
-
-      param_bytes = 0
-      current = Ansi::Param.new
-      while i < buf.size && params.size < Ansi::Parser::MaxParamsSize && buf[i] >= 0x30 && buf[i] <= 0x3f
-        param_bytes += 1
-        byte = buf[i]
-        if byte >= '0'.ord && byte <= '9'.ord
-          unless current.present?
-            current.present = true
-            current.value = 0
-          end
-          current.value = current.value * 10 + (byte - '0'.ord)
-        end
-        if byte == ':'.ord
-          current.has_more = true
-        end
-        if byte == ';'.ord || byte == ':'.ord
-          params << current
-          current = Ansi::Param.new
-        end
-        i += 1
-      end
-
-      if param_bytes > 0 && params.size < Ansi::Parser::MaxParamsSize
-        params << current
-      end
-
-      intermed = 0_u8
-      while i < buf.size && buf[i] >= 0x20 && buf[i] <= 0x2f
-        intermed = buf[i]
-        i += 1
-      end
-      cmd |= (intermed.to_i << Ansi::Parser::IntermedShift)
-
-      if i >= buf.size || buf[i] < 0x40 || buf[i] > 0x7e
+      cmd, params, i, intermed, ok = parse_csi_header(buf)
+      unless ok
         if intermed == '$'.ord && i > 0 && buf[i - 1] == '$'.ord
           extended = Bytes.new(i)
           extended.copy_from(buf[0, i - 1])
@@ -148,251 +123,427 @@ module Ultraviolet
         return {i, UnknownEvent.new(String.new(buf[0, i]))}
       end
 
-      cmd |= buf[i].to_i
-      i += 1
-
       pa = Ansi::Params.new(params)
-      case cmd
-      when ('y'.ord | ('?'.ord << Ansi::Parser::PrefixShift) | ('$'.ord << Ansi::Parser::IntermedShift))
-        mode, _, ok = pa.param(0, -1)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mode != -1
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size < 2
-        value, _, _ = pa.param(1, Ansi::ModeNotRecognized)
-        return {i, ModeReportEvent.new(mode, value)}
-      when ('c'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
-        return {i, parse_primary_dev_attrs(pa)}
-      when ('c'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
-        return {i, parse_secondary_dev_attrs(pa)}
-      when ('u'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
-        flags, _, _ = pa.param(0, 0)
-        return {i, KeyboardEnhancementsEvent.new(flags)}
-      when ('R'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
-        row, _, _ = pa.param(0, 1)
-        col, _, ok = pa.param(1, 1)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok
-        return {i, CursorPositionEvent.new(row - 1, col - 1)}
-      when ('m'.ord | ('<'.ord << Ansi::Parser::PrefixShift)), ('M'.ord | ('<'.ord << Ansi::Parser::PrefixShift))
-        if params.size == 3
-          return {i, parse_sgr_mouse_event(cmd, pa)}
-        end
-      when ('m'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
-        mok, _, ok = pa.param(0, 0)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mok == 4
-        val, _, ok = pa.param(1, -1)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && val != -1
-        return {i, ModifyOtherKeysEvent.new(val)}
-      when ('n'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
-        report, _, _ = pa.param(0, -1)
-        dark_light, _, _ = pa.param(1, -1)
-        if report == 997
-          return {i, DarkColorSchemeEvent.new} if dark_light == 1
-          return {i, LightColorSchemeEvent.new} if dark_light == 2
-        end
-      when 'I'.ord
-        return {i, FocusEvent.new}
-      when 'O'.ord
-        return {i, BlurEvent.new}
-      when 'R'.ord
-        if params.empty?
-          return {i, Key.new(code: KeyF3)}
-        end
-        row, _, row_ok = pa.param(0, 1)
-        col, _, col_ok = pa.param(1, 1)
-        if params.size == 2 && row_ok && col_ok
-          m = CursorPositionEvent.new(row - 1, col - 1)
-          if row == 1 && (col - 1) <= (ModMeta | ModShift | ModAlt | ModCtrl)
-            events = [] of EventSingle
-            events << Key.new(code: KeyF3, mod: col - 1)
-            events << m
-            return {i, events}
-          end
-          return {i, m}
-        end
-
-        if params.size != 0
-          return {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
-        end
-      when 'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord, 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord, 'E'.ord, 'F'.ord, 'H'.ord, 'P'.ord, 'Q'.ord, 'S'.ord, 'Z'.ord
-        key = Key.new
-        case cmd & 0xff
-        when 'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord
-          key = Key.new(code: KeyUp + (cmd & 0xff) - 'a'.ord, mod: ModShift)
-        when 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord
-          key = Key.new(code: KeyUp + (cmd & 0xff) - 'A'.ord)
-        when 'E'.ord
-          key = Key.new(code: KeyBegin)
-        when 'F'.ord
-          key = Key.new(code: KeyEnd)
-        when 'H'.ord
-          key = Key.new(code: KeyHome)
-        when 'P'.ord, 'Q'.ord, 'R'.ord, 'S'.ord
-          key = Key.new(code: KeyF1 + (cmd & 0xff) - 'P'.ord)
-        when 'Z'.ord
-          key = Key.new(code: KeyTab, mod: ModShift)
-        end
-
-        id, _, _ = pa.param(0, 1)
-        mod, _, _ = pa.param(1, 1)
-        if params.size > 2 && !pa[1].has_more? || id != 1
-          return {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
-        end
-        if params.size > 1 && id == 1 && mod != -1
-          key.mod |= (mod - 1)
-        end
-
-        return {i, parse_kitty_keyboard_ext(pa, key)}
-      when 'M'.ord
-        if i + 3 > buf.size
-          return {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
-        end
-        data = Bytes.new(i + 3)
-        data.copy_from(buf[0, i])
-        data[i, 3].copy_from(buf[i, 3])
-        return {i + 3, parse_x10_mouse_event(data)}
-      when ('y'.ord | ('$'.ord << Ansi::Parser::IntermedShift))
-        mode, _, ok = pa.param(0, -1)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok && mode != -1
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size < 2
-        val, _, _ = pa.param(1, Ansi::ModeNotRecognized)
-        return {i, ModeReportEvent.new(mode, val)}
-      when 'u'.ord
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.empty?
-        return {i, parse_kitty_keyboard(pa)}
-      when '_'.ord
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size != 6
-
-        vk, _, _ = pa.param(0, 0)
-        sc, _, _ = pa.param(1, 0)
-        uc, _, _ = pa.param(2, 0)
-        kd, _, _ = pa.param(3, 0)
-        cs, _, _ = pa.param(4, 0)
-        rc, _, _ = pa.param(5, 0)
-        event = parse_win32_input_key_event(vk.to_u16, sc.to_u16, uc, kd == 1, cs.to_u32, {1, rc}.max.to_u16)
-        return {i, event}
-      when '@'.ord, '^'.ord, '~'.ord
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.empty?
-
-        param, _, _ = pa.param(0, 0)
-        if (cmd & 0xff) == '~'.ord
-          case param
-          when 27
-            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} if params.size != 3
-            return {i, parse_xterm_modify_other_keys(pa)}
-          when 200
-            return {i, PasteStartEvent.new}
-          when 201
-            return {i, PasteEndEvent.new}
-          end
-        end
-
-        if [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24, 25, 26, 28, 29, 31, 32, 33, 34].includes?(param)
-          key = Key.new
-          case param
-          when 1
-            key = @legacy.contains?(FLAG_FIND) ? Key.new(code: KeyFind) : Key.new(code: KeyHome)
-          when 2
-            key = Key.new(code: KeyInsert)
-          when 3
-            key = Key.new(code: KeyDelete)
-          when 4
-            key = @legacy.contains?(FLAG_SELECT) ? Key.new(code: KeySelect) : Key.new(code: KeyEnd)
-          when 5
-            key = Key.new(code: KeyPgUp)
-          when 6
-            key = Key.new(code: KeyPgDown)
-          when 7
-            key = Key.new(code: KeyHome)
-          when 8
-            key = Key.new(code: KeyEnd)
-          when 11, 12, 13, 14, 15
-            key = Key.new(code: KeyF1 + param - 11)
-          when 17, 18, 19, 20, 21
-            key = Key.new(code: KeyF6 + param - 17)
-          when 23, 24, 25, 26
-            key = Key.new(code: KeyF11 + param - 23)
-          when 28, 29
-            key = Key.new(code: KeyF15 + param - 28)
-          when 31, 32, 33, 34
-            key = Key.new(code: KeyF17 + param - 31)
-          end
-
-          mod, _, _ = pa.param(1, -1)
-          if params.size > 1 && mod != -1
-            key.mod |= (mod - 1)
-          end
-
-          case cmd & 0xff
-          when '~'.ord
-            return {i, parse_kitty_keyboard_ext(pa, key)}
-          when '^'.ord
-            key.mod |= ModCtrl
-          when '@'.ord
-            key.mod |= ModCtrl | ModShift
-          end
-
-          return {i, key}
-        end
-      when 't'.ord
-        param, _, ok = pa.param(0, 0)
-        return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ok
-
-        case param
-        when 4
-          if params.size == 3
-            height, _, h_ok = pa.param(1, 0)
-            width, _, w_ok = pa.param(2, 0)
-            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
-            return {i, PixelSizeEvent.new(width, height)}
-          end
-        when 6
-          if params.size == 3
-            height, _, h_ok = pa.param(1, 0)
-            width, _, w_ok = pa.param(2, 0)
-            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
-            return {i, CellSizeEvent.new(width, height)}
-          end
-        when 8
-          if params.size == 3
-            height, _, h_ok = pa.param(1, 0)
-            width, _, w_ok = pa.param(2, 0)
-            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless h_ok && w_ok
-            return {i, WindowSizeEvent.new(width, height)}
-          end
-        when 48
-          if params.size == 5
-            cell_height, _, ch_ok = pa.param(1, 0)
-            cell_width, _, cw_ok = pa.param(2, 0)
-            pixel_height, _, ph_ok = pa.param(3, 0)
-            pixel_width, _, pw_ok = pa.param(4, 0)
-            return {i, UnknownCsiEvent.new(String.new(buf[0, i]))} unless ch_ok && cw_ok && ph_ok && pw_ok
-            events = [] of EventSingle
-            events << WindowSizeEvent.new(cell_width, cell_height)
-            events << PixelSizeEvent.new(pixel_width, pixel_height)
-            return {i, events}
-          end
-        end
-
-        winop = WindowOpEvent.new(param)
-        j = 1
-        while j < params.size
-          val, _, ok = pa.param(j, 0)
-          winop.args << val if ok
-          j += 1
-        end
-        return {i, winop}
-      end
+      result = handle_csi_command(cmd, params, pa, buf, i)
+      return {result.consumed, result.event} if result.handled?
 
       {i, UnknownCsiEvent.new(String.new(buf[0, i]))}
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
+    private def parse_csi_header(buf : Bytes) : {Int32, Array(Ansi::Param), Int32, UInt8, Bool}
+      i = 0
+      cmd, i = parse_csi_prefix(buf, i)
+      params, i = parse_csi_params(buf, i)
+      intermed, i = parse_csi_intermed(buf, i)
+      cmd |= (intermed.to_i << Ansi::Parser::IntermedShift)
+      cmd, i, ok = parse_csi_final(buf, cmd, i)
 
-    # ameba:disable Metrics/CyclomaticComplexity
-    private def parse_ss3(buf : Bytes) : {Int32, Event}
-      if buf.size == 2 && buf[0] == Ansi::ESC
-        return {2, key_from_byte(buf[1], ModShift | ModAlt)}
+      {cmd, params, i, intermed, ok}
+    end
+
+    private def parse_csi_prefix(buf : Bytes, i : Int32) : {Int32, Int32}
+      cmd = 0
+      if buf[i] == Ansi::CSI || buf[i] == Ansi::ESC
+        i += 1
+      end
+      if i < buf.size && buf[i - 1] == Ansi::ESC && buf[i] == '['.ord
+        i += 1
+      end
+      if i < buf.size && buf[i] >= '<'.ord && buf[i] <= '?'.ord
+        cmd |= (buf[i].to_i << Ansi::Parser::PrefixShift)
+      end
+      {cmd, i}
+    end
+
+    private def parse_csi_params(buf : Bytes, i : Int32) : {Array(Ansi::Param), Int32}
+      params, i, _ = parse_params(buf, i, Ansi::Parser::MaxParamsSize)
+      {params, i}
+    end
+
+    private def parse_params(buf : Bytes, i : Int32, max : Int32) : {Array(Ansi::Param), Int32, Int32}
+      params = [] of Ansi::Param
+      param_bytes = 0
+      current = Ansi::Param.new
+      while i < buf.size && params.size < max && csi_param_byte?(buf[i])
+        param_bytes += 1
+        current = update_param_from_byte(current, params, buf[i])
+        i += 1
       end
 
+      if param_bytes > 0 && params.size < max
+        params << current
+      end
+
+      {params, i, param_bytes}
+    end
+
+    private def csi_param_byte?(byte : UInt8) : Bool
+      byte >= 0x30 && byte <= 0x3f
+    end
+
+    private def csi_digit?(byte : UInt8) : Bool
+      byte >= '0'.ord && byte <= '9'.ord
+    end
+
+    private def update_param_from_byte(current : Ansi::Param, params : Array(Ansi::Param), byte : UInt8) : Ansi::Param
+      if csi_digit?(byte)
+        unless current.present?
+          current.present = true
+          current.value = 0
+        end
+        current.value = current.value * 10 + (byte - '0'.ord)
+      end
+      current.has_more = true if byte == ':'.ord
+      if byte == ';'.ord || byte == ':'.ord
+        params << current
+        return Ansi::Param.new
+      end
+      current
+    end
+
+    private def parse_csi_intermed(buf : Bytes, i : Int32) : {UInt8, Int32}
+      intermed = 0_u8
+      while i < buf.size && buf[i] >= 0x20 && buf[i] <= 0x2f
+        intermed = buf[i]
+        i += 1
+      end
+      {intermed, i}
+    end
+
+    private def parse_csi_final(buf : Bytes, cmd : Int32, i : Int32) : {Int32, Int32, Bool}
+      return {cmd, i, false} if i >= buf.size || buf[i] < 0x40 || buf[i] > 0x7e
+      cmd |= buf[i].to_i
+      i += 1
+      {cmd, i, true}
+    end
+
+    private def handle_csi_command(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      result = handle_csi_prefixed(cmd, params, pa, buf, i)
+      return result if result.handled?
+
+      result = handle_csi_unprefixed(cmd, params, pa, buf, i)
+      return result if result.handled?
+
+      if csi_simple_key_cmd?(cmd)
+        return handle_csi_simple_keys(cmd, params, pa, buf, i)
+      end
+
+      CsiResult.unhandled
+    end
+
+    private def handle_csi_prefixed(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      case cmd
+      when ('y'.ord | ('?'.ord << Ansi::Parser::PrefixShift) | ('$'.ord << Ansi::Parser::IntermedShift))
+        handle_csi_mode_report('y'.ord, params, pa, buf, i)
+      when ('c'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+        handled_csi(i, parse_primary_dev_attrs(pa))
+      when ('c'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+        handled_csi(i, parse_secondary_dev_attrs(pa))
+      when ('u'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+        handle_csi_keyboard_enhancements('u'.ord, pa, i)
+      when ('R'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+        handle_csi_cursor_report('R'.ord, pa, buf, i)
+      when ('m'.ord | ('<'.ord << Ansi::Parser::PrefixShift)), ('M'.ord | ('<'.ord << Ansi::Parser::PrefixShift))
+        handle_csi_mouse_sgr(cmd & 0xff, params, pa, i)
+      when ('m'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+        handle_csi_modify_other_keys('m'.ord, pa, buf, i)
+      when ('n'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+        handle_csi_color_scheme('n'.ord, pa, i)
+      else
+        CsiResult.unhandled
+      end
+    end
+
+    private def handle_csi_unprefixed(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      case cmd
+      when 'I'.ord
+        handled_csi(i, FocusEvent.new)
+      when 'O'.ord
+        handled_csi(i, BlurEvent.new)
+      when 'R'.ord
+        handle_csi_cursor_or_f3('R'.ord, params, pa, buf, i)
+      when 'M'.ord
+        handle_csi_x10_mouse('M'.ord, buf, i)
+      when ('y'.ord | ('$'.ord << Ansi::Parser::IntermedShift))
+        handle_csi_mode_report('y'.ord, params, pa, buf, i)
+      when 'u'.ord
+        handle_csi_kitty_keyboard('u'.ord, params, pa, buf, i)
+      when '_'.ord
+        handle_csi_win32_input('_'.ord, params, pa, buf, i)
+      when '@'.ord, '^'.ord, '~'.ord
+        handle_csi_tilde_keys(cmd & 0xff, params, pa, buf, i)
+      when 't'.ord
+        handle_csi_window_ops('t'.ord, params, pa, buf, i)
+      else
+        CsiResult.unhandled
+      end
+    end
+
+    protected def handle_csi_mode_report(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      mode, _, ok = pa.param(0, -1)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok && mode != -1
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size < 2
+      value, _, _ = pa.param(1, Ansi::ModeNotRecognized)
+      handled_csi(i, ModeReportEvent.new(mode, value))
+    end
+
+    protected def handle_csi_keyboard_enhancements(_cmd : Int32, pa : Ansi::Params, i : Int32) : CsiResult
+      flags, _, _ = pa.param(0, 0)
+      handled_csi(i, KeyboardEnhancementsEvent.new(flags))
+    end
+
+    protected def handle_csi_cursor_report(_cmd : Int32, pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      row, _, _ = pa.param(0, 1)
+      col, _, ok = pa.param(1, 1)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok
+      handled_csi(i, CursorPositionEvent.new(row - 1, col - 1))
+    end
+
+    protected def handle_csi_mouse_sgr(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, i : Int32) : CsiResult
+      return CsiResult.unhandled unless params.size == 3
+      handled_csi(i, parse_sgr_mouse_event(cmd, pa))
+    end
+
+    protected def handle_csi_modify_other_keys(_cmd : Int32, pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      mok, _, ok = pa.param(0, 0)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok && mok == 4
+      val, _, ok = pa.param(1, -1)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok && val != -1
+      handled_csi(i, ModifyOtherKeysEvent.new(val))
+    end
+
+    protected def handle_csi_color_scheme(_cmd : Int32, pa : Ansi::Params, i : Int32) : CsiResult
+      report, _, _ = pa.param(0, -1)
+      dark_light, _, _ = pa.param(1, -1)
+      return handled_csi(i, DarkColorSchemeEvent.new) if report == 997 && dark_light == 1
+      return handled_csi(i, LightColorSchemeEvent.new) if report == 997 && dark_light == 2
+      CsiResult.unhandled
+    end
+
+    protected def handle_csi_cursor_or_f3(_cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      return handled_csi(i, Key.new(code: KeyF3)) if params.empty?
+
+      row, _, row_ok = pa.param(0, 1)
+      col, _, col_ok = pa.param(1, 1)
+      if params.size == 2 && row_ok && col_ok
+        m = CursorPositionEvent.new(row - 1, col - 1)
+        if row == 1 && (col - 1) <= (ModMeta | ModShift | ModAlt | ModCtrl)
+          events = [] of EventSingle
+          events << Key.new(code: KeyF3, mod: col - 1)
+          events << m
+          return handled_csi(i, events)
+        end
+        return handled_csi(i, m)
+      end
+
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size != 0
+      CsiResult.unhandled
+    end
+
+    private def csi_simple_key_cmd?(cmd : Int32) : Bool
+      key = cmd & 0xff
+      {'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord, 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord, 'E'.ord, 'F'.ord, 'H'.ord, 'P'.ord, 'Q'.ord, 'S'.ord, 'Z'.ord}.includes?(key)
+    end
+
+    private def handle_csi_simple_keys(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      key = simple_csi_key(cmd)
+      id, _, _ = pa.param(0, 1)
+      mod, _, _ = pa.param(1, 1)
+      if (params.size > 2 && !pa[1].has_more?) || id != 1
+        return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i])))
+      end
+      if params.size > 1 && id == 1 && mod != -1
+        key.mod |= (mod - 1)
+      end
+
+      handled_csi(i, parse_kitty_keyboard_ext(pa, key))
+    end
+
+    private def simple_csi_key(cmd : Int32) : Key
+      case cmd & 0xff
+      when 'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord
+        Key.new(code: KeyUp + (cmd & 0xff) - 'a'.ord, mod: ModShift)
+      when 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord
+        Key.new(code: KeyUp + (cmd & 0xff) - 'A'.ord)
+      when 'E'.ord
+        Key.new(code: KeyBegin)
+      when 'F'.ord
+        Key.new(code: KeyEnd)
+      when 'H'.ord
+        Key.new(code: KeyHome)
+      when 'P'.ord, 'Q'.ord, 'R'.ord, 'S'.ord
+        Key.new(code: KeyF1 + (cmd & 0xff) - 'P'.ord)
+      else
+        Key.new(code: KeyTab, mod: ModShift)
+      end
+    end
+
+    protected def handle_csi_x10_mouse(_cmd : Int32, buf : Bytes, i : Int32) : CsiResult
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if i + 3 > buf.size
+      data = Bytes.new(i + 3)
+      data.copy_from(buf[0, i])
+      data[i, 3].copy_from(buf[i, 3])
+      handled_csi(i + 3, parse_x10_mouse_event(data))
+    end
+
+    protected def handle_csi_kitty_keyboard(_cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.empty?
+      handled_csi(i, parse_kitty_keyboard(pa))
+    end
+
+    protected def handle_csi_win32_input(_cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size != 6
+
+      vk, _, _ = pa.param(0, 0)
+      sc, _, _ = pa.param(1, 0)
+      uc, _, _ = pa.param(2, 0)
+      kd, _, _ = pa.param(3, 0)
+      cs, _, _ = pa.param(4, 0)
+      rc, _, _ = pa.param(5, 0)
+      event = parse_win32_input_key_event(vk.to_u16, sc.to_u16, uc, kd == 1, cs.to_u32, {1, rc}.max.to_u16)
+      handled_csi(i, event)
+    end
+
+    protected def handle_csi_tilde_keys(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.empty?
+
+      param, _, _ = pa.param(0, 0)
+      if (cmd & 0xff) == '~'.ord && tilde_special_param?(param)
+        result = handle_csi_special_tilde(cmd, param, params, pa, buf, i)
+        return result if result.handled?
+      end
+
+      if key = csi_tilde_key(param)
+        mod, _, _ = pa.param(1, -1)
+        if params.size > 1 && mod != -1
+          key.mod |= (mod - 1)
+        end
+        key = apply_csi_tilde_mod(cmd, key, pa)
+        return handled_csi(i, key)
+      end
+
+      CsiResult.unhandled
+    end
+
+    private def tilde_special_param?(param : Int32) : Bool
+      param == 27 || param == 200 || param == 201
+    end
+
+    private def handle_csi_special_tilde(_cmd : Int32, param : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      case param
+      when 27
+        return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size != 3
+        return handled_csi(i, parse_xterm_modify_other_keys(pa))
+      when 200
+        return handled_csi(i, PasteStartEvent.new)
+      when 201
+        return handled_csi(i, PasteEndEvent.new)
+      end
+      CsiResult.unhandled
+    end
+
+    private TILDE_LEGACY_CODES = {
+      2 => KeyInsert,
+      3 => KeyDelete,
+      5 => KeyPgUp,
+      6 => KeyPgDown,
+      7 => KeyHome,
+      8 => KeyEnd,
+    }
+
+    private def csi_tilde_key(param : Int32) : Key?
+      tilde_legacy_key(param)
+    end
+
+    private def tilde_legacy_key(param : Int32) : Key?
+      if param == 1
+        return Key.new(code: KeyFind) if @legacy.contains?(FLAG_FIND)
+        return Key.new(code: KeyHome)
+      end
+      if param == 4
+        return Key.new(code: KeySelect) if @legacy.contains?(FLAG_SELECT)
+        return Key.new(code: KeyEnd)
+      end
+      if code = TILDE_LEGACY_CODES[param]?
+        return Key.new(code: code)
+      end
+      tilde_function_key(param)
+    end
+
+    private def tilde_function_key(param : Int32) : Key?
+      return Key.new(code: KeyF1 + param - 11) if (11..15).includes?(param)
+      return Key.new(code: KeyF6 + param - 17) if (17..21).includes?(param)
+      return Key.new(code: KeyF11 + param - 23) if (23..26).includes?(param)
+      return Key.new(code: KeyF15 + param - 28) if (28..29).includes?(param)
+      return Key.new(code: KeyF17 + param - 31) if (31..34).includes?(param)
+      nil
+    end
+
+    private def apply_csi_tilde_mod(cmd : Int32, key : Key, pa : Ansi::Params) : Key
+      case cmd & 0xff
+      when '~'.ord
+        return parse_kitty_keyboard_ext(pa, key)
+      when '^'.ord
+        key.mod |= ModCtrl
+      when '@'.ord
+        key.mod |= ModCtrl | ModShift
+      end
+      key
+    end
+
+    protected def handle_csi_window_ops(_cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      param, _, ok = pa.param(0, 0)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok
+
+      result = handle_csi_window_op_sizes(param, params, pa, buf, i)
+      return result if result.handled?
+
+      winop = WindowOpEvent.new(param)
+      j = 1
+      while j < params.size
+        val, _, ok = pa.param(j, 0)
+        winop.args << val if ok
+        j += 1
+      end
+      handled_csi(i, winop)
+    end
+
+    private def handle_csi_window_op_sizes(param : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      case param
+      when 4
+        return window_op_size(params, pa, buf, i) { |width, height| PixelSizeEvent.new(width, height) }
+      when 6
+        return window_op_size(params, pa, buf, i) { |width, height| CellSizeEvent.new(width, height) }
+      when 8
+        return window_op_size(params, pa, buf, i) { |width, height| WindowSizeEvent.new(width, height) }
+      when 48
+        return window_op_size_48(params, pa, buf, i)
+      end
+      CsiResult.unhandled
+    end
+
+    private def window_op_size(params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32, & : Int32, Int32 -> Event) : CsiResult
+      return CsiResult.unhandled unless params.size == 3
+      height, _, h_ok = pa.param(1, 0)
+      width, _, w_ok = pa.param(2, 0)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless h_ok && w_ok
+      handled_csi(i, yield width, height)
+    end
+
+    private def window_op_size_48(params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
+      return CsiResult.unhandled unless params.size == 5
+      cell_height, _, ch_ok = pa.param(1, 0)
+      cell_width, _, cw_ok = pa.param(2, 0)
+      pixel_height, _, ph_ok = pa.param(3, 0)
+      pixel_width, _, pw_ok = pa.param(4, 0)
+      return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ch_ok && cw_ok && ph_ok && pw_ok
+      events = [] of EventSingle
+      events << WindowSizeEvent.new(cell_width, cell_height)
+      events << PixelSizeEvent.new(pixel_width, pixel_height)
+      handled_csi(i, events)
+    end
+
+    private def parse_ss3_intro(buf : Bytes) : Int32
       i = 0
       if buf[i] == Ansi::SS3 || buf[i] == Ansi::ESC
         i += 1
@@ -400,13 +551,77 @@ module Ultraviolet
       if i < buf.size && buf[i - 1] == Ansi::ESC && buf[i] == 'O'.ord
         i += 1
       end
+      i
+    end
 
+    private def parse_ss3_modifier(buf : Bytes, i : Int32) : {Int32, Int32}
       mod = 0
       while i < buf.size && buf[i] >= '0'.ord && buf[i] <= '9'.ord
         mod *= 10
         mod += buf[i] - '0'.ord
         i += 1
       end
+      {mod, i}
+    end
+
+    private def ss3_key_for(gl : UInt8) : Key?
+      if key = ss3_arrow_ctrl_key(gl)
+        return key
+      end
+      if key = ss3_arrow_key(gl)
+        return key
+      end
+      if key = ss3_special_key(gl)
+        return key
+      end
+      if key = ss3_function_key(gl)
+        return key
+      end
+      ss3_keypad_key(gl)
+    end
+
+    private def ss3_arrow_ctrl_key(gl : UInt8) : Key?
+      return nil unless gl >= 'a'.ord && gl <= 'd'.ord
+      Key.new(code: KeyUp + gl - 'a'.ord, mod: ModCtrl)
+    end
+
+    private def ss3_arrow_key(gl : UInt8) : Key?
+      return nil unless gl >= 'A'.ord && gl <= 'D'.ord
+      Key.new(code: KeyUp + gl - 'A'.ord)
+    end
+
+    private def ss3_special_key(gl : UInt8) : Key?
+      case gl
+      when 'E'.ord
+        Key.new(code: KeyBegin)
+      when 'F'.ord
+        Key.new(code: KeyEnd)
+      when 'H'.ord
+        Key.new(code: KeyHome)
+      else
+        nil
+      end
+    end
+
+    private def ss3_function_key(gl : UInt8) : Key?
+      return nil unless gl >= 'P'.ord && gl <= 'S'.ord
+      Key.new(code: KeyF1 + gl - 'P'.ord)
+    end
+
+    private def ss3_keypad_key(gl : UInt8) : Key?
+      return Key.new(code: KeyKpEnter) if gl == 'M'.ord
+      return Key.new(code: KeyKpEqual) if gl == 'X'.ord
+      return nil unless gl >= 'j'.ord && gl <= 'y'.ord
+      Key.new(code: KeyKpMultiply + gl - 'j'.ord)
+    end
+
+    private def parse_ss3(buf : Bytes) : {Int32, Event}
+      if buf.size == 2 && buf[0] == Ansi::ESC
+        return {2, key_from_byte(buf[1], ModShift | ModAlt)}
+      end
+
+      i = parse_ss3_intro(buf)
+      mod, i = parse_ss3_modifier(buf, i)
 
       if i >= buf.size || buf[i] < 0x21 || buf[i] > 0x7e
         return {i, UnknownEvent.new(String.new(buf[0, i]))}
@@ -415,78 +630,58 @@ module Ultraviolet
       gl = buf[i]
       i += 1
 
-      key = Key.new
-      case gl
-      when 'a'.ord, 'b'.ord, 'c'.ord, 'd'.ord
-        key = Key.new(code: KeyUp + gl - 'a'.ord, mod: ModCtrl)
-      when 'A'.ord, 'B'.ord, 'C'.ord, 'D'.ord
-        key = Key.new(code: KeyUp + gl - 'A'.ord)
-      when 'E'.ord
-        key = Key.new(code: KeyBegin)
-      when 'F'.ord
-        key = Key.new(code: KeyEnd)
-      when 'H'.ord
-        key = Key.new(code: KeyHome)
-      when 'P'.ord, 'Q'.ord, 'R'.ord, 'S'.ord
-        key = Key.new(code: KeyF1 + gl - 'P'.ord)
-      when 'M'.ord
-        key = Key.new(code: KeyKpEnter)
-      when 'X'.ord
-        key = Key.new(code: KeyKpEqual)
-      when 'j'.ord, 'k'.ord, 'l'.ord, 'm'.ord, 'n'.ord, 'o'.ord, 'p'.ord, 'q'.ord, 'r'.ord, 's'.ord, 't'.ord, 'u'.ord, 'v'.ord, 'w'.ord, 'x'.ord, 'y'.ord
-        key = Key.new(code: KeyKpMultiply + gl - 'j'.ord)
-      else
-        return {i, UnknownSs3Event.new(String.new(buf[0, i]))}
-      end
+      key = ss3_key_for(gl)
+      return {i, UnknownSs3Event.new(String.new(buf[0, i]))} unless key
 
       key.mod |= (mod - 1) if mod > 0
 
       {i, key}
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
-
-    # ameba:disable Metrics/CyclomaticComplexity
     private def parse_osc(buf : Bytes) : {Int32, Event}
       default_key = Key.new(code: buf[1].to_i, mod: ModAlt)
       if buf.size == 2 && buf[0] == Ansi::ESC
         return {2, default_key}
       end
 
-      i = 0
-      if buf[i] == Ansi::OSC || buf[i] == Ansi::ESC
-        i += 1
-      end
-      if i < buf.size && buf[i - 1] == Ansi::ESC && buf[i] == ']'.ord
-        i += 1
-      end
-
-      cmd = -1
-      start = 0
-      while i < buf.size && buf[i] >= '0'.ord && buf[i] <= '9'.ord
-        cmd = 0 if cmd == -1
-        cmd = cmd * 10 + (buf[i] - '0'.ord)
-        i += 1
-      end
-
+      i = parse_osc_intro(buf)
+      cmd, i = parse_osc_cmd(buf, i)
+      start = i
       if i < buf.size && buf[i] == ';'.ord
         i += 1
         start = i
       end
 
-      while i < buf.size
-        if [Ansi::BEL, Ansi::ESC, Ansi::ST, Ansi::CAN, Ansi::SUB].includes?(buf[i])
-          break
+      ending, i, term = scan_osc_terminator(buf, i)
+      return {i, UnknownEvent.new(String.new(buf[0, i]))} if term == 0_u8
+      i, early = handle_osc_termination(term, buf, i, cmd, start, ending, default_key)
+      return {i, early} if early
+
+      if ending <= start
+        if cmd == 52
+          return {i, ClipboardEvent.new}
         end
-        i += 1
+        return {i, UnknownEvent.new(String.new(buf[0, i]))}
       end
 
-      return {i, UnknownEvent.new(String.new(buf[0, i]))} if i >= buf.size
+      data = String.new(buf[start, ending - start])
+      if event = osc_event_for(cmd, data)
+        return {i, event}
+      end
 
-      ending = i
-      i += 1
+      {i, UnknownOscEvent.new(String.new(buf[0, i]))}
+    end
 
-      case buf[i - 1]
+    private def handle_osc_termination(
+      term : UInt8,
+      buf : Bytes,
+      i : Int32,
+      cmd : Int32,
+      start : Int32,
+      ending : Int32,
+      default_key : Key,
+    ) : {Int32, Event?}
+      case term
       when Ansi::CAN, Ansi::SUB
         return {i, String.new(buf[0, i])}
       when Ansi::ESC
@@ -496,122 +691,178 @@ module Ultraviolet
           end
           return {i, String.new(buf[0, i])}
         end
+        return {i + 1, nil}
+      else
+        return {i, nil}
+      end
+    end
+
+    private def parse_osc_intro(buf : Bytes) : Int32
+      i = 0
+      if buf[i] == Ansi::OSC || buf[i] == Ansi::ESC
         i += 1
       end
+      if i < buf.size && buf[i - 1] == Ansi::ESC && buf[i] == ']'.ord
+        i += 1
+      end
+      i
+    end
 
-      return {i, UnknownEvent.new(String.new(buf[0, i]))} if ending <= start
+    private def parse_osc_cmd(buf : Bytes, i : Int32) : {Int32, Int32}
+      cmd = -1
+      while i < buf.size && buf[i] >= '0'.ord && buf[i] <= '9'.ord
+        cmd = 0 if cmd == -1
+        cmd = cmd * 10 + (buf[i] - '0'.ord)
+        i += 1
+      end
+      {cmd, i}
+    end
 
-      data = String.new(buf[start, ending - start])
+    private def scan_osc_terminator(buf : Bytes, i : Int32) : {Int32, Int32, UInt8}
+      while i < buf.size
+        byte = buf[i]
+        if osc_terminator?(byte)
+          return {i, i + 1, byte}
+        end
+        i += 1
+      end
+      {i, i, 0_u8}
+    end
+
+    private def osc_terminator?(byte : UInt8) : Bool
+      byte == Ansi::BEL || byte == Ansi::ESC || byte == Ansi::ST || byte == Ansi::CAN || byte == Ansi::SUB
+    end
+
+    private def osc_event_for(cmd : Int32, data : String) : Event?
       case cmd
       when 10
-        return {i, ForegroundColorEvent.new(Ansi.x_parse_color(data))}
+        ForegroundColorEvent.new(Ansi.x_parse_color(data))
       when 11
-        return {i, BackgroundColorEvent.new(Ansi.x_parse_color(data))}
+        BackgroundColorEvent.new(Ansi.x_parse_color(data))
       when 12
-        return {i, CursorColorEvent.new(Ansi.x_parse_color(data))}
+        CursorColorEvent.new(Ansi.x_parse_color(data))
       when 52
-        parts = data.split(';')
-        if parts.size != 2 || parts[0].empty?
-          return {i, ClipboardEvent.new}
-        end
-
-        selection = parts[0][0]
-        b64 = parts[1]
-        begin
-          decoded = Base64.decode_string(b64)
-        rescue
-          return {i, ClipboardEvent.new(parts[1], selection)}
-        end
-
-        return {i, ClipboardEvent.new(decoded, selection)}
+        osc_clipboard_event(data)
+      else
+        nil
       end
-
-      {i, UnknownOscEvent.new(String.new(buf[0, i]))}
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
+    private def osc_clipboard_event(data : String) : Event
+      parts = data.split(';')
+      return ClipboardEvent.new if parts.size != 2 || parts[0].empty?
 
-    # ameba:disable Metrics/CyclomaticComplexity
+      selection = parts[0][0]
+      b64 = parts[1]
+      begin
+        decoded = Base64.decode_string(b64)
+      rescue
+        return ClipboardEvent.new(parts[1], selection)
+      end
+
+      ClipboardEvent.new(decoded, selection)
+    end
+
     private def parse_st_terminated(intro8 : Int32, intro7 : Int32, fn : (Bytes -> Event?)?) : Proc(Bytes, {Int32, Event?})
-      default_key = ->(bytes : Bytes) do
-        case intro8
-        when Ansi::SOS
-          {2, key_from_byte(bytes[1], ModShift | ModAlt)}
-        when Ansi::PM, Ansi::APC
-          {2, key_from_byte(bytes[1], ModAlt)}
-        else
-          {0, nil}
-        end
-      end
-
-      # ameba:disable Metrics/CyclomaticComplexity
-      ->(bytes : Bytes) : {Int32, Event?} do
-        if bytes.size == 2 && bytes[0] == Ansi::ESC
-          return default_key.call(bytes)
-        end
-
-        i = 0
-        if bytes[i] == intro8 || bytes[i] == Ansi::ESC
-          i += 1
-        end
-        if i < bytes.size && bytes[i - 1] == Ansi::ESC && bytes[i] == intro7
-          i += 1
-        end
-
-        start = i
-        while i < bytes.size
-          if [Ansi::ESC, Ansi::ST, Ansi::CAN, Ansi::SUB].includes?(bytes[i])
-            break
-          end
-          i += 1
-        end
-
-        return {i, UnknownEvent.new(String.new(bytes[0, i]))} if i >= bytes.size
-
-        ending = i
-        i += 1
-
-        case bytes[i - 1]
-        when Ansi::CAN, Ansi::SUB
-          return {i, String.new(bytes[0, i])}
-        when Ansi::ESC
-          if i >= bytes.size || bytes[i] != '\\'.ord
-            return default_key.call(bytes) if start == ending
-            return {i, String.new(bytes[0, i])}
-          end
-          i += 1
-        end
-
-        if fn
-          event = fn.call(bytes[start, ending - start])
-          return {i, event} if event
-        end
-
-        case intro8
-        when Ansi::PM
-          return {i, UnknownPmEvent.new(String.new(bytes[0, i]))}
-        when Ansi::SOS
-          return {i, UnknownSosEvent.new(String.new(bytes[0, i]))}
-        when Ansi::APC
-          return {i, UnknownApcEvent.new(String.new(bytes[0, i]))}
-        end
-
-        {i, UnknownEvent.new(String.new(bytes[0, i]))}
-      end
-      # ameba:enable Metrics/CyclomaticComplexity
+      ->(bytes : Bytes) : {Int32, Event?} { parse_st_terminated_bytes(intro8, intro7, fn, bytes) }
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
+    private def parse_st_terminated_bytes(intro8 : Int32, intro7 : Int32, fn : (Bytes -> Event?)?, bytes : Bytes) : {Int32, Event?}
+      if bytes.size == 2 && bytes[0] == Ansi::ESC
+        return st_default_key(intro8, bytes)
+      end
 
-    # ameba:disable Metrics/CyclomaticComplexity
+      i = st_intro_index(bytes, intro8, intro7)
+      start = i
+      ending, i, term = scan_st_terminator(bytes, i)
+      return {i, UnknownEvent.new(String.new(bytes[0, i]))} if term == 0_u8
+
+      case term
+      when Ansi::CAN, Ansi::SUB
+        return {i, String.new(bytes[0, i])}
+      when Ansi::ESC
+        if i >= bytes.size || bytes[i] != '\\'.ord
+          return st_default_key(intro8, bytes) if start == ending
+          return {i, String.new(bytes[0, i])}
+        end
+        i += 1
+      end
+
+      if fn
+        event = fn.call(bytes[start, ending - start])
+        return {i, event} if event
+      end
+
+      {i, st_unknown_event(intro8, bytes[0, i])}
+    end
+
+    private def st_default_key(intro8 : Int32, bytes : Bytes) : {Int32, Event?}
+      case intro8
+      when Ansi::SOS
+        {2, key_from_byte(bytes[1], ModShift | ModAlt)}
+      when Ansi::PM, Ansi::APC
+        {2, key_from_byte(bytes[1], ModAlt)}
+      else
+        {0, nil}
+      end
+    end
+
+    private def st_intro_index(bytes : Bytes, intro8 : Int32, intro7 : Int32) : Int32
+      i = 0
+      if bytes[i] == intro8 || bytes[i] == Ansi::ESC
+        i += 1
+      end
+      if i < bytes.size && bytes[i - 1] == Ansi::ESC && bytes[i] == intro7
+        i += 1
+      end
+      i
+    end
+
+    private def scan_st_terminator(bytes : Bytes, i : Int32) : {Int32, Int32, UInt8}
+      while i < bytes.size
+        byte = bytes[i]
+        if byte == Ansi::ESC || byte == Ansi::ST || byte == Ansi::CAN || byte == Ansi::SUB
+          return {i, i + 1, byte}
+        end
+        i += 1
+      end
+      {i, i, 0_u8}
+    end
+
+    private def st_unknown_event(intro8 : Int32, bytes : Bytes) : Event
+      case intro8
+      when Ansi::PM
+        UnknownPmEvent.new(String.new(bytes))
+      when Ansi::SOS
+        UnknownSosEvent.new(String.new(bytes))
+      when Ansi::APC
+        UnknownApcEvent.new(String.new(bytes))
+      else
+        UnknownEvent.new(String.new(bytes))
+      end
+    end
+
     private def parse_dcs(buf : Bytes) : {Int32, Event}
       if buf.size == 2 && buf[0] == Ansi::ESC
         return {2, key_from_byte(buf[1], ModShift | ModAlt)}
       end
 
-      params = [] of Ansi::Param
-      cmd = 0
+      cmd, params, i, ok = parse_dcs_header(buf)
+      return {i, UnknownEvent.new(String.new(buf[0, i]))} unless ok
 
+      start, ending, i, ok = scan_dcs_payload(buf, i)
+      return {i, UnknownEvent.new(String.new(buf[0, i]))} unless ok
+
+      pa = Ansi::Params.new(params)
+      if event = dcs_event_for(cmd, pa, buf[start, ending - start])
+        return {i, event}
+      end
+
+      {i, UnknownDcsEvent.new(String.new(buf[0, i]))}
+    end
+
+    private def parse_dcs_header(buf : Bytes) : {Int32, Array(Ansi::Param), Int32, Bool}
+      cmd = 0
       i = 0
       if buf[i] == Ansi::DCS || buf[i] == Ansi::ESC
         i += 1
@@ -624,51 +875,20 @@ module Ultraviolet
         cmd |= (buf[i].to_i << Ansi::Parser::PrefixShift)
       end
 
-      param_bytes = 0
-      current = Ansi::Param.new
-      while i < buf.size && params.size < 16 && buf[i] >= 0x30 && buf[i] <= 0x3f
-        param_bytes += 1
-        byte = buf[i]
-        if byte >= '0'.ord && byte <= '9'.ord
-          unless current.present?
-            current.present = true
-            current.value = 0
-          end
-          current.value = current.value * 10 + (byte - '0'.ord)
-        end
-        current.has_more = true if byte == ':'.ord
-        if byte == ';'.ord || byte == ':'.ord
-          params << current
-          current = Ansi::Param.new
-        end
-        i += 1
-      end
-
-      if param_bytes > 0 && params.size < 16
-        params << current
-      end
-
-      intermed = 0_u8
-      while i < buf.size && buf[i] >= 0x20 && buf[i] <= 0x2f
-        intermed = buf[i]
-        i += 1
-      end
+      params, i, _ = parse_params(buf, i, 16)
+      intermed, i = parse_csi_intermed(buf, i)
       cmd |= (intermed.to_i << Ansi::Parser::IntermedShift)
+      cmd, i, ok = parse_csi_final(buf, cmd, i)
+      {cmd, params, i, ok}
+    end
 
-      if i >= buf.size || buf[i] < 0x40 || buf[i] > 0x7e
-        return {i, UnknownEvent.new(String.new(buf[0, i]))}
-      end
-
-      cmd |= buf[i].to_i
-      i += 1
-
+    private def scan_dcs_payload(buf : Bytes, i : Int32) : {Int32, Int32, Int32, Bool}
       start = i
       while i < buf.size
         break if buf[i] == Ansi::ST || buf[i] == Ansi::ESC
         i += 1
       end
-
-      return {i, UnknownEvent.new(String.new(buf[0, i]))} if i >= buf.size
+      return {start, i, i, false} if i >= buf.size
 
       ending = i
       i += 1
@@ -677,23 +897,21 @@ module Ultraviolet
         i += 1
       end
 
-      pa = Ansi::Params.new(params)
-      case cmd
-      when ('r'.ord | ('+'.ord << Ansi::Parser::IntermedShift))
-        param, _, _ = pa.param(0, 0)
-        if param == 1
-          return {i, parse_termcap(buf[start, ending - start])}
-        end
-      when ('|'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
-        return {i, TerminalVersionEvent.new(String.new(buf[start, ending - start]))}
-      when ('|'.ord | ('!'.ord << Ansi::Parser::IntermedShift))
-        return {i, parse_tertiary_dev_attrs(buf[start, ending - start])}
-      end
-
-      {i, UnknownDcsEvent.new(String.new(buf[0, i]))}
+      {start, ending, i, true}
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
+    private def dcs_event_for(cmd : Int32, params : Ansi::Params, payload : Bytes) : Event?
+      case cmd
+      when ('r'.ord | ('+'.ord << Ansi::Parser::IntermedShift))
+        param, _, _ = params.param(0, 0)
+        return parse_termcap(payload) if param == 1
+      when ('|'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+        return TerminalVersionEvent.new(String.new(payload))
+      when ('|'.ord | ('!'.ord << Ansi::Parser::IntermedShift))
+        return parse_tertiary_dev_attrs(payload)
+      end
+      nil
+    end
 
     private def parse_apc(buf : Bytes) : {Int32, Event?}
       if buf.size == 2 && buf[0] == Ansi::ESC
@@ -755,42 +973,64 @@ module Ultraviolet
       {cluster.bytesize, Key.new(code: codepoint, text: cluster)}
     end
 
-    # ameba:disable Metrics/CyclomaticComplexity
     private def parse_control(b : UInt8) : Event
-      if b == Ansi::NUL
-        return Key.new(code: '@'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_AT)
-        return Key.new(code: KeySpace, mod: ModCtrl)
+      if key = parse_control_legacy(b)
+        return key
       end
-      if b == Ansi::HT
-        return Key.new(code: 'i'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_I)
-        return Key.new(code: KeyTab)
+      if key = parse_control_standard(b)
+        return key
       end
-      if b == Ansi::CR
-        return Key.new(code: 'm'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_M)
-        return Key.new(code: KeyEnter)
-      end
-      if b == Ansi::ESC
-        return Key.new(code: '['.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_OPEN_BRACKET)
-        return Key.new(code: KeyEscape)
-      end
-      if b == Ansi::DEL
-        return Key.new(code: KeyDelete) if @legacy.contains?(FLAG_BACKSPACE)
-        return Key.new(code: KeyBackspace)
-      end
-      if b == Ansi::BS
-        return Key.new(code: 'h'.ord, mod: ModCtrl)
-      end
-      return Key.new(code: KeySpace, text: " ") if b == Ansi::SP
-
-      if b >= Ansi::SOH && b <= Ansi::SUB
-        code = b + 0x60
-        return Key.new(code: code, mod: ModCtrl)
-      end
-      if b >= Ansi::FS && b <= Ansi::US
-        code = b + 0x40
-        return Key.new(code: code, mod: ModCtrl)
+      if key = parse_control_range(b)
+        return key
       end
       UnknownEvent.new(b.chr.to_s)
+    end
+
+    private def parse_control_legacy(b : UInt8) : Key?
+      case b
+      when Ansi::NUL
+        return Key.new(code: '@'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_AT)
+      when Ansi::HT
+        return Key.new(code: 'i'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_I)
+      when Ansi::CR
+        return Key.new(code: 'm'.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_M)
+      when Ansi::ESC
+        return Key.new(code: '['.ord, mod: ModCtrl) if @legacy.contains?(FLAG_CTRL_OPEN_BRACKET)
+      when Ansi::DEL
+        return Key.new(code: KeyDelete) if @legacy.contains?(FLAG_BACKSPACE)
+      end
+      nil
+    end
+
+    private def parse_control_standard(b : UInt8) : Key?
+      case b
+      when Ansi::NUL
+        Key.new(code: KeySpace, mod: ModCtrl)
+      when Ansi::HT
+        Key.new(code: KeyTab)
+      when Ansi::CR
+        Key.new(code: KeyEnter)
+      when Ansi::ESC
+        Key.new(code: KeyEscape)
+      when Ansi::DEL
+        Key.new(code: KeyBackspace)
+      when Ansi::BS
+        Key.new(code: 'h'.ord, mod: ModCtrl)
+      when Ansi::SP
+        Key.new(code: KeySpace, text: " ")
+      else
+        nil
+      end
+    end
+
+    private def parse_control_range(b : UInt8) : Key?
+      if b >= Ansi::SOH && b <= Ansi::SUB
+        return Key.new(code: b + 0x60, mod: ModCtrl)
+      end
+      if b >= Ansi::FS && b <= Ansi::US
+        return Key.new(code: b + 0x40, mod: ModCtrl)
+      end
+      nil
     end
 
     private def key_from_byte(byte : UInt8, mod : KeyMod) : Key
@@ -802,8 +1042,6 @@ module Ultraviolet
       end
       key
     end
-
-    # ameba:enable Metrics/CyclomaticComplexity
 
     private def parse_xterm_modify_other_keys(params : Ansi::Params) : Event
       xmod, _, _ = params.param(1, 1)
@@ -829,7 +1067,6 @@ module Ultraviolet
       key
     end
 
-    # ameba:disable Metrics/CyclomaticComplexity
     private def parse_kitty_keyboard(params : Ansi::Params) : Event
       is_release = false
       key = Key.new
@@ -837,47 +1074,7 @@ module Ultraviolet
       param_idx = 0
       sub_idx = 0
       params.each do |param|
-        case param_idx
-        when 0
-          case sub_idx
-          when 0
-            code = param.param(1)
-            mapped = kitty_key_map[code]?
-            key = mapped || Key.new(code: code)
-          when 2
-            shifted = param.param(1)
-            if Ultraviolet.printable_char?(shifted)
-              key.base_code = shifted
-            end
-            if Ultraviolet.printable_char?(shifted)
-              key.shifted_code = shifted
-            end
-          when 1
-            shifted = param.param(1)
-            if Ultraviolet.printable_char?(shifted)
-              key.shifted_code = shifted
-            end
-          end
-        when 1
-          case sub_idx
-          when 0
-            mod = param.param(1)
-            if mod > 1
-              key.mod = from_kitty_mod(mod - 1)
-              key.text = "" if key.mod > ModShift
-            end
-          when 1
-            case param.param(1)
-            when 2
-              key.is_repeat = true
-            when 3
-              is_release = true
-            end
-          end
-        when 2
-          code = param.param(0)
-          key.text += Ultraviolet.safe_char(code).to_s if code != 0
-        end
+        key, is_release = apply_kitty_param(param_idx, sub_idx, param, key, is_release)
 
         sub_idx += 1
         unless param.has_more?
@@ -890,7 +1087,64 @@ module Ultraviolet
       key
     end
 
-    # ameba:enable Metrics/CyclomaticComplexity
+    private def apply_kitty_param(param_idx : Int32, sub_idx : Int32, param : Ansi::Param, key : Key, is_release : Bool) : {Key, Bool}
+      case param_idx
+      when 0
+        {apply_kitty_key_param(sub_idx, param, key), is_release}
+      when 1
+        apply_kitty_mod_param(sub_idx, param, key, is_release)
+      when 2
+        {apply_kitty_text_param(param, key), is_release}
+      else
+        {key, is_release}
+      end
+    end
+
+    private def apply_kitty_key_param(sub_idx : Int32, param : Ansi::Param, key : Key) : Key
+      case sub_idx
+      when 0
+        code = param.param(1)
+        mapped = kitty_key_map[code]?
+        return mapped || Key.new(code: code)
+      when 1
+        shifted = param.param(1)
+        if Ultraviolet.printable_char?(shifted)
+          key.shifted_code = shifted
+        end
+      when 2
+        shifted = param.param(1)
+        if Ultraviolet.printable_char?(shifted)
+          key.base_code = shifted
+          key.shifted_code = shifted
+        end
+      end
+      key
+    end
+
+    private def apply_kitty_mod_param(sub_idx : Int32, param : Ansi::Param, key : Key, is_release : Bool) : {Key, Bool}
+      case sub_idx
+      when 0
+        mod = param.param(1)
+        if mod > 1
+          key.mod = from_kitty_mod(mod - 1)
+          key.text = "" if key.mod > ModShift
+        end
+      when 1
+        case param.param(1)
+        when 2
+          key.is_repeat = true
+        when 3
+          is_release = true
+        end
+      end
+      {key, is_release}
+    end
+
+    private def apply_kitty_text_param(param : Ansi::Param, key : Key) : Key
+      code = param.param(0)
+      key.text += Ultraviolet.safe_char(code).to_s if code != 0
+      key
+    end
 
     private def parse_kitty_keyboard_ext(params : Ansi::Params, key : Key) : Event
       return key if params.empty?
@@ -905,7 +1159,7 @@ module Ultraviolet
       key
     end
 
-    private def parse_primary_dev_attrs(params : Ansi::Params) : Event
+    protected def parse_primary_dev_attrs(params : Ansi::Params) : Event
       attrs = [] of Int32
       params.each do |param|
         attrs << param.param(0) unless param.has_more?
@@ -913,7 +1167,7 @@ module Ultraviolet
       attrs
     end
 
-    private def parse_secondary_dev_attrs(params : Ansi::Params) : Event
+    protected def parse_secondary_dev_attrs(params : Ansi::Params) : Event
       attrs = [] of Int32
       params.each do |param|
         attrs << param.param(0) unless param.has_more?

@@ -104,7 +104,6 @@ module Ultraviolet
     index + 1
   end
 
-  # ameba:disable Metrics/CyclomaticComplexity
   def self.print_string(
     screen : Screen,
     start_x : Int32,
@@ -119,12 +118,7 @@ module Ultraviolet
     style = Style.new
     link = Link.new
 
-    tail_cell = Cell.new
-    tail_width = 0
-    if truncate && !tail.empty?
-      tail_width = UnicodeCharWidth.width(tail)
-      tail_cell = Cell.new(tail, tail_width, style, link)
-    end
+    tail_cell, tail_width = build_tail_cell(truncate, tail, style, link)
 
     i = 0
     while i < value.bytesize
@@ -136,8 +130,8 @@ module Ultraviolet
       end
 
       if byte == '\n'.ord
-        y += 1
         x = bounds.min.x
+        y += 1
         i += 1
         next
       end
@@ -148,42 +142,74 @@ module Ultraviolet
         next
       end
 
-      segment_start = i
-      while i < value.bytesize
-        current = value.byte_at(i)
-        break if current == 0x1b || current == '\n'.ord || current == '\r'.ord
-        i += 1
-      end
-      segment = value[segment_start, i - segment_start]
-
-      TextSegment.each_grapheme(segment) do |cluster|
-        grapheme = cluster.str
-        width = UnicodeCharWidth.width(grapheme)
-
-        if !truncate && x + width > bounds.max.x && y + 1 < bounds.max.y
-          x = bounds.min.x
-          y += 1
-        end
-
-        pos = Position.new(x, y)
-        if pos.in?(bounds)
-          if truncate && tail_width > 0 && x + width > bounds.max.x - tail_width
-            cell = tail_cell.clone
-            cell.style = style
-            cell.link = link
-            screen.set_cell(x, y, cell)
-            return
-          end
-
-          cell = Cell.new(grapheme, width, style, link)
-          screen.set_cell(x, y, cell)
-          x += width
-        end
-      end
+      segment, i = read_print_segment(value, i)
+      x, y, done = render_segment(screen, bounds, segment, x, y, style, link, truncate, tail_cell, tail_width)
+      return if done
     end
   end
 
-  # ameba:enable Metrics/CyclomaticComplexity
+  private def self.build_tail_cell(truncate : Bool, tail : String, style : Style, link : Link) : {Cell, Int32}
+    if truncate && !tail.empty?
+      width = UnicodeCharWidth.width(tail)
+      return {Cell.new(tail, width, style, link), width}
+    end
+
+    {Cell.new, 0}
+  end
+
+  private def self.read_print_segment(value : String, index : Int32) : {String, Int32}
+    segment_start = index
+    i = index
+    while i < value.bytesize
+      current = value.byte_at(i)
+      break if current == 0x1b || current == '\n'.ord || current == '\r'.ord
+      i += 1
+    end
+    {value[segment_start, i - segment_start], i}
+  end
+
+  private def self.render_segment(
+    screen : Screen,
+    bounds : Rectangle,
+    segment : String,
+    x : Int32,
+    y : Int32,
+    style : Style,
+    link : Link,
+    truncate : Bool,
+    tail_cell : Cell,
+    tail_width : Int32,
+  ) : {Int32, Int32, Bool}
+    done = false
+
+    TextSegment.each_grapheme(segment) do |cluster|
+      grapheme = cluster.str
+      width = UnicodeCharWidth.width(grapheme)
+
+      if !truncate && x + width > bounds.max.x && y + 1 < bounds.max.y
+        x = bounds.min.x
+        y += 1
+      end
+
+      pos = Position.new(x, y)
+      if pos.in?(bounds)
+        if truncate && tail_width > 0 && x + width > bounds.max.x - tail_width
+          cell = tail_cell.clone
+          cell.style = style
+          cell.link = link
+          screen.set_cell(x, y, cell)
+          done = true
+          break
+        end
+
+        cell = Cell.new(grapheme, width, style, link)
+        screen.set_cell(x, y, cell)
+        x += width
+      end
+    end
+
+    {x, y, done}
+  end
 
   private def self.handle_escape(
     value : String,
@@ -238,125 +264,192 @@ module Ultraviolet
     {value.bytesize, link}
   end
 
-  # ameba:disable Metrics/CyclomaticComplexity
   private def self.read_style(params : String, pen : Style) : Style
     style = pen
     if params.empty?
-      style.fg = nil
-      style.bg = nil
-      style.underline_color = nil
-      style.underline = Underline::None
-      style.attrs = Attr::RESET
+      reset_style(style)
       return style
     end
 
     tokens = params.split(';', remove_empty: false)
     i = 0
     while i < tokens.size
-      token = tokens[i]
-      token = "0" if token.empty?
-      parts = token.split(':')
-      code = parts[0].to_i?
-      code ||= 0
-
-      case code
-      when 0
-        style.fg = nil
-        style.bg = nil
-        style.underline_color = nil
-        style.underline = Underline::None
-        style.attrs = Attr::RESET
-      when 1
-        style.attrs |= Attr::BOLD
-      when 2
-        style.attrs |= Attr::FAINT
-      when 3
-        style.attrs |= Attr::ITALIC
-      when 4
-        if parts.size > 1
-          style.underline = underline_from_code(parts[1].to_i)
-        else
-          style.underline = Underline::Single
-        end
-      when 5
-        style.attrs |= Attr::BLINK
-      when 6
-        style.attrs |= Attr::RAPID_BLINK
-      when 7
-        style.attrs |= Attr::REVERSE
-      when 8
-        style.attrs |= Attr::CONCEAL
-      when 9
-        style.attrs |= Attr::STRIKETHROUGH
-      when 22
-        style.attrs &= ~(Attr::BOLD | Attr::FAINT)
-      when 23
-        style.attrs &= ~Attr::ITALIC
-      when 24
-        style.underline = Underline::None
-      when 25
-        style.attrs &= ~(Attr::BLINK | Attr::RAPID_BLINK)
-      when 27
-        style.attrs &= ~Attr::REVERSE
-      when 28
-        style.attrs &= ~Attr::CONCEAL
-      when 29
-        style.attrs &= ~Attr::STRIKETHROUGH
-      when 30..37
-        style.fg = AnsiColor.basic(code - 30)
-      when 38
-        color, consumed = read_color_parts(parts)
-        if color
-          style.fg = color
-        else
-          color, consumed = read_color(tokens, i + 1)
-          if color
-            style.fg = color
-            i += consumed
-          end
-        end
-      when 39
-        style.fg = nil
-      when 40..47
-        style.bg = AnsiColor.basic(code - 40)
-      when 48
-        color, consumed = read_color_parts(parts)
-        if color
-          style.bg = color
-        else
-          color, consumed = read_color(tokens, i + 1)
-          if color
-            style.bg = color
-            i += consumed
-          end
-        end
-      when 49
-        style.bg = nil
-      when 58
-        color, consumed = read_color_parts(parts)
-        if color
-          style.underline_color = color
-        else
-          color, consumed = read_color(tokens, i + 1)
-          if color
-            style.underline_color = color
-            i += consumed
-          end
-        end
-      when 59
-        style.underline_color = nil
-      when 90..97
-        style.fg = AnsiColor.bright(code - 90)
-      when 100..107
-        style.bg = AnsiColor.bright(code - 100)
-      end
-
-      i += 1
+      code, parts = parse_style_token(tokens[i])
+      style, consumed = apply_style_code(style, code, parts, tokens, i)
+      i += consumed + 1
     end
     style
   end
 
-  # ameba:enable Metrics/CyclomaticComplexity
+  private STYLE_SET_ATTR = {
+    1 => Attr::BOLD,
+    2 => Attr::FAINT,
+    3 => Attr::ITALIC,
+    5 => Attr::BLINK,
+    6 => Attr::RAPID_BLINK,
+    7 => Attr::REVERSE,
+    8 => Attr::CONCEAL,
+    9 => Attr::STRIKETHROUGH,
+  }
+
+  private STYLE_CLEAR_ATTR = {
+    22 => (Attr::BOLD | Attr::FAINT),
+    23 => Attr::ITALIC,
+    25 => (Attr::BLINK | Attr::RAPID_BLINK),
+    27 => Attr::REVERSE,
+    28 => Attr::CONCEAL,
+    29 => Attr::STRIKETHROUGH,
+  }
+
+  private def self.reset_style(style : Style) : Style
+    style.fg = nil
+    style.bg = nil
+    style.underline_color = nil
+    style.underline = Underline::None
+    style.attrs = Attr::RESET
+    style
+  end
+
+  private def self.parse_style_token(token : String) : {Int32, Array(String)}
+    value = token.empty? ? "0" : token
+    parts = value.split(':')
+    code = parts[0].to_i?
+    {code || 0, parts}
+  end
+
+  private def self.apply_style_code(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32}
+    return {apply_style_reset(style, code), 0} if code == 0
+
+    style, handled = apply_style_attr(style, code)
+    return {style, 0} if handled
+
+    style, handled = apply_style_misc(style, code, parts)
+    return {style, 0} if handled
+
+    apply_style_color(style, code, parts, tokens, index)
+  end
+
+  private def self.apply_style_reset(style : Style, _code : Int32) : Style
+    reset_style(style)
+  end
+
+  private def self.apply_style_attr(style : Style, code : Int32) : {Style, Bool}
+    if attr = STYLE_SET_ATTR[code]?
+      style.attrs |= attr
+      return {style, true}
+    end
+    if attr = STYLE_CLEAR_ATTR[code]?
+      style.attrs &= ~attr
+      return {style, true}
+    end
+    {style, false}
+  end
+
+  private def self.apply_style_misc(style : Style, code : Int32, parts : Array(String)) : {Style, Bool}
+    case code
+    when 4
+      style.underline = parts.size > 1 ? underline_from_code(parts[1].to_i) : Underline::Single
+      {style, true}
+    when 24
+      style.underline = Underline::None
+      {style, true}
+    else
+      {style, false}
+    end
+  end
+
+  private def self.apply_style_color(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32}
+    style, handled = apply_style_basic_color(style, code)
+    return {style, 0} if handled
+
+    style, consumed = apply_style_extended_color_code(style, code, parts, tokens, index)
+    return {style, consumed} if consumed
+
+    style, handled = apply_style_bright_color(style, code)
+    return {style, 0} if handled
+
+    {style, 0}
+  end
+
+  private def self.apply_style_basic_color(style : Style, code : Int32) : {Style, Bool}
+    if code >= 30 && code <= 37
+      style.fg = AnsiColor.basic(code - 30)
+      return {style, true}
+    end
+    if code == 39
+      style.fg = nil
+      return {style, true}
+    end
+    if code >= 40 && code <= 47
+      style.bg = AnsiColor.basic(code - 40)
+      return {style, true}
+    end
+    if code == 49
+      style.bg = nil
+      return {style, true}
+    end
+    {style, false}
+  end
+
+  private def self.apply_style_extended_color_code(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32?}
+    if code == 38
+      style, consumed = apply_extended_color(style, parts, tokens, index, :fg)
+      return {style, consumed}
+    end
+    if code == 48
+      style, consumed = apply_extended_color(style, parts, tokens, index, :bg)
+      return {style, consumed}
+    end
+    if code == 58
+      style, consumed = apply_extended_color(style, parts, tokens, index, :underline)
+      return {style, consumed}
+    end
+    if code == 59
+      style.underline_color = nil
+      return {style, 0}
+    end
+    {style, nil}
+  end
+
+  private def self.apply_style_bright_color(style : Style, code : Int32) : {Style, Bool}
+    if code >= 90 && code <= 97
+      style.fg = AnsiColor.bright(code - 90)
+      return {style, true}
+    end
+    if code >= 100 && code <= 107
+      style.bg = AnsiColor.bright(code - 100)
+      return {style, true}
+    end
+    {style, false}
+  end
+
+  private def self.apply_extended_color(style : Style, parts : Array(String), tokens : Array(String), index : Int32, target : Symbol) : {Style, Int32}
+    color, _ = read_color_parts(parts)
+    if color
+      style = assign_color(style, color, target)
+      return {style, 0}
+    end
+
+    color, consumed = read_color(tokens, index + 1)
+    if color
+      style = assign_color(style, color, target)
+      return {style, consumed}
+    end
+
+    {style, 0}
+  end
+
+  private def self.assign_color(style : Style, color : Color, target : Symbol) : Style
+    case target
+    when :fg
+      style.fg = color
+    when :bg
+      style.bg = color
+    when :underline
+      style.underline_color = color
+    end
+    style
+  end
 
   private def self.read_color_parts(parts : Array(String)) : {Color?, Int32}
     return {nil, 0} if parts.size < 3

@@ -20,36 +20,8 @@ module Ultraviolet
     Button10   = 10
     Button11   = 11
 
-    # ameba:disable Metrics/CyclomaticComplexity
     def string : String
-      case self
-      when None
-        "none"
-      when Left
-        "left"
-      when Middle
-        "middle"
-      when Right
-        "right"
-      when WheelUp
-        "wheelup"
-      when WheelDown
-        "wheeldown"
-      when WheelLeft
-        "wheelleft"
-      when WheelRight
-        "wheelright"
-      when Backward
-        "backward"
-      when Forward
-        "forward"
-      when Button10
-        "button10"
-      when Button11
-        "button11"
-      else
-        ""
-      end
+      BUTTON_NAMES[self]? || ""
     end
   end
 
@@ -76,6 +48,20 @@ module Ultraviolet
         end
       end
     end
-    # ameba:enable Metrics/CyclomaticComplexity
   end
+
+  BUTTON_NAMES = {
+    MouseButton::None       => "none",
+    MouseButton::Left       => "left",
+    MouseButton::Middle     => "middle",
+    MouseButton::Right      => "right",
+    MouseButton::WheelUp    => "wheelup",
+    MouseButton::WheelDown  => "wheeldown",
+    MouseButton::WheelLeft  => "wheelleft",
+    MouseButton::WheelRight => "wheelright",
+    MouseButton::Backward   => "backward",
+    MouseButton::Forward    => "forward",
+    MouseButton::Button10   => "button10",
+    MouseButton::Button11   => "button11",
+  }
 end

@@ -203,46 +203,42 @@ module Ultraviolet
       keystroke
     end
 
-    # ameba:disable Metrics/CyclomaticComplexity
     def keystroke : String
-      String.build do |builder|
-        if Ultraviolet.mod_contains?(@mod, ModCtrl) && @code != KeyLeftCtrl && @code != KeyRightCtrl
-          builder << "ctrl+"
-        end
-        if Ultraviolet.mod_contains?(@mod, ModAlt) && @code != KeyLeftAlt && @code != KeyRightAlt
-          builder << "alt+"
-        end
-        if Ultraviolet.mod_contains?(@mod, ModShift) && @code != KeyLeftShift && @code != KeyRightShift
-          builder << "shift+"
-        end
-        if Ultraviolet.mod_contains?(@mod, ModMeta) && @code != KeyLeftMeta && @code != KeyRightMeta
-          builder << "meta+"
-        end
-        if Ultraviolet.mod_contains?(@mod, ModHyper) && @code != KeyLeftHyper && @code != KeyRightHyper
-          builder << "hyper+"
-        end
-        if Ultraviolet.mod_contains?(@mod, ModSuper) && @code != KeyLeftSuper && @code != KeyRightSuper
-          builder << "super+"
-        end
+      parts = modifier_prefixes
+      parts << key_label
+      parts.join
+    end
 
-        if key_type = KEY_TYPE_STRING[@code]?
-          builder << key_type
-        else
-          code = @code
-          code = @base_code if @base_code != 0
+    private def modifier_prefixes : Array(String)
+      parts = [] of String
+      parts << "ctrl+" if mod_active?(ModCtrl, KeyLeftCtrl, KeyRightCtrl)
+      parts << "alt+" if mod_active?(ModAlt, KeyLeftAlt, KeyRightAlt)
+      parts << "shift+" if mod_active?(ModShift, KeyLeftShift, KeyRightShift)
+      parts << "meta+" if mod_active?(ModMeta, KeyLeftMeta, KeyRightMeta)
+      parts << "hyper+" if mod_active?(ModHyper, KeyLeftHyper, KeyRightHyper)
+      parts << "super+" if mod_active?(ModSuper, KeyLeftSuper, KeyRightSuper)
+      parts
+    end
 
-          case code
-          when KeySpace
-            builder << "space"
-          when KeyExtended
-            builder << @text
-          else
-            builder << Ultraviolet.safe_char(code)
-          end
-        end
+    private def mod_active?(mod : KeyMod, left : Int32, right : Int32) : Bool
+      Ultraviolet.mod_contains?(@mod, mod) && @code != left && @code != right
+    end
+
+    private def key_label : String
+      if key_type = KEY_TYPE_STRING[@code]?
+        return key_type
+      end
+
+      code = @base_code != 0 ? @base_code : @code
+      case code
+      when KeySpace
+        "space"
+      when KeyExtended
+        @text
+      else
+        Ultraviolet.safe_char(code).to_s
       end
     end
-    # ameba:enable Metrics/CyclomaticComplexity
   end
 
   KEY_TYPE_STRING = {
@@ -543,61 +539,13 @@ module Ultraviolet
     "rightmeta"        => KeyRightMeta,
   }
 
-  # ameba:disable Metrics/CyclomaticComplexity
   def self.key_match_string(key : Key, value : String) : Bool
-    mod = 0
-    code = 0
-    text = ""
-
-    value.split('+').each do |part|
-      case part
-      when "ctrl"
-        mod |= ModCtrl
-      when "alt"
-        mod |= ModAlt
-      when "shift"
-        mod |= ModShift
-      when "meta"
-        mod |= ModMeta
-      when "hyper"
-        mod |= ModHyper
-      when "super"
-        mod |= ModSuper
-      when "capslock"
-        mod |= ModCapsLock
-      when "scrolllock"
-        mod |= ModScrollLock
-      when "numlock"
-        mod |= ModNumLock
-      else
-        if key_type = STRING_KEY_TYPE[part]?
-          code = key_type
-        else
-          if part.each_char.count { true } == 1
-            code = part.each_char.first.ord
-          else
-            code = KeyExtended
-            text = part
-          end
-        end
-      end
-    end
-
-    smod = mod & ~(ModShift | ModCapsLock)
-    if smod == 0 && text.empty? && printable_char?(code)
-      if (mod & (ModShift | ModCapsLock)) != 0
-        text = Ultraviolet.safe_char(code).upcase.to_s
-      else
-        text = Ultraviolet.safe_char(code).to_s
-      end
-    end
-
+    mod, code, text = parse_key_string(value)
+    text = apply_printable_text(mod, code, text)
     return true if key.mod == mod && key.code == code
     return false if key.text.empty?
     key.text == text
   end
-
-  # ameba:enable Metrics/CyclomaticComplexity
 
   def self.safe_char(code : Int32) : Char
     if code < 0 || code > Char::MAX_CODEPOINT
@@ -614,4 +562,55 @@ module Ultraviolet
     return false if code >= 0xD800 && code <= 0xDFFF
     code.chr.printable?
   end
+
+  private def self.parse_key_string(value : String) : {KeyMod, Int32, String}
+    mod = 0
+    code = 0
+    text = ""
+    value.split('+').each do |part|
+      if mod_flag = MOD_KEYWORDS[part]?
+        mod |= mod_flag
+        next
+      end
+
+      if key_type = STRING_KEY_TYPE[part]?
+        code = key_type
+        next
+      end
+
+      if part.each_char.count { true } == 1
+        code = part.each_char.first.ord
+      else
+        code = KeyExtended
+        text = part
+      end
+    end
+
+    {mod, code, text}
+  end
+
+  private def self.apply_printable_text(mod : KeyMod, code : Int32, text : String) : String
+    return text unless text.empty?
+    return text unless (mod & ~(ModShift | ModCapsLock)) == 0
+    return text unless printable_char?(code)
+
+    char = Ultraviolet.safe_char(code)
+    if (mod & (ModShift | ModCapsLock)) != 0
+      char.upcase.to_s
+    else
+      char.to_s
+    end
+  end
+
+  MOD_KEYWORDS = {
+    "ctrl"       => ModCtrl,
+    "alt"        => ModAlt,
+    "shift"      => ModShift,
+    "meta"       => ModMeta,
+    "hyper"      => ModHyper,
+    "super"      => ModSuper,
+    "capslock"   => ModCapsLock,
+    "scrolllock" => ModScrollLock,
+    "numlock"    => ModNumLock,
+  }
 end

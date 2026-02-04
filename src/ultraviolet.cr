@@ -20,6 +20,7 @@ require "./ultraviolet/event"
 require "./ultraviolet/decoder"
 require "./ultraviolet/ansi_color"
 require "./ultraviolet/styled"
+require "./ultraviolet/terminal_renderer"
 
 module Ultraviolet
   VERSION = "0.1.0"
