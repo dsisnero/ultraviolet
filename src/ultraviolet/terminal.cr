@@ -419,13 +419,21 @@ module Ultraviolet
     private def send_resize_event : Nil
       if winch = @winch
         cells, pixels = winch.window_size
-        @evch.send(WindowSizeEvent.new(cells.width, cells.height))
-        if pixels.width > 0 && pixels.height > 0
+        if cells != @size
+          @evch.send(WindowSizeEvent.new(cells.width, cells.height))
+          @size = cells
+        end
+        if pixels.width > 0 && pixels.height > 0 && pixels != @pixel_size
           @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
+          @pixel_size = pixels
         end
       else
         width, height = platform_size
-        @evch.send(WindowSizeEvent.new(width, height))
+        size = Size.new(width, height)
+        if size != @size
+          @evch.send(WindowSizeEvent.new(width, height))
+          @size = size
+        end
       end
     end
 
