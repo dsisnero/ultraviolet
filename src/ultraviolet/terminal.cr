@@ -3,6 +3,7 @@ require "./buffer"
 require "./event"
 require "./environ"
 require "./colorprofile"
+require "./cancelreader"
 
 module Ultraviolet
   ErrNotTerminal          = Exception.new("not a terminal")
@@ -42,6 +43,7 @@ module Ultraviolet
     @reader : TerminalReader?
     @reader_stop : Channel(Nil)?
     @reader_done : Channel(Nil)?
+    @cancel_reader : CancelReader?
     @logger : Logger
 
     struct TerminalState
@@ -76,6 +78,7 @@ module Ultraviolet
       @reader = nil
       @reader_stop = nil
       @reader_done = nil
+      @cancel_reader = nil
       @running = false
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
@@ -429,9 +432,11 @@ module Ultraviolet
     private def start_input : Nil
       return if @reader
 
-      reader = TerminalReader.new(@in, @termtype)
+      cancel_reader = CancelReader.new(@in)
+      reader = TerminalReader.new(cancel_reader, @termtype)
       reader.logger = @logger
       @reader = reader
+      @cancel_reader = cancel_reader
 
       stop = Channel(Nil).new(1)
       done = Channel(Nil).new(1)
@@ -452,11 +457,14 @@ module Ultraviolet
     private def stop_input : Nil
       stop = @reader_stop
       done = @reader_done
+      cancel_reader = @cancel_reader
       @reader_stop = nil
       @reader_done = nil
       @reader = nil
+      @cancel_reader = nil
       return unless stop && done
 
+      cancel_reader.try &.cancel
       stop.try_send(nil)
       select
       when done.receive
