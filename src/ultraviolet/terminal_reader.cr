@@ -136,12 +136,21 @@ module Ultraviolet
               if !key.text.empty?
                 @paste = paste + key.text
               else
-                @paste = paste + String.new(buf[0, n])
+                seq = String.new(buf[0, n])
+                is_win32 = seq.starts_with?("\e[") && seq.ends_with?("_")
+                if is_win32 && key.code == KeyEnter && key.code == key.base_code
+                  @paste = paste + "\n"
+                elsif is_win32 && key.code == key.base_code && control_char?(key.code)
+                  @paste = paste + Ultraviolet.safe_char(key.code).to_s
+                elsif !is_win32
+                  if esc && n <= 2 && !expired
+                    return {total, events}
+                  end
+                  @paste = paste + seq
+                end
               end
             elsif !expired && event.is_a?(UnknownEvent)
               return {total, events}
-            else
-              @paste = paste + String.new(buf[0, n])
             end
           end
           buf = buf[n, buf.size - n]
@@ -182,6 +191,10 @@ module Ultraviolet
     end
 
     # ameba:enable Metrics/CyclomaticComplexity
+
+    private def control_char?(code : Int32) : Bool
+      (code >= 0 && code < 0x20) || code == 0x7f
+    end
 
     private def append_bytes(buffer : Bytes, data : Bytes) : Bytes
       return data if buffer.empty?
