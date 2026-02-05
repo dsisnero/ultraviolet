@@ -71,8 +71,8 @@ Legend:
 - [x] `ultraviolet_go/doc.go` → `src/ultraviolet.cr` (package docs)
 
 ### Examples & Docs
-- [ ] `ultraviolet_go/examples/*` → missing Crystal examples
-- [ ] `ultraviolet_go/TUTORIAL.md` → missing Crystal tutorial
+- [x] (partial) `ultraviolet_go/examples/*` → `examples/helloworld.cr` (others pending)
+- [x] `ultraviolet_go/TUTORIAL.md` → `TUTORIAL.md`
 
 ## Tests (Parity Required)
 - [x] `ultraviolet_go/buffer_test.go` → `spec/buffer_spec.cr`
@@ -112,4 +112,4 @@ Legend:
   renderer core (hashmap/hardscroll), ansi/colorprofile integration, cursor/window, environ/logger/utils,
   cancelreader, and basic tty/winch/terminal scaffolding.
 - Partially implemented: decoder/key_table, terminal/reader, unix/windows backends, tty/winch platform paths.
-- Missing: non-windows terminal_other parity and examples/tutorial docs.
+- Missing: non-windows terminal_other parity and remaining example ports.

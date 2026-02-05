@@ -22,7 +22,7 @@ reference while porting behavior into Crystal.
 require "ultraviolet"
 ```
 
-TODO: Write usage instructions here
+See `TUTORIAL.md` and `examples/helloworld.cr` for a minimal working example.
 
 ## Development
 

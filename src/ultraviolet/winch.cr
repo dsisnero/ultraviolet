@@ -43,7 +43,12 @@ module Ultraviolet
         @lock.synchronize do
           raise ErrNotTerminal unless terminal?(@tty)
           return if @running
-          Signal::WINCH.trap { @sig.try_send(nil) }
+          Signal::WINCH.trap do
+            begin
+              @sig.send(nil)
+            rescue Channel::ClosedError
+            end
+          end
           @running = true
         end
       {% end %}
@@ -70,7 +75,7 @@ module Ultraviolet
 
         winsize = uninitialized LibC::Winsize
         if LibC.ioctl(@tty.not_nil!.fd, TIOCGWINSZ, pointerof(winsize).as(Void*)) != 0
-          raise Errno.new("ioctl")
+          raise IO::Error.from_errno("ioctl")
         end
 
         cells = Size.new(winsize.ws_col.to_i, winsize.ws_row.to_i)

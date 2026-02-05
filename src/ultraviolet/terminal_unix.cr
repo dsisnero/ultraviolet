@@ -22,20 +22,20 @@
       private def make_raw : Nil
         raise ErrNotTerminal if @in_tty.nil? && @out_tty.nil?
 
-        last_error = nil
+        last_error = nil.as(Exception?)
         {@in_tty, @out_tty}.each do |tty|
           next unless tty
 
           state = TtyState.new
           if LibC.tcgetattr(tty.fd, pointerof(state)) != 0
-            last_error = Errno.new("tcgetattr")
+            last_error = IO::Error.from_errno("tcgetattr")
             next
           end
 
           raw_state = state
           LibC.cfmakeraw(pointerof(raw_state))
           if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(raw_state)) != 0
-            last_error = Errno.new("tcsetattr")
+            last_error = IO::Error.from_errno("tcsetattr")
             next
           end
 
@@ -52,19 +52,21 @@
       end
 
       private def restore_tty : Nil
-        last_error = nil
+        last_error = nil.as(Exception?)
         if tty = @in_tty
-          if state = @in_tty_state
+          if @in_tty_state
+            state = @in_tty_state.not_nil!
             if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(state)) != 0
-              last_error = Errno.new("tcsetattr")
+              last_error = IO::Error.from_errno("tcsetattr")
             end
           end
         end
 
         if tty = @out_tty
-          if state = @out_tty_state
+          if @out_tty_state
+            state = @out_tty_state.not_nil!
             if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(state)) != 0
-              last_error = Errno.new("tcsetattr")
+              last_error = IO::Error.from_errno("tcsetattr")
             end
           end
         end
@@ -74,11 +76,11 @@
 
       private def platform_size : {Int32, Int32}
         tty = @in_tty || @out_tty
-        raise ErrNotTerminal unless tty
+        raise ErrNotTerminal unless tty && tty.tty?
 
         winsize = uninitialized LibC::Winsize
         if LibC.ioctl(tty.fd, TIOCGWINSZ, pointerof(winsize).as(Void*)) != 0
-          raise Errno.new("ioctl")
+          raise IO::Error.from_errno("ioctl")
         end
 
         {winsize.ws_col.to_i, winsize.ws_row.to_i}

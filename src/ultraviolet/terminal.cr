@@ -44,7 +44,7 @@ module Ultraviolet
     @reader_stop : Channel(Nil)?
     @reader_done : Channel(Nil)?
     @cancel_reader : CancelReader?
-    @logger : Logger
+    @logger : Logger?
 
     struct TerminalState
       property? altscreen : Bool
@@ -82,7 +82,7 @@ module Ultraviolet
       @running = false
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
-      @logger = Logger.new
+      @logger = nil
       @in_tty = @in.as?(IO::FileDescriptor)
       @out_tty = @out.as?(IO::FileDescriptor)
       @in_tty_state = nil
@@ -94,7 +94,7 @@ module Ultraviolet
       {% end %}
     end
 
-    def logger=(logger : Logger) : Nil
+    def logger=(logger : Logger?) : Nil
       @logger = logger
     end
 
@@ -189,13 +189,16 @@ module Ultraviolet
     end
 
     def resize(width : Int32, height : Int32) : Nil
-      @buf.touched = nil
       @buf.resize(width, height)
+      @buf.touched = Array(LineData?).new(height) { LineData.new(-1, -1) }
       @scr.resize(width, height)
     end
 
     def start : Nil
       raise ErrRunning if @running
+      if (!@in_tty || !@in_tty.not_nil!.tty?) && (!@out_tty || !@out_tty.not_nil!.tty?)
+        raise ErrNotTerminal
+      end
 
       if @last_state.nil?
         enter_alt_screen
@@ -331,6 +334,12 @@ module Ultraviolet
       @last_state = state
     end
 
+    def erase : Nil
+      @buf.touched = [] of LineData?
+      @scr.erase
+      clear
+    end
+
     def buffered : Int32
       @scr.buffered
     end
@@ -419,7 +428,12 @@ module Ultraviolet
       winch = @winch
       return unless winch
       winch.stop
-      @winch_stop.try &.try_send(nil)
+      if stop = @winch_stop
+        begin
+          stop.send(nil)
+        rescue Channel::ClosedError
+        end
+      end
       @winch_stop = nil
     end
 
@@ -474,9 +488,14 @@ module Ultraviolet
         begin
           reader.stream_events(@evch, stop)
         rescue ex
-          @logger.printf("terminal reader error: %s\n", ex.message) if @logger
+          if logger = @logger
+            logger.printf("terminal reader error: %s\n", ex.message)
+          end
         ensure
-          done.try_send(nil)
+          begin
+            done.send(nil)
+          rescue Channel::ClosedError
+          end
         end
       end
     end
@@ -492,7 +511,10 @@ module Ultraviolet
       return unless stop && done
 
       cancel_reader.try &.cancel
-      stop.try_send(nil)
+      begin
+        stop.send(nil)
+      rescue Channel::ClosedError
+      end
       select
       when done.receive
       when timeout(500.milliseconds)
