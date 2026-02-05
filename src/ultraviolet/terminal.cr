@@ -79,6 +79,7 @@ module Ultraviolet
       @reader_stop = nil
       @reader_done = nil
       @cancel_reader = nil
+      @owned_tty = nil.as(IO::FileDescriptor?)
       @running = false
       @size = Size.new(0, 0)
       @pixel_size = Size.new(0, 0)
@@ -180,8 +181,9 @@ module Ultraviolet
 
     def fetch_size : {Int32, Int32}
       width, height = platform_size
-      @size = Size.new(width, height)
-      {width, height}
+      size = sanitize_size(width, height)
+      @size = size
+      {size.width, size.height}
     end
 
     def size : Size
@@ -198,6 +200,15 @@ module Ultraviolet
       raise ErrRunning if @running
       if (!@in_tty || !@in_tty.not_nil!.tty?) && (!@out_tty || !@out_tty.not_nil!.tty?)
         raise ErrNotTerminal
+      end
+
+      ensure_input_tty
+      if ENV["UV_DEBUG_IO"]?
+        in_fd = @in_tty.try &.fd
+        out_fd = @out_tty.try &.fd
+        stdin_fd = STDIN.as(IO::FileDescriptor).fd
+        stdout_fd = STDOUT.as(IO::FileDescriptor).fd
+        STDERR.puts("uv: fds in=#{in_fd} out=#{out_fd} stdin=#{stdin_fd} stdout=#{stdout_fd}")
       end
 
       if @last_state.nil?
@@ -255,6 +266,7 @@ module Ultraviolet
       stop if @running
       @evch.close
       @evs.close
+      close_owned_tty
     end
 
     def wait(timeout : Time::Span? = nil) : Bool
@@ -451,7 +463,20 @@ module Ultraviolet
 
     private def send_resize_event : Nil
       if winch = @winch
-        cells, pixels = winch.window_size
+        begin
+          cells, pixels = winch.window_size
+          cells = sanitize_size(cells.width, cells.height)
+          if pixels.width <= 0 || pixels.height <= 0 || pixels.width > 10000 || pixels.height > 10000
+            pixels = Size.new(0, 0)
+          end
+        rescue
+          fallback_width, fallback_height = size_now
+          cells = Size.new(fallback_width, fallback_height)
+          pixels = Size.new(0, 0)
+        end
+        if ENV["UV_DEBUG_EVENTS"]?
+          STDERR.puts("uv: winch cells=#{cells.width}x#{cells.height} pixels=#{pixels.width}x#{pixels.height}")
+        end
         if cells != @size
           @evch.send(WindowSizeEvent.new(cells.width, cells.height))
           @size = cells
@@ -462,9 +487,9 @@ module Ultraviolet
         end
       else
         width, height = platform_size
-        size = Size.new(width, height)
+        size = sanitize_size(width, height)
         if size != @size
-          @evch.send(WindowSizeEvent.new(width, height))
+          @evch.send(WindowSizeEvent.new(size.width, size.height))
           @size = size
         end
       end
@@ -486,8 +511,10 @@ module Ultraviolet
 
       spawn do
         begin
+          STDERR.puts("uv: reader start") if ENV["UV_DEBUG_IO"]?
           reader.stream_events(@evch, stop)
         rescue ex
+          STDERR.puts("uv: reader error #{ex.class}: #{ex.message}") if ENV["UV_DEBUG_IO"]?
           if logger = @logger
             logger.printf("terminal reader error: %s\n", ex.message)
           end
@@ -527,9 +554,9 @@ module Ultraviolet
         break unless event
         case event
         when WindowSizeEvent
-          @size = event
+          @size = Size.new(event.width, event.height)
         when PixelSizeEvent
-          @pixel_size = event
+          @pixel_size = Size.new(event.width, event.height)
         end
         @evs.send(event)
       end
@@ -540,6 +567,37 @@ module Ultraviolet
       value, ok = @environ.lookup_env(key)
       return nil unless ok
       value.to_i?
+    end
+
+    private def sanitize_size(width : Int32, height : Int32) : Size
+      if width <= 0 || height <= 0 || width > 1000 || height > 1000
+        fallback_width, fallback_height = size_now
+        return Size.new(fallback_width, fallback_height)
+      end
+      Size.new(width, height)
+    end
+
+    private def ensure_input_tty : Nil
+      return if @in_tty && @in_tty.not_nil!.tty?
+      return unless @out_tty && @out_tty.not_nil!.tty?
+
+      in_tty, _ = Ultraviolet.open_tty
+      @owned_tty = in_tty
+      @in = in_tty
+      @in_tty = in_tty.as?(IO::FileDescriptor)
+      {% unless flag?(:win32) %}
+        @winch = SizeNotifier.new(@in_tty || @out_tty)
+      {% end %}
+    end
+
+    private def close_owned_tty : Nil
+      if tty = @owned_tty
+        begin
+          tty.close
+        rescue
+        end
+      end
+      @owned_tty = nil
     end
   end
 end

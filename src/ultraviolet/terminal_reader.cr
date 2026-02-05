@@ -136,13 +136,30 @@ module Ultraviolet
         break if stop && stop.closed?
         buf = Bytes.new(READ_BUF_SIZE)
         n = @reader.read(buf)
-        break if n == 0
+        if n == 0
+          STDERR.puts("uv: read eof") if ENV["UV_DEBUG_IO"]?
+          break
+        end
+        if ENV["UV_DEBUG_IO"]?
+          slice = buf[0, n]
+          hex = String.build do |io|
+            slice.each_with_index do |byte, idx|
+              io << ' ' if idx > 0
+              io << byte.to_s(16).rjust(2, '0')
+            end
+          end
+          STDERR.puts("uv: read #{n} bytes: #{hex}")
+        end
         readc.send(buf[0, n])
       end
     end
 
     private def send_events(buf : Bytes, expired : Bool, eventc : Channel(Event)) : Int32
       total, events = scan_events(buf, expired)
+      if ENV["UV_DEBUG_IO"]? && !events.empty?
+        summary = events.map { |event| "#{event.class}(#{event})" }.join(", ")
+        STDERR.puts("uv: events #{summary}")
+      end
       events.each { |event| eventc.send(event) }
       total
     end

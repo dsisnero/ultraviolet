@@ -28,6 +28,9 @@
 
           state = TtyState.new
           if LibC.tcgetattr(tty.fd, pointerof(state)) != 0
+            if ENV["UV_DEBUG_IO"]?
+              STDERR.puts("uv: tcgetattr failed fd=#{tty.fd} errno=#{Errno.value}")
+            end
             last_error = IO::Error.from_errno("tcgetattr")
             next
           end
@@ -35,6 +38,9 @@
           raw_state = state
           LibC.cfmakeraw(pointerof(raw_state))
           if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(raw_state)) != 0
+            if ENV["UV_DEBUG_IO"]?
+              STDERR.puts("uv: tcsetattr failed fd=#{tty.fd} errno=#{Errno.value}")
+            end
             last_error = IO::Error.from_errno("tcsetattr")
             next
           end
@@ -44,6 +50,7 @@
           else
             @out_tty_state = state
           end
+          STDERR.puts("uv: raw set fd=#{tty.fd}") if ENV["UV_DEBUG_IO"]?
           return
         end
 
@@ -80,7 +87,8 @@
 
         winsize = uninitialized LibC::Winsize
         if LibC.ioctl(tty.fd, TIOCGWINSZ, pointerof(winsize).as(Void*)) != 0
-          raise IO::Error.from_errno("ioctl")
+          fallback = size_now
+          return {fallback[0], fallback[1]}
         end
 
         {winsize.ws_col.to_i, winsize.ws_row.to_i}

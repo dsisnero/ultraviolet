@@ -7,7 +7,9 @@ module Ultraviolet
                       UnknownSosEvent |
                       UnknownPmEvent |
                       UnknownApcEvent |
-                      Size |
+                      WindowSizeEvent |
+                      PixelSizeEvent |
+                      CellSizeEvent |
                       Key |
                       Mouse |
                       MouseClickEvent |
@@ -168,9 +170,41 @@ module Ultraviolet
     end
   end
 
-  alias WindowSizeEvent = Size
-  alias PixelSizeEvent = Size
-  alias CellSizeEvent = Size
+  struct WindowSizeEvent
+    property width : Int32
+    property height : Int32
+
+    def initialize(@width : Int32, @height : Int32)
+    end
+
+    def bounds : Rectangle
+      Rectangle.new(Position.new(0, 0), Position.new(@width, @height))
+    end
+  end
+
+  struct PixelSizeEvent
+    property width : Int32
+    property height : Int32
+
+    def initialize(@width : Int32, @height : Int32)
+    end
+
+    def bounds : Rectangle
+      Rectangle.new(Position.new(0, 0), Position.new(@width, @height))
+    end
+  end
+
+  struct CellSizeEvent
+    property width : Int32
+    property height : Int32
+
+    def initialize(@width : Int32, @height : Int32)
+    end
+
+    def bounds : Rectangle
+      Rectangle.new(Position.new(0, 0), Position.new(@width, @height))
+    end
+  end
 
   alias KeyPressEvent = Key
   alias KeyReleaseEvent = Key

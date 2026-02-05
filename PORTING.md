@@ -25,9 +25,9 @@ Legend:
 ### Input & Events
 - [x] `ultraviolet_go/event.go` → `src/ultraviolet/event.cr`
 - [x] `ultraviolet_go/key.go` → `src/ultraviolet/key.cr`
-- [x] (partial) `ultraviolet_go/key_table.go` → `src/ultraviolet/key_table.cr`
+- [x] `ultraviolet_go/key_table.go` → `src/ultraviolet/key_table.cr`
 - [x] `ultraviolet_go/mouse.go` → `src/ultraviolet/mouse.cr`
-- [x] (partial) `ultraviolet_go/decoder.go` → `src/ultraviolet/decoder.cr`
+- [x] `ultraviolet_go/decoder.go` → `src/ultraviolet/decoder.cr`
 - [x] `github.com/charmbracelet/x/ansi` → `src/ultraviolet/ansi.cr`, `src/ultraviolet/ansi_color.cr` (parsing helpers and SGR mappings)
 
 ### Terminal Stack
@@ -48,7 +48,7 @@ Legend:
 - [x] (partial) `ultraviolet_go/winch_unix.go` → `src/ultraviolet/winch.cr`
 - [x] (partial) `ultraviolet_go/terminal_unix.go` → `src/ultraviolet/terminal_unix.cr`
 - [x] (partial) `ultraviolet_go/terminal_windows.go` → `src/ultraviolet/terminal_windows.cr`
-- [ ] `ultraviolet_go/terminal_other.go` → missing non-windows fallback parity
+- [x] (partial) `ultraviolet_go/terminal_other.go` → `src/ultraviolet/terminal.cr` (open `/dev/tty` fallback for input)
 - [x] (partial) `ultraviolet_go/poll.go` → `src/ultraviolet/poll.cr` (interface + default)
 - [x] (partial) `ultraviolet_go/poll_default.go` → `src/ultraviolet/poll.cr` (select-based reader)
 - [x] (partial) `ultraviolet_go/poll_fallback.go` → `src/ultraviolet/poll.cr` (buffered fallback)
@@ -111,5 +111,5 @@ Legend:
 - Implemented in Crystal: core primitives (buffer/cell/style/geometry), layout helpers, screen,
   renderer core (hashmap/hardscroll), ansi/colorprofile integration, cursor/window, environ/logger/utils,
   cancelreader, and basic tty/winch/terminal scaffolding.
-- Partially implemented: decoder/key_table, terminal/reader, unix/windows backends, tty/winch platform paths.
+- Partially implemented: terminal/reader, unix/windows backends, tty/winch platform paths.
 - Missing: non-windows terminal_other parity and remaining example ports.
