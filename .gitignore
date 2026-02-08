@@ -2,6 +2,8 @@
 /lib/*
 !/lib/ansi/
 !/lib/ansi/**
+!/lib/colorful/
+!/lib/colorful/**
 !/lib/mosaic/
 !/lib/mosaic/**
 /bin/
