@@ -1,5 +1,9 @@
 /docs/
-/lib/
+/lib/*
+!/lib/ansi/
+!/lib/ansi/**
+!/lib/mosaic/
+!/lib/mosaic/**
 /bin/
 /.shards/
 .crystal-cache/
