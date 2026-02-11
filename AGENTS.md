@@ -1,5 +1,7 @@
 # Agent Instructions
 
+This is a port of golang ultraviolet available as a submodule in ./ultraviolet_go.  The golang code is the source of truth for functionality both for tests and src.  If you have any implementaton questions, look to golang code.
+
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking.
