@@ -68,24 +68,41 @@ describe "Event types" do
 
   it "supports mouse event helpers" do
     mouse = Ultraviolet::Mouse.new(10, 20, Ultraviolet::MouseButton::Left)
+    modded_mouse = Ultraviolet::Mouse.new(30, 40, Ultraviolet::MouseButton::Right, Ultraviolet::ModShift)
 
     click = Ultraviolet::MouseClickEvent.new(mouse)
     click.string.should eq("left")
     click.mouse.should eq(mouse)
+    click.x.should eq(10)
+    click.y.should eq(20)
+    click.button.should eq(Ultraviolet::MouseButton::Left)
 
     release = Ultraviolet::MouseReleaseEvent.new(mouse)
     release.string.should eq("left")
     release.mouse.should eq(mouse)
+    release.x.should eq(10)
+    release.y.should eq(20)
+    release.button.should eq(Ultraviolet::MouseButton::Left)
 
     wheel = Ultraviolet::MouseWheelEvent.new(Ultraviolet::Mouse.new(10, 20, Ultraviolet::MouseButton::WheelUp))
     wheel.string.should eq("wheelup")
     wheel.mouse.button.should eq(Ultraviolet::MouseButton::WheelUp)
+    wheel.x.should eq(10)
+    wheel.y.should eq(20)
+    wheel.button.should eq(Ultraviolet::MouseButton::WheelUp)
 
     motion = Ultraviolet::MouseMotionEvent.new(mouse)
     motion.string.should eq("left+motion")
+    motion.x.should eq(10)
+    motion.y.should eq(20)
+    motion.button.should eq(Ultraviolet::MouseButton::Left)
 
     motion2 = Ultraviolet::MouseMotionEvent.new(Ultraviolet::Mouse.new(10, 20, Ultraviolet::MouseButton::None))
     motion2.string.should eq("motion")
+    motion2.button.should eq(Ultraviolet::MouseButton::None)
+
+    modded = Ultraviolet::MouseClickEvent.new(modded_mouse)
+    modded.mod.should eq(Ultraviolet::ModShift)
   end
 
   it "supports kitty enhancements flags" do
@@ -95,6 +112,8 @@ describe "Event types" do
     event.contains?(0b111).should be_true
     event.contains?(0b1000).should be_false
     event.contains?(0b1011).should be_false
+    event.supports_event_types?.should be_true
+    event.supports_event_types.should be_true
   end
 
   it "supports color event helpers" do
