@@ -313,8 +313,18 @@ module Ultraviolet
   private def self.parse_style_token(token : String) : {Int32, Array(String)}
     value = token.empty? ? "0" : token
     parts = value.split(':')
-    code = parts[0].to_i?
+    code = parse_int_token(parts[0])
     {code || 0, parts}
+  end
+
+  private def self.parse_int_token(token : String) : Int32?
+    return nil if token.empty?
+    i = 0
+    while i < token.bytesize && token.byte_at(i).unsafe_chr.ascii_number?
+      i += 1
+    end
+    return nil if i == 0
+    token[0, i].to_i?
   end
 
   private def self.apply_style_code(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32}
@@ -348,7 +358,8 @@ module Ultraviolet
   private def self.apply_style_misc(style : Style, code : Int32, parts : Array(String)) : {Style, Bool}
     case code
     when 4
-      style.underline = parts.size > 1 ? underline_from_code(parts[1].to_i) : Underline::Single
+      underline_code = parts.size > 1 ? (parse_int_token(parts[1]) || 1) : 1
+      style.underline = underline_from_code(underline_code)
       {style, true}
     when 24
       style.underline = Underline::None
@@ -453,20 +464,22 @@ module Ultraviolet
 
   private def self.read_color_parts(parts : Array(String)) : {Color?, Int32}
     return {nil, 0} if parts.size < 3
-    mode = parts[1].to_i?
+    mode = parse_int_token(parts[1])
     return {nil, 0} unless mode
 
     if mode == 2
       return {nil, 0} if parts.size < 5
-      r = parts[2].to_i
-      g = parts[3].to_i
-      b = parts[4].to_i
+      r = parse_int_token(parts[2])
+      g = parse_int_token(parts[3])
+      b = parse_int_token(parts[4])
+      return {nil, 0} unless r && g && b
       return {Color.new(r.to_u8, g.to_u8, b.to_u8), 0}
     end
 
     if mode == 5
       return {nil, 0} if parts.size < 3
-      idx = parts[2].to_i
+      idx = parse_int_token(parts[2])
+      return {nil, 0} unless idx
       return {AnsiColor.indexed(idx), 0}
     end
 
@@ -476,21 +489,23 @@ module Ultraviolet
   private def self.read_color(tokens : Array(String), start_index : Int32) : {Color?, Int32}
     return {nil, 0} if start_index >= tokens.size
 
-    mode = tokens[start_index].to_i?
+    mode = parse_int_token(tokens[start_index])
     return {nil, 0} unless mode
 
     if mode == 2
       return {nil, 0} if start_index + 3 >= tokens.size
-      r = tokens[start_index + 1].to_i
-      g = tokens[start_index + 2].to_i
-      b = tokens[start_index + 3].to_i
+      r = parse_int_token(tokens[start_index + 1])
+      g = parse_int_token(tokens[start_index + 2])
+      b = parse_int_token(tokens[start_index + 3])
+      return {nil, 0} unless r && g && b
       color = Color.new(r.to_u8, g.to_u8, b.to_u8)
       return {color, 4}
     end
 
     if mode == 5
       return {nil, 0} if start_index + 1 >= tokens.size
-      idx = tokens[start_index + 1].to_i
+      idx = parse_int_token(tokens[start_index + 1])
+      return {nil, 0} unless idx
       return {AnsiColor.indexed(idx), 2}
     end
 
