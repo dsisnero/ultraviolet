@@ -1,5 +1,5 @@
 require "uniwidth"
-require "./ansi"
+require "ansi"
 require "./buffer"
 require "./colorprofile"
 require "./tabstop"

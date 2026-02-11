@@ -15,10 +15,10 @@ development_dependencies:
 dependencies:
   colorful:
     github: dsisnero/colorful
-  lipgloss:
-    github: dsisnero/lipgloss
   mosaic:
     github: dsisnero/mosaic
+  ansi:
+    github: dsisnero/ansi
   terminfo:
     github: docelic/terminfo
   uniwidth:

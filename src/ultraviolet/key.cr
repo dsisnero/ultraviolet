@@ -170,11 +170,11 @@ module Ultraviolet
   KeyRightHyper = KeyRightSuper + 1
 
   # Common keys.
-  KeyBackspace = Ansi::BS
-  KeyTab       = Ansi::HT
-  KeyEnter     = Ansi::CR
-  KeyEscape    = Ansi::ESC
-  KeySpace     = Ansi::SP
+  KeyBackspace = Ansi::BS.to_i
+  KeyTab       = Ansi::HT.to_i
+  KeyEnter     = Ansi::CR.to_i
+  KeyEscape    = Ansi::ESC.to_i
+  KeySpace     = Ansi::SP.to_i
 
   struct Key
     property text : String

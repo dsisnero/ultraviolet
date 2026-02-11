@@ -215,6 +215,22 @@ module Ultraviolet
     def initialize(@mouse : Mouse)
     end
 
+    def x : Int32
+      @mouse.x
+    end
+
+    def y : Int32
+      @mouse.y
+    end
+
+    def button : MouseButton
+      @mouse.button
+    end
+
+    def mod : KeyMod
+      @mouse.mod
+    end
+
     def string : String
       @mouse.string
     end
@@ -224,6 +240,22 @@ module Ultraviolet
     property mouse : Mouse
 
     def initialize(@mouse : Mouse)
+    end
+
+    def x : Int32
+      @mouse.x
+    end
+
+    def y : Int32
+      @mouse.y
+    end
+
+    def button : MouseButton
+      @mouse.button
+    end
+
+    def mod : KeyMod
+      @mouse.mod
     end
 
     def string : String
@@ -237,6 +269,22 @@ module Ultraviolet
     def initialize(@mouse : Mouse)
     end
 
+    def x : Int32
+      @mouse.x
+    end
+
+    def y : Int32
+      @mouse.y
+    end
+
+    def button : MouseButton
+      @mouse.button
+    end
+
+    def mod : KeyMod
+      @mouse.mod
+    end
+
     def string : String
       @mouse.string
     end
@@ -246,6 +294,22 @@ module Ultraviolet
     property mouse : Mouse
 
     def initialize(@mouse : Mouse)
+    end
+
+    def x : Int32
+      @mouse.x
+    end
+
+    def y : Int32
+      @mouse.y
+    end
+
+    def button : MouseButton
+      @mouse.button
+    end
+
+    def mod : KeyMod
+      @mouse.mod
     end
 
     def string : String
@@ -337,6 +401,14 @@ module Ultraviolet
 
     def supports_key_releases? : Bool
       (@flags & Ansi::KittyReportEventTypes) != 0
+    end
+
+    def supports_event_types? : Bool
+      supports_key_releases?
+    end
+
+    def supports_event_types : Bool
+      supports_key_releases?
     end
 
     def supports_uniform_key_layout? : Bool

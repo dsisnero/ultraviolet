@@ -283,7 +283,7 @@ module Ultraviolet
       mode, _, ok = pa.param(0, -1)
       return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok && mode != -1
       return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size < 2
-      value, _, _ = pa.param(1, Ansi::ModeNotRecognized)
+      value, _, _ = pa.param(1, Ultraviolet::Ansi::ModeNotRecognized)
       handled_csi(i, ModeReportEvent.new(mode, value))
     end
 
@@ -736,11 +736,11 @@ module Ultraviolet
     private def osc_event_for(cmd : Int32, data : String) : Event?
       case cmd
       when 10
-        ForegroundColorEvent.new(Ansi.x_parse_color(data))
+        ForegroundColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
       when 11
-        BackgroundColorEvent.new(Ansi.x_parse_color(data))
+        BackgroundColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
       when 12
-        CursorColorEvent.new(Ansi.x_parse_color(data))
+        CursorColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
       when 52
         osc_clipboard_event(data)
       else
