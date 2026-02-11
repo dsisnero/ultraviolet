@@ -153,7 +153,7 @@ module Ultraviolet
         select
         when _ = @data_chan.receive?
           @data_chan.try_send(nil)
-          return true
+          true
         when _ = @cancel_chan.receive?
           raise PollCanceledError.new("poll canceled")
         end
@@ -161,11 +161,11 @@ module Ultraviolet
         select
         when _ = @data_chan.receive?
           @data_chan.try_send(nil)
-          return true
+          true
         when _ = @cancel_chan.receive?
           raise PollCanceledError.new("poll canceled")
         when timeout(timeout)
-          return false
+          false
         end
       end
     end

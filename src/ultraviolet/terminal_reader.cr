@@ -343,9 +343,9 @@ module Ultraviolet
 
     private def encode_grapheme_bufs : Bytes
       out = IO::Memory.new
-      @grapheme_buf.each_with_index do |buf, kd|
+      @grapheme_buf.each_with_index do |buf, kind|
         next if buf.empty?
-        if kd == 1
+        if kind == 1
           buf.each do |code|
             out << Ultraviolet.safe_char(code).to_s
           end
@@ -356,9 +356,9 @@ module Ultraviolet
           TextSegment.each_grapheme(graphemes) do |segment|
             grapheme = segment.str
             codes = [] of String
-            grapheme.each_char_with_index do |ch, idx|
-              next if ch.ord == 0
-              codes << ch.ord.to_s
+            grapheme.each_char do |char|
+              next if char.ord == 0
+              codes << char.ord.to_s
             end
             next if codes.empty?
             seq = "\e[#{buf[0]};1:3;#{codes.join(":")}u"

@@ -2,7 +2,7 @@ require "./spec_helper"
 
 module Ultraviolet
   private class BlockingReader < IO
-    getter read_called : Bool
+    getter? read_called : Bool
     getter started_chan : Channel(Nil)
     getter unblock_chan : Channel(Nil)
 
@@ -48,7 +48,7 @@ module Ultraviolet
       reader.unblock_chan.send(nil)
       done.receive
 
-      reader.read_called.should be_true
+      reader.read_called?.should be_true
     end
 
     it "reads data then errors after cancel" do

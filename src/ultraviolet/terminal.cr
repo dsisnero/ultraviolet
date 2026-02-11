@@ -198,7 +198,9 @@ module Ultraviolet
 
     def start : Nil
       raise ErrRunning if @running
-      if (!@in_tty || !@in_tty.not_nil!.tty?) && (!@out_tty || !@out_tty.not_nil!.tty?)
+      in_tty = @in_tty
+      out_tty = @out_tty
+      if (!in_tty || !in_tty.tty?) && (!out_tty || !out_tty.tty?)
         raise ErrNotTerminal
       end
 
@@ -463,35 +465,46 @@ module Ultraviolet
 
     private def send_resize_event : Nil
       if winch = @winch
-        begin
-          cells, pixels = winch.window_size
-          cells = sanitize_size(cells.width, cells.height)
-          if pixels.width <= 0 || pixels.height <= 0 || pixels.width > 10000 || pixels.height > 10000
-            pixels = Size.new(0, 0)
-          end
-        rescue
-          fallback_width, fallback_height = size_now
-          cells = Size.new(fallback_width, fallback_height)
-          pixels = Size.new(0, 0)
-        end
-        if ENV["UV_DEBUG_EVENTS"]?
-          STDERR.puts("uv: winch cells=#{cells.width}x#{cells.height} pixels=#{pixels.width}x#{pixels.height}")
-        end
-        if cells != @size
-          @evch.send(WindowSizeEvent.new(cells.width, cells.height))
-          @size = cells
-        end
-        if pixels.width > 0 && pixels.height > 0 && pixels != @pixel_size
-          @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
-          @pixel_size = pixels
-        end
-      else
-        width, height = platform_size
-        size = sanitize_size(width, height)
-        if size != @size
-          @evch.send(WindowSizeEvent.new(size.width, size.height))
-          @size = size
-        end
+        cells, pixels = window_sizes_from_winch(winch)
+        debug_resize_event(cells, pixels)
+        apply_resize_updates(cells, pixels)
+        return
+      end
+
+      width, height = platform_size
+      size = sanitize_size(width, height)
+      if size != @size
+        @evch.send(WindowSizeEvent.new(size.width, size.height))
+        @size = size
+      end
+    end
+
+    private def window_sizes_from_winch(winch : SizeNotifier) : {Size, Size}
+      cells, pixels = winch.window_size
+      {sanitize_size(cells.width, cells.height), sanitize_pixel_size(pixels)}
+    rescue
+      fallback_width, fallback_height = size_now
+      {Size.new(fallback_width, fallback_height), Size.new(0, 0)}
+    end
+
+    private def sanitize_pixel_size(pixels : Size) : Size
+      return pixels if pixels.width > 0 && pixels.height > 0 && pixels.width <= 10000 && pixels.height <= 10000
+      Size.new(0, 0)
+    end
+
+    private def debug_resize_event(cells : Size, pixels : Size) : Nil
+      return unless ENV["UV_DEBUG_EVENTS"]?
+      STDERR.puts("uv: winch cells=#{cells.width}x#{cells.height} pixels=#{pixels.width}x#{pixels.height}")
+    end
+
+    private def apply_resize_updates(cells : Size, pixels : Size) : Nil
+      if cells != @size
+        @evch.send(WindowSizeEvent.new(cells.width, cells.height))
+        @size = cells
+      end
+      if pixels.width > 0 && pixels.height > 0 && pixels != @pixel_size
+        @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
+        @pixel_size = pixels
       end
     end
 
@@ -578,8 +591,11 @@ module Ultraviolet
     end
 
     private def ensure_input_tty : Nil
-      return if @in_tty && @in_tty.not_nil!.tty?
-      return unless @out_tty && @out_tty.not_nil!.tty?
+      in_tty = @in_tty
+      return if in_tty && in_tty.tty?
+
+      out_tty = @out_tty
+      return unless out_tty && out_tty.tty?
 
       in_tty, _ = Ultraviolet.open_tty
       @owned_tty = in_tty

@@ -146,6 +146,24 @@ module Ultraviolet
 
     struct BasicColor
       getter value : UInt8
+      RGB_VALUES = [
+        {0x00_u8, 0x00_u8, 0x00_u8}, # Black
+        {0x80_u8, 0x00_u8, 0x00_u8}, # Red
+        {0x00_u8, 0x80_u8, 0x00_u8}, # Green
+        {0x80_u8, 0x80_u8, 0x00_u8}, # Yellow
+        {0x00_u8, 0x00_u8, 0x80_u8}, # Blue
+        {0x80_u8, 0x00_u8, 0x80_u8}, # Magenta
+        {0x00_u8, 0x80_u8, 0x80_u8}, # Cyan
+        {0xc0_u8, 0xc0_u8, 0xc0_u8}, # White
+        {0x80_u8, 0x80_u8, 0x80_u8}, # BrightBlack
+        {0xff_u8, 0x00_u8, 0x00_u8}, # BrightRed
+        {0x00_u8, 0xff_u8, 0x00_u8}, # BrightGreen
+        {0xff_u8, 0xff_u8, 0x00_u8}, # BrightYellow
+        {0x00_u8, 0x00_u8, 0xff_u8}, # BrightBlue
+        {0xff_u8, 0x00_u8, 0xff_u8}, # BrightMagenta
+        {0x00_u8, 0xff_u8, 0xff_u8}, # BrightCyan
+        {0xff_u8, 0xff_u8, 0xff_u8}, # BrightWhite
+      ]
 
       def initialize(@value : UInt8)
       end
@@ -155,25 +173,8 @@ module Ultraviolet
       end
 
       def to_color : Color
-        case @value
-        when  0 then Color.new(0x00_u8, 0x00_u8, 0x00_u8) # Black
-        when  1 then Color.new(0x80_u8, 0x00_u8, 0x00_u8) # Red
-        when  2 then Color.new(0x00_u8, 0x80_u8, 0x00_u8) # Green
-        when  3 then Color.new(0x80_u8, 0x80_u8, 0x00_u8) # Yellow
-        when  4 then Color.new(0x00_u8, 0x00_u8, 0x80_u8) # Blue
-        when  5 then Color.new(0x80_u8, 0x00_u8, 0x80_u8) # Magenta
-        when  6 then Color.new(0x00_u8, 0x80_u8, 0x80_u8) # Cyan
-        when  7 then Color.new(0xc0_u8, 0xc0_u8, 0xc0_u8) # White
-        when  8 then Color.new(0x80_u8, 0x80_u8, 0x80_u8) # BrightBlack
-        when  9 then Color.new(0xff_u8, 0x00_u8, 0x00_u8) # BrightRed
-        when 10 then Color.new(0x00_u8, 0xff_u8, 0x00_u8) # BrightGreen
-        when 11 then Color.new(0xff_u8, 0xff_u8, 0x00_u8) # BrightYellow
-        when 12 then Color.new(0x00_u8, 0x00_u8, 0xff_u8) # BrightBlue
-        when 13 then Color.new(0xff_u8, 0x00_u8, 0xff_u8) # BrightMagenta
-        when 14 then Color.new(0x00_u8, 0xff_u8, 0xff_u8) # BrightCyan
-        when 15 then Color.new(0xff_u8, 0xff_u8, 0xff_u8) # BrightWhite
-        else         Color.new(0x00_u8, 0x00_u8, 0x00_u8)
-        end
+        r, g, b = RGB_VALUES[@value]? || RGB_VALUES[0]
+        Color.new(r, g, b)
       end
     end
 
@@ -196,9 +197,12 @@ module Ultraviolet
 
     alias Mode = ANSIMode | DECMode
 
+    # ameba:disable Naming/AccessorMethodName
     def self.set_mode(*modes : Mode) : String
       set_mode(false, modes.to_a)
     end
+
+    # ameba:enable Naming/AccessorMethodName
 
     def self.sm(*modes : Mode) : String
       set_mode(*modes)
