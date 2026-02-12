@@ -171,7 +171,7 @@ module Ultraviolet
 
     def enter_alt_screen : Nil
       save_cursor
-      @buf << "\e[?1049h"
+      @buf << Ansi::SetModeAltScreenSaveCursor
       self.fullscreen = true
       self.relative_cursor = false
       erase
@@ -181,7 +181,7 @@ module Ultraviolet
       erase
       self.relative_cursor = true
       self.fullscreen = false
-      @buf << "\e[?1049l"
+      @buf << Ansi::ResetModeAltScreenSaveCursor
       restore_cursor
     end
 
@@ -334,7 +334,6 @@ module Ultraviolet
         end
         unless @cur.cell.link.empty?
           @buf << Ansi.reset_hyperlink
-          @cur.cell = Cell.new(@cur.cell.content, @cur.cell.width, @cur.cell.style, Link.new)
         end
         return
       end
