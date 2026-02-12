@@ -29,6 +29,28 @@
     ENABLE_WINDOW_INPUT           = 0x0008_u32
     ENABLE_EXTENDED_FLAGS         = 0x0080_u32
 
+    # File and wait constants
+    GENERIC_READ         = 0x80000000_u32
+    GENERIC_WRITE        = 0x40000000_u32
+    FILE_SHARE_READ      = 0x00000001_u32
+    FILE_SHARE_WRITE     = 0x00000002_u32
+    FILE_SHARE_DELETE    = 0x00000004_u32
+    OPEN_EXISTING        =          3_u32
+    FILE_FLAG_OVERLAPPED = 0x40000000_u32
+    INFINITE             = 0xFFFFFFFF_u32
+    WAIT_OBJECT_0        =          0_u32
+    WAIT_ABANDONED       = 0x00000080_u32
+    WAIT_TIMEOUT         = 0x00000102_u32
+    WAIT_FAILED          = 0xFFFFFFFF_u32
+
+    # Console mode constants
+    ENABLE_PROCESSED_INPUT = 0x0001_u32
+    ENABLE_LINE_INPUT      = 0x0002_u32
+    ENABLE_ECHO_INPUT      = 0x0004_u32
+    ENABLE_MOUSE_INPUT     = 0x0010_u32
+    ENABLE_INSERT_MODE     = 0x0020_u32
+    ENABLE_QUICK_EDIT_MODE = 0x0040_u32
+
     # Input event types
     KEY_EVENT                = 0x0001_u16
     MOUSE_EVENT              = 0x0002_u16
@@ -114,6 +136,11 @@
     fun FlushConsoleInputBuffer(hConsoleInput : HANDLE) : BOOL
     fun PeekConsoleInputW(hConsoleInput : HANDLE, lpBuffer : InputRecord*, nLength : DWORD, lpNumberOfEventsRead : DWORD*) : BOOL
     fun ReadConsoleInputW(hConsoleInput : HANDLE, lpBuffer : InputRecord*, nLength : DWORD, lpNumberOfEventsRead : DWORD*) : BOOL
+    fun CreateFileW(lpFileName : UInt16*, dwDesiredAccess : DWORD, dwShareMode : DWORD, lpSecurityAttributes : Void*, dwCreationDisposition : DWORD, dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
+    fun CreateEventW(lpEventAttributes : Void*, bManualReset : BOOL, bInitialState : BOOL, lpName : UInt16*) : HANDLE
+    fun SetEvent(hEvent : HANDLE) : BOOL
+    fun WaitForMultipleObjects(nCount : DWORD, lpHandles : HANDLE*, bWaitAll : BOOL, dwMilliseconds : DWORD) : DWORD
+    fun GetOverlappedResult(hFile : HANDLE, lpOverlapped : Void*, lpNumberOfBytesTransferred : DWORD*, bWait : BOOL) : BOOL
   end
 
   module Ultraviolet
