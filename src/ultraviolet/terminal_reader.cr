@@ -21,6 +21,12 @@ module Ultraviolet
     @utf16_half : Array(Bool)
     @utf16_buf : Array(Array(Int32))
     @grapheme_buf : Array(Array(Int32))
+    {% if flag?(:win32) %}
+      @vt_input : Bool = false
+      @last_mouse_btns : UInt32 = 0_u32
+      @last_winsize_x : Int32 = 0
+      @last_winsize_y : Int32 = 0
+    {% end %}
 
     def initialize(reader : IO, term_type : String, legacy : LegacyKeyEncoding = LegacyKeyEncoding.new, use_terminfo : Bool = false)
       super(legacy, use_terminfo)
