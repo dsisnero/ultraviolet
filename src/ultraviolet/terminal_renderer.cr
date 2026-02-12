@@ -512,7 +512,7 @@ module Ultraviolet
       @cur.cell
     end
 
-    def insert_cells(newbuf : RenderBuffer, line : Line, count : Int32) : Nil
+    def insert_cells(newbuf : RenderBuffer, cells : Array(Cell), count : Int32) : Nil
       supports_ich = (@caps & Capabilities::ICH) == Capabilities::ICH
       if supports_ich
         @buf << Ansi.insert_character(count)
@@ -523,7 +523,7 @@ module Ultraviolet
       i = 0
       remaining = count
       while remaining > 0
-        put_attr_cell(newbuf, line.at(i))
+        put_attr_cell(newbuf, cells[i])
         i += 1
         remaining -= 1
       end
@@ -681,7 +681,7 @@ module Ultraviolet
           if (@caps & Capabilities::ICH) == Capabilities::ICH && (n_last < n_last_non_blank || ich_cost > (m - n))
             put_range(newbuf, old_line, new_line, y, n + 1, m)
           else
-            insert_cells(newbuf, new_line, n_last - o_last)
+            insert_cells(newbuf, new_line.cells[(n + 1)...], n_last - o_last)
           end
         elsif o_last > n_last
           move(newbuf, n + 1, y)
