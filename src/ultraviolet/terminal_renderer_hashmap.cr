@@ -20,6 +20,9 @@ module Ultraviolet
 
   class TerminalRenderer
     private def hash_line(line : Line) : UInt64
+      # Note: Go uses hash/maphash with random per-instance seeding.
+      # Crystal uses FNV-1a (64-bit) for simplicity and good distribution.
+      # Both are non-cryptographic hash functions suitable for line comparison.
       hash = 1469598103934665603_u64
       line.cells.each do |cell|
         cell.content.each_byte do |byte|

@@ -676,6 +676,10 @@ module Ultraviolet
             end
           end
 
+          # TODO: This can sometimes send unnecessary cursor movements with
+          # negative or zero ranges. This could happen on a screen resize
+          # where o_last < n_last and o_last is -1 or less.
+          # Investigate and fix.
           move(newbuf, n + 1, y)
           ich_cost = 3 + n_last - o_last
           if (@caps & Capabilities::ICH) == Capabilities::ICH && (n_last < n_last_non_blank || ich_cost > (m - n))
