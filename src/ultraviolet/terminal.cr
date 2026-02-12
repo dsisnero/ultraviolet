@@ -316,6 +316,10 @@ module Ultraviolet
       @scr.write_string(value)
     end
 
+    def flush : Nil
+      @scr.flush
+    end
+
     def display : Nil
       state = @state
       if last = @last_state
