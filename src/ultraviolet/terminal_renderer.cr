@@ -84,7 +84,7 @@ module Ultraviolet
     getter cur : CursorState
 
     def initialize(@writer : IO, env : Array(String) = [] of String)
-      @profile = detect_color_profile(env)
+      @profile = ColorProfile.detect(@writer, env)
       @buf = IO::Memory.new
       @term = Environ.new(env).getenv("TERM")
       @caps = xterm_caps(@term)
@@ -962,15 +962,6 @@ module Ultraviolet
 
     def move_to(x : Int32, y : Int32) : Nil
       move(nil, x, y)
-    end
-
-    private def detect_color_profile(env : Array(String)) : ColorProfile
-      term = Environ.new(env).getenv("TERM")
-      colorterm = Environ.new(env).getenv("COLORTERM")
-      return ColorProfile::TrueColor if colorterm == "truecolor"
-      return ColorProfile::ANSI256 if term.includes?("256color")
-      return ColorProfile::ANSI if term.empty? == false
-      ColorProfile::TrueColor
     end
 
     private def can_clear_with(cell : Cell?) : Bool

@@ -16,7 +16,7 @@ module Ultraviolet
     @table : Hash(String, Key)
     @term : String
     @lookup : Bool
-    @paste : String?
+    @paste : Bytes?
     @logger : Logger?
     @utf16_half : Array(Bool)
     @utf16_buf : Array(Array(Int32))
@@ -186,25 +186,25 @@ module Ultraviolet
 
         if paste = @paste
           if event.is_a?(PasteEndEvent)
-            events << PasteEvent.new(paste)
+            events << PasteEvent.new(decode_paste_bytes(paste))
             @paste = nil
           else
             if event.is_a?(Key)
               key = event.as(Key)
               if !key.text.empty?
-                @paste = paste + key.text
+                @paste = append_bytes(paste, key.text.to_slice)
               else
-                seq = String.new(buf[0, n])
-                is_win32 = seq.starts_with?("\e[") && seq.ends_with?("_")
+                seq_bytes = buf[0, n]
+                is_win32 = seq_bytes.size >= 3 && seq_bytes[0] == Ansi::ESC && seq_bytes[1] == '['.ord && seq_bytes[seq_bytes.size - 1] == '_'.ord
                 if is_win32 && key.code == KeyEnter && key.code == key.base_code
-                  @paste = paste + "\n"
+                  @paste = append_bytes(paste, "\n".to_slice)
                 elsif is_win32 && key.code == key.base_code && control_char?(key.code)
-                  @paste = paste + Ultraviolet.safe_char(key.code).to_s
+                  @paste = append_bytes(paste, Bytes.new(1, Ultraviolet.safe_char(key.code).ord.to_u8))
                 elsif !is_win32
                   if esc && n <= 2 && !expired
                     return {total, events}
                   end
-                  @paste = paste + seq
+                  @paste = append_bytes(paste, seq_bytes)
                 end
               end
             elsif !expired && event.is_a?(UnknownEvent)
@@ -217,6 +217,8 @@ module Ultraviolet
         end
 
         case event
+        when String
+          # ignore this event
         when UnknownEvent
           return {total, events} unless expired
           if key = @table[String.new(buf[0, n])]?
@@ -225,9 +227,14 @@ module Ultraviolet
           end
           events << event
         when PasteStartEvent
-          @paste = ""
+          @paste = Bytes.new(0)
         when PasteEndEvent
-          events << PasteEvent.new
+          if paste = @paste
+            events << PasteEvent.new(decode_paste_bytes(paste))
+          else
+            events << PasteEvent.new("")
+          end
+          @paste = nil
         else
           if event
             if esc && n <= 2 && !expired
@@ -252,6 +259,12 @@ module Ultraviolet
 
     private def control_char?(code : Int32) : Bool
       (code >= 0 && code < 0x20) || code == 0x7f
+    end
+
+    private def decode_paste_bytes(paste_bytes : Bytes) : String
+      return "" if paste_bytes.empty?
+      str = String.new(paste_bytes, "UTF-8", invalid: :replace)
+      str.gsub('\uFFFD', "")
     end
 
     private def append_bytes(buffer : Bytes, data : Bytes) : Bytes

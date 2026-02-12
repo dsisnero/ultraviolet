@@ -65,7 +65,8 @@ module Ultraviolet
       @scr = TerminalRenderer.new(@out, env)
       @buf = RenderBuffer.new(0, 0)
       @method = DEFAULT_WIDTH_METHOD
-      @profile = ColorProfile::TrueColor
+      @profile = ColorProfile.detect(@out, env)
+      @scr.color_profile = @profile
       @use_tabs = false
       @use_bspace = false
       @state = TerminalState.new

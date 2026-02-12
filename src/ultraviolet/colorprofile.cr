@@ -5,6 +5,37 @@ module Ultraviolet
     ANSI
     Ascii
     NoTTY
+
+    def self.detect(io : IO, env : Array(String)) : ColorProfile
+      # Check if output is a TTY
+      tty = io.is_a?(IO::FileDescriptor) && io.tty?
+      # Allow forcing TTY via environment variable for testing
+      unless tty
+        env.each do |e|
+          if e.starts_with?("TTY_FORCE=")
+            tty = true
+            break
+          end
+        end
+      end
+      if tty
+        # Use environment detection
+        env_detect(env)
+      else
+        NoTTY
+      end
+    end
+
+    def self.env_detect(env : Array(String)) : ColorProfile
+      environ = Environ.new(env)
+      colorterm = environ.getenv("COLORTERM")
+      term = environ.getenv("TERM")
+      return TrueColor if colorterm == "truecolor"
+      return ANSI256 if term.includes?("256color")
+      return ANSI if !term.empty?
+      # Default to TrueColor if we can't determine
+      TrueColor
+    end
   end
 
   module ColorProfileUtil
