@@ -695,6 +695,12 @@ module Ultraviolet
     lines.join("\n")
   end
 
+  # TODO: This is needed to handle empty lines correctly when scroll
+  # optimizations are enabled. Instead, a nil check should be equivalent to
+  # checking for an [EmptyCell], should it?
+  # Investigate why when we assign the pointers to &[EmptyCell], this causes
+  # scroll optimization related artifacts where excess lines are left behind
+  # in empty lines after scrolling.
   def self.cell_equal?(a : Cell?, b : Cell?) : Bool
     return true if a == b
     return false if a.nil? || b.nil?

@@ -188,6 +188,9 @@ module Ultraviolet
     def prepend_string(newbuf : RenderBuffer, value : String) : Nil
       return if value.empty?
 
+      # TODO: Use scrolling region if available.
+      # TODO: Use [Screen.Write] [io.Writer] interface.
+
       width = newbuf.width
       height = newbuf.height
       move(newbuf, 0, height - 1)
@@ -257,6 +260,20 @@ module Ultraviolet
         @buf << "\r"
         @at_phantom = false
       end
+
+      # TODO: Investigate if we need to handle this case and/or if we need the
+      # following code.
+      #
+      # if width > 0 && @cur.x >= width
+      #   l := (@cur.x + 1) // width
+      #
+      #   @cur.y += l
+      #   if height > 0 && @cur.y >= height
+      #     l -= @cur.y - height - 1
+      #   end
+      #
+      #   if l > 0
+      #     @cur.x = 0
 
       if height > 0
         @cur.y = height - 1 if @cur.y > height - 1
@@ -873,6 +890,17 @@ module Ultraviolet
         @newhash.clear
       end
 
+      # TODO: Investigate whether this is necessary. Theoretically, terminals
+      # can add/remove tab stops and we should be able to handle that. We could
+      # use [ansi.DECTABSR] to read the tab stops, but that's not implemented in
+      # most terminals :/
+      # // Are we using hard tabs? If so, ensure tabs are using the
+      # // default interval using [ansi.DECST8C].
+      # if s.opts.HardTabs && !s.initTabs {
+      #   s.buf.WriteString(ansi.SetTabEvery8Columns)
+      #   s.initTabs = true
+      # }
+
       partial_clear = !fullscreen? && @cur.x != -1 && @cur.y != -1 &&
                       cur_width == new_width && cur_height > 0 && cur_height > new_height
 
@@ -885,6 +913,9 @@ module Ultraviolet
         @clear = false
       elsif touched_lines > 0
         if (@flags & TerminalFlags::ScrollOptim) == TerminalFlags::ScrollOptim && fullscreen?
+          # Optimize scrolling for the alternate screen buffer.
+          # TODO: Should we optimize for inline mode as well? If so, we need
+          # to know the actual cursor position to use [ansi.DECSTBM].
           scroll_optimize(newbuf)
         end
 
@@ -1026,6 +1057,7 @@ module Ultraviolet
           cuu = Ansi.cursor_up(n)
           yseq = cuu if yseq.empty? || cuu.bytesize < yseq.bytesize
           if n == 1 && fy - 1 > 0
+            # TODO: Ensure we're not unintentionally scrolling the screen up.
             yseq = Ansi.reverse_index
           end
         end
@@ -1055,8 +1087,16 @@ module Ultraviolet
             end
 
             if tabs_count > 0
+              # TODO: The linux console and some terminals such as
+              # Alacritty don't support [ansi.CHT]. Enable this when
+              # we have a way to detect this, or after 5 years when
+              # we're sure everyone has updated their terminals :P
+              # if (@caps & Capabilities::CHT) == Capabilities::CHT
+              #   seq << Ansi.cursor_horizontal_forward_tab(tabs_count)
+              # else
               tab = "\t" * tabs_count
               seq << tab
+              # end
               n = tx - col
               fx = col
             end
