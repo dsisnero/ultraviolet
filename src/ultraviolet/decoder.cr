@@ -1205,12 +1205,12 @@ module Ultraviolet
 
     private def parse_x10_mouse_event(buf : Bytes) : Event
       v = buf[3, 3]
-      b = v[0]
+      b = v[0].to_i
       b = b - 32 if b >= 32
 
       mod, btn, is_release, is_motion = parse_mouse_button(b)
-      x = v[1] - 32 - 1
-      y = v[2] - 32 - 1
+      x = v[1].to_i - 32 - 1
+      y = v[2].to_i - 32 - 1
 
       mouse = Mouse.new(x, y, btn, mod)
       return MouseWheelEvent.new(mouse) if wheel?(btn)
@@ -1456,6 +1456,28 @@ module Ultraviolet
       base_code = rune_value
       code = rune_value
       text = ""
+
+      # Match Go's win32 key decoding for common virtual key codes.
+      case vkc
+      when 0x08_u16 # VK_BACK
+        base_code = KeyBackspace
+        code = KeyBackspace
+      when 0x09_u16 # VK_TAB
+        base_code = KeyTab
+        code = KeyTab
+      when 0x0D_u16 # VK_RETURN
+        base_code = KeyEnter
+        code = KeyEnter
+      when 0x1B_u16 # VK_ESCAPE
+        base_code = KeyEscape
+        code = KeyEscape
+      when 0x20_u16 # VK_SPACE
+        base_code = KeySpace
+        code = KeySpace
+      when 0x70_u16..0x87_u16 # VK_F1..VK_F24
+        base_code = KeyF1 + (vkc.to_i - 0x70)
+        code = base_code
+      end
 
       if Ultraviolet.printable_char?(code)
         text = Ultraviolet.safe_char(code).to_s

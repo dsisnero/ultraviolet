@@ -170,6 +170,7 @@ module Ultraviolet
       total
     end
 
+    # TODO: Ensure behavior matches Go's scanEvents (logging, control char detection, etc.)
     # ameba:disable Metrics/CyclomaticComplexity
     private def scan_events(buf : Bytes, expired : Bool) : {Int32, Array(Event)}
       return {0, [] of Event} if buf.empty?
@@ -192,8 +193,7 @@ module Ultraviolet
 
         if paste = @paste
           if event.is_a?(PasteEndEvent)
-            events << PasteEvent.new(decode_paste_bytes(paste))
-            @paste = nil
+            # fall through to case statement
           else
             if event.is_a?(Key)
               key = event.as(Key)
@@ -216,10 +216,10 @@ module Ultraviolet
             elsif !expired && event.is_a?(UnknownEvent)
               return {total, events}
             end
+            buf = buf[n, buf.size - n]
+            total += n
+            next
           end
-          buf = buf[n, buf.size - n]
-          total += n
-          next
         end
 
         case event
@@ -234,6 +234,7 @@ module Ultraviolet
           events << event
         when PasteStartEvent
           @paste = Bytes.new(0)
+          events << event
         when PasteEndEvent
           if paste = @paste
             events << PasteEvent.new(decode_paste_bytes(paste))
@@ -241,6 +242,7 @@ module Ultraviolet
             events << PasteEvent.new("")
           end
           @paste = nil
+          events << event
         else
           if event
             if esc && n <= 2 && !expired
@@ -264,13 +266,18 @@ module Ultraviolet
     # ameba:enable Metrics/CyclomaticComplexity
 
     private def control_char?(code : Int32) : Bool
-      (code >= 0 && code < 0x20) || code == 0x7f
+      return false if code < 0 || code > 0x10FFFF
+      return false if code >= 0xD800 && code <= 0xDFFF # surrogates
+      begin
+        code.chr.control?
+      rescue
+        false
+      end
     end
 
     private def decode_paste_bytes(paste_bytes : Bytes) : String
       return "" if paste_bytes.empty?
-      str = String.new(paste_bytes, "UTF-8", invalid: :replace)
-      str.gsub('\uFFFD', "")
+      String.new(paste_bytes, "UTF-8", invalid: :skip)
     end
 
     private def append_bytes(buffer : Bytes, data : Bytes) : Bytes
@@ -281,6 +288,7 @@ module Ultraviolet
       combined
     end
 
+    # TODO: Compare with Go's deserializeWin32Input (uses ansi.DecodeSequence)
     private def deserialize_win32_input(buf : Bytes) : {Int32, Bytes}
       processed = 0
       out = IO::Memory.new
@@ -360,6 +368,7 @@ module Ultraviolet
       {0, [] of Int32}
     end
 
+    # TODO: Verify grapheme encoding matches Go's encodeGraphemeBufs (kitty keyboard sequences)
     private def encode_grapheme_bufs : Bytes
       out = IO::Memory.new
       @grapheme_buf.each_with_index do |buf, kind|
@@ -375,12 +384,14 @@ module Ultraviolet
           TextSegment.each_grapheme(graphemes) do |segment|
             grapheme = segment.str
             codes = [] of String
-            grapheme.each_char do |char|
+            first_code = 0
+            grapheme.each_char_with_index do |char, idx|
               next if char.ord == 0
               codes << char.ord.to_s
+              first_code = char.ord if idx == 0
             end
             next if codes.empty?
-            seq = "\e[#{buf[0]};1:3;#{codes.join(":")}u"
+            seq = "\e[#{first_code};1:3;#{codes.join(":")}u"
             out << seq
           end
         end

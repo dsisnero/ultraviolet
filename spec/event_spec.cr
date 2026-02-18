@@ -105,6 +105,34 @@ describe "Event types" do
     modded.mod.should eq(Ultraviolet::ModShift)
   end
 
+  it "matches TestMouseEvent_String from Go" do
+    tests = [
+      {name: "unknown", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton.new(0xff))), expected: "unknown"},
+      {name: "left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left)), expected: "left"},
+      {name: "right", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Right)), expected: "right"},
+      {name: "middle", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Middle)), expected: "middle"},
+      {name: "release", event: Ultraviolet::MouseReleaseEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::None)), expected: ""},
+      {name: "wheelup", event: Ultraviolet::MouseWheelEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::WheelUp)), expected: "wheelup"},
+      {name: "wheeldown", event: Ultraviolet::MouseWheelEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::WheelDown)), expected: "wheeldown"},
+      {name: "wheelleft", event: Ultraviolet::MouseWheelEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::WheelLeft)), expected: "wheelleft"},
+      {name: "wheelright", event: Ultraviolet::MouseWheelEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::WheelRight)), expected: "wheelright"},
+      {name: "motion", event: Ultraviolet::MouseMotionEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::None)), expected: "motion"},
+      {name: "shift+left release", event: Ultraviolet::MouseReleaseEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModShift)), expected: "shift+left"},
+      {name: "shift+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModShift)), expected: "shift+left"},
+      {name: "ctrl+shift+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModCtrl | Ultraviolet::ModShift)), expected: "ctrl+shift+left"},
+      {name: "alt+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModAlt)), expected: "alt+left"},
+      {name: "ctrl+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModCtrl)), expected: "ctrl+left"},
+      {name: "ctrl+alt+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModAlt | Ultraviolet::ModCtrl)), expected: "ctrl+alt+left"},
+      {name: "ctrl+alt+shift+left", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton::Left, mod: Ultraviolet::ModAlt | Ultraviolet::ModCtrl | Ultraviolet::ModShift)), expected: "ctrl+alt+shift+left"},
+      {name: "ignore coordinates", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(x: 100, y: 200, button: Ultraviolet::MouseButton::Left)), expected: "left"},
+      {name: "broken type", event: Ultraviolet::MouseClickEvent.new(Ultraviolet::Mouse.new(button: Ultraviolet::MouseButton.new(120))), expected: "unknown"},
+    ]
+
+    tests.each do |test_case|
+      test_case[:event].string.should eq(test_case[:expected]), test_case[:name]
+    end
+  end
+
   it "supports kitty enhancements flags" do
     event = Ultraviolet::KeyboardEnhancementsEvent.new(0b111)
     event.contains?(0b001).should be_true
