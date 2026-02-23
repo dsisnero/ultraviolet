@@ -21,11 +21,11 @@
 ## tabstop.go
 
 ## terminal.go
-- `state`
-- `func DefaultTerminal`
-- `func NewTerminal`
-- `(t *Terminal) ColorProfile`
-- `(t *Terminal) SetColorProfile`
+
+
+
+
+
 - `(t *Terminal) ColorModel`
 - `(t *Terminal) Convert`
 - `(t *Terminal) SetCell`

@@ -7,8 +7,8 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 45 / 51 (88.2%)
-- **Methods/Functions**: 339 / 470 (72.1%)
+- **Structs**: 46 / 51 (90.2%)
+- **Methods/Functions**: 343 / 470 (72.9%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -870,14 +870,14 @@ Methods:
 
 #### Structs
 - [x] `Terminal` (line 49)
-- [ ] `state` (line 92)
+- [x] `state` (line 92)
 
 #### Methods/Functions
-- [ ] `func DefaultTerminal` (line 100)
-- [ ] `func NewTerminal` (line 106)
+- [x] `func DefaultTerminal` (line 100)
+- [x] `func NewTerminal` (line 106)
 - [x] `(t *Terminal) SetLogger` (line 156)
-- [ ] `(t *Terminal) ColorProfile` (line 161)
-- [ ] `(t *Terminal) SetColorProfile` (line 168)
+- [x] `(t *Terminal) ColorProfile` (line 161)
+- [x] `(t *Terminal) SetColorProfile` (line 168)
 - [ ] `(t *Terminal) ColorModel` (line 173)
 - [x] `(t *Terminal) SetWidthMethod` (line 181)
 - [x] `(t *Terminal) WidthMethod` (line 188)
