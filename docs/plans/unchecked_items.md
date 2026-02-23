@@ -12,10 +12,8 @@
 
 
 ## poll_linux.go
-- `epollReader`
 
-## poll_select.go
-- `selectReader`
+
 
 ## poll_windows.go
 - `conReader`

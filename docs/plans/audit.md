@@ -7,7 +7,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 42 / 51 (82.4%)
+- **Structs**: 44 / 51 (86.3%)
 - **Methods/Functions**: 337 / 470 (71.7%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
@@ -35,174 +35,16 @@ This document tracks the porting status of each Go file, struct, and method to C
 - [x] `func borderCell` (line 224)
 
 #### Crystal Equivalents
-Crystal file: `src/ultraviolet/border.cr`
+Crystal file: `src/ultraviolet/poll.cr`
 Structs/Classes:
-- `Side`
-- `Border`
+- `SelectReader`
 Methods:
 - `initialize`
-- `initialize`
-- `style`
-- `link`
-- `draw`
-- `normal_border`
-- `rounded_border`
-- `block_border`
-- `outer_half_block_border`
-- `inner_half_block_border`
-- `thick_border`
-- `double_border`
-- `hidden_border`
-- `markdown_border`
-- `ascii_border`
-- `border_cell`
+- `read`
+- `poll`
+- `cancel`
+- `close`
 
----
-
-### buffer.go
-
-#### Structs
-- [x] `Buffer` (line 245)
-- [x] `ScreenBuffer` (line 597)
-- [x] `RenderBuffer` (line 643)
-
-#### Methods/Functions
-- [x] `func Pos` (line 16)
-- [x] `func Rect` (line 24)
-- [x] `func NewLine` (line 32)
-- [x] `(l Line) Set` (line 41)
-- [x] `(l Line) At` (line 105)
-- [x] `(l Line) String` (line 115)
-- [x] `(l Line) Render` (line 138)
-- [x] `func renderLine` (line 144)
-- [x] `(ls Lines) Height` (line 206)
-- [x] `(ls Lines) Width` (line 211)
-- [x] `(ls Lines) String` (line 220)
-- [x] `(ls Lines) Render` (line 233)
-- [x] `func NewBuffer` (line 254)
-- [x] `(b *Buffer) String` (line 268)
-- [x] `(b *Buffer) Render` (line 274)
-- [x] `(b *Buffer) Line` (line 280)
-- [x] `(b *Buffer) CellAt` (line 289)
-- [x] `(b *Buffer) SetCell` (line 297)
-- [x] `(b *Buffer) Height` (line 306)
-- [x] `(b *Buffer) Width` (line 311)
-- [x] `(b *Buffer) Bounds` (line 321)
-- [x] `(b *Buffer) Resize` (line 326)
-- [x] `(b *Buffer) Fill` (line 361)
-- [x] `(b *Buffer) FillArea` (line 366)
-- [x] `(b *Buffer) Clear` (line 379)
-- [x] `(b *Buffer) ClearArea` (line 385)
-- [x] `(b *Buffer) CloneArea` (line 391)
-- [x] `(b *Buffer) Clone` (line 410)
-- [x] `(b *Buffer) Draw` (line 416)
-- [x] `(b *Buffer) InsertLine` (line 450)
-- [x] `(b *Buffer) InsertLineArea` (line 458)
-- [x] `(b *Buffer) DeleteLineArea` (line 489)
-- [x] `(b *Buffer) DeleteLine` (line 519)
-- [x] `(b *Buffer) InsertCell` (line 527)
-- [x] `(b *Buffer) InsertCellArea` (line 534)
-- [x] `(b *Buffer) DeleteCell` (line 562)
-- [x] `(b *Buffer) DeleteCellArea` (line 569)
-- [x] `func NewScreenBuffer` (line 608)
-- [x] `(s ScreenBuffer) WidthMethod` (line 617)
-- [x] `func TrimSpace` (line 623)
-- [x] `func NewRenderBuffer` (line 649)
-- [x] `(b *RenderBuffer) TouchLine` (line 657)
-- [x] `(b *RenderBuffer) Touch` (line 682)
-- [x] `(b *RenderBuffer) TouchedLines` (line 687)
-- [x] `(b *RenderBuffer) SetCell` (line 702)
-- [x] `(b *RenderBuffer) InsertLine` (line 718)
-- [x] `(b *RenderBuffer) InsertLineArea` (line 726)
-- [x] `(b *RenderBuffer) DeleteLine` (line 737)
-- [x] `(b *RenderBuffer) DeleteLineArea` (line 746)
-- [x] `(b *RenderBuffer) InsertCell` (line 758)
-- [x] `(b *RenderBuffer) InsertCellArea` (line 765)
-- [x] `(b *RenderBuffer) DeleteCell` (line 777)
-- [x] `(b *RenderBuffer) DeleteCellArea` (line 784)
-
-#### Crystal Equivalents
-Crystal file: `src/ultraviolet/buffer.cr`
-Structs/Classes:
-- `LineData`
-- `Line`
-- `Lines`
-- `Buffer`
-- `RenderBuffer`
-- `ScreenBuffer`
-Methods:
-- `initialize`
-- `width`
-- `set`
-- `at`
-- `string`
-- `render`
-- `render_line`
-- `initialize`
-- `height`
-- `width`
-- `string`
-- `render`
-- `initialize`
-- `new_buffer`
-- `string`
-- `render`
-- `line`
-- `line_at`
-- `cell_at`
-- `set_cell`
-- `height`
-- `width`
-- `bounds`
-- `resize`
-- `fill`
-- `fill_area`
-- `clear`
-- `clear_area`
-- `clone_area`
-- `clone`
-- `draw`
-- `insert_line`
-- `insert_line_area`
-- `delete_line_area`
-- `delete_line`
-- `insert_cell`
-- `insert_cell_area`
-- `delete_cell`
-- `delete_cell_area`
-- `initialize`
-- `initialize`
-- `touch_line`
-- `touch`
-- `touched_lines`
-- `set_cell`
-- `insert_line`
-- `insert_line_area`
-- `delete_line`
-- `delete_line_area`
-- `insert_cell`
-- `insert_cell_area`
-- `delete_cell`
-- `delete_cell_area`
-- `initialize`
-- `width_method`
-- `new_render_buffer`
-- `new_screen_buffer`
-- `trim_space`
-- `cell_equal`
-
----
-
-### cancelreader_other.go
-
-#### Structs
-- No structs
-
-#### Methods/Functions
-- [x] `func NewCancelReader` (line 14)
-
-#### Crystal Equivalents
-No Crystal file found.
 
 ---
 
@@ -844,7 +686,7 @@ Methods:
 ### poll_linux.go
 
 #### Structs
-- [ ] `epollReader` (line 67)
+- [x] `epollReader` (line 67)
 
 #### Methods/Functions
 - [x] `func newPollReader` (line 18)
@@ -854,14 +696,24 @@ Methods:
 - [x] `(r *epollReader) Close` (line 150)
 
 #### Crystal Equivalents
-No Crystal file found.
+Crystal file: `src/ultraviolet/poll_linux.cr`
+Structs/Classes:
+- `EpollReader`
+Methods:
+- `initialize`
+- `read`
+- `poll`
+- `cancel`
+- `close`
+- `canceled?` (private)
+- `new_poll_reader` (module method override)
 
 ---
 
 ### poll_select.go
 
 #### Structs
-- [ ] `selectReader` (line 40)
+- [x] `selectReader` (line 40)
 
 #### Methods/Functions
 - [x] `func newSelectPollReader` (line 19)
