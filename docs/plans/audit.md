@@ -32,7 +32,40 @@ Methods:
 
 ---
 
+### cell.go
 
+#### Structs
+- [x] `Cell` (line 15)
+- [x] `Link` (line 91)
+- [x] `Style` (line 164)
+
+#### Methods/Functions
+- [x] `func NewCell` (line 35)
+- [x] `(c *Cell) Equal` (line 55)
+- [x] `func NewLink` (line 83)
+- [x] `(h *Link) Equal` (line 102)
+- [x] `(s *Style) Equal` (line 173)
+- [x] `(s *Style) Diff` (line 252)
+- [x] `func colorEqual` (line 410)
+- [x] `func ConvertLink` (line 454)
+
+#### Crystal Equivalents
+Crystal file: `src/ultraviolet/cell.cr`, `src/ultraviolet/style.cr`
+Structs/Classes:
+- `Cell`
+- `Link`
+- `Style`
+Methods:
+- `new_cell`
+- `==` (def_equals_and_hash)
+- `new_link`
+- `==` (def_equals_and_hash)
+- `==` (def_equals_and_hash)
+- `diff`
+- `color_equal`
+- `convert_link`
+
+---
 ### terminal_bsdly_other.go
 
 #### Structs
