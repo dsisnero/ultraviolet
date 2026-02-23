@@ -8,7 +8,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 
 - **Go files**: 50
 - **Structs**: 40 / 51 (78.4%)
-- **Methods/Functions**: 333 / 470 (70.9%)
+- **Methods/Functions**: 337 / 470 (71.7%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -449,13 +449,13 @@ Methods:
 - [x] `(k KeyReleaseEvent) Keystroke` (line 214)
 - [x] `(k KeyReleaseEvent) Key` (line 221)
 - [x] `(e MouseClickEvent) String` (line 247)
-- [ ] `(e MouseClickEvent) Mouse` (line 254)
+- [x] `(e MouseClickEvent) Mouse` (line 254)
 - [x] `(e MouseReleaseEvent) String` (line 262)
-- [ ] `(e MouseReleaseEvent) Mouse` (line 269)
+- [x] `(e MouseReleaseEvent) Mouse` (line 269)
 - [x] `(e MouseWheelEvent) String` (line 277)
-- [ ] `(e MouseWheelEvent) Mouse` (line 284)
+- [x] `(e MouseWheelEvent) Mouse` (line 284)
 - [x] `(e MouseMotionEvent) String` (line 292)
-- [ ] `(e MouseMotionEvent) Mouse` (line 303)
+- [x] `(e MouseMotionEvent) Mouse` (line 303)
 - [x] `(e PasteEvent) String` (line 339)
 - [x] `(e TerminalVersionEvent) String` (line 357)
 - [x] `(e KeyboardEnhancementsEvent) Contains` (line 398)

@@ -4,11 +4,6 @@
 
 
 
-## event.go
-- `(e MouseClickEvent) Mouse`
-- `(e MouseReleaseEvent) Mouse`
-- `(e MouseWheelEvent) Mouse`
-- `(e MouseMotionEvent) Mouse`
 
 ## layout.go
 - `func SplitVertical`
