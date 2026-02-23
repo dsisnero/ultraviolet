@@ -859,15 +859,15 @@ No Crystal file found.
 - [x] `TerminalReader` (line 31)
 
 #### Methods/Functions
-- [ ] `func NewTerminalReader` (line 93)
+- [x] `func NewTerminalReader` (line 93)
 - [x] `(d *TerminalReader) sendBytes` (line 112)
-- [ ] `(d *TerminalReader) StreamEvents` (line 130)
+- [x] `(d *TerminalReader) StreamEvents` (line 130)
 - [x] `(d *TerminalReader) SetLogger` (line 212)
-- [ ] `(d *TerminalReader) sendEvents` (line 216)
-- [ ] `(d *TerminalReader) scanEvents` (line 224)
-- [ ] `(d *TerminalReader) encodeGraphemeBufs` (line 347)
-- [ ] `(d *TerminalReader) storeGraphemeRune` (line 390)
-- [ ] `(d *TerminalReader) deserializeWin32Input` (line 411)
+- [x] `(d *TerminalReader) sendEvents` (line 216)
+- [x] `(d *TerminalReader) scanEvents` (line 224)
+- [x] `(d *TerminalReader) encodeGraphemeBufs` (line 347)
+- [x] `(d *TerminalReader) storeGraphemeRune` (line 390)
+- [x] `(d *TerminalReader) deserializeWin32Input` (line 411)
 - [x] `(d *TerminalReader) logf` (line 451)
 
 #### Crystal Equivalents
@@ -875,9 +875,16 @@ Crystal file: `src/ultraviolet/terminal_reader.cr`
 Structs/Classes:
 - `TerminalReader`
 Methods:
-- `initialize`
-- `logger`
-- `stream_events`
+- `initialize` (NewTerminalReader)
+- `logger`, `logger=`
+- `stream_events` (StreamEvents)
+- `send_bytes`
+- `send_events`
+- `scan_events`
+- `encode_grapheme_bufs`
+- `store_grapheme_rune`
+- `deserialize_win32_input`
+- `logf`
 
 ---
 

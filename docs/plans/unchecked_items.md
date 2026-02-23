@@ -37,13 +37,7 @@
 
 
 ## terminal_reader.go
-- `func NewTerminalReader`
-- `(d *TerminalReader) StreamEvents`
-- `(d *TerminalReader) sendEvents`
-- `(d *TerminalReader) scanEvents`
-- `(d *TerminalReader) encodeGraphemeBufs`
-- `(d *TerminalReader) storeGraphemeRune`
-- `(d *TerminalReader) deserializeWin32Input`
+
 
 ## terminal_reader_other.go
 - `(d *TerminalReader) streamData`
