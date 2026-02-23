@@ -7,7 +7,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 40 / 51 (78.4%)
+- **Structs**: 41 / 51 (80.4%)
 - **Methods/Functions**: 337 / 470 (71.7%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
@@ -665,17 +665,17 @@ Methods:
 - [x] `(p Percent) Apply` (line 16)
 - [x] `func Ratio` (line 28)
 - [x] `(f Fixed) Apply` (line 39)
-- [ ] `func SplitVertical` (line 53)
-- [ ] `func SplitHorizontal` (line 64)
-- [ ] `func CenterRect` (line 73)
-- [ ] `func TopLeftRect` (line 85)
-- [ ] `func TopCenterRect` (line 91)
-- [ ] `func TopRightRect` (line 99)
-- [ ] `func RightCenterRect` (line 105)
-- [ ] `func LeftCenterRect` (line 113)
-- [ ] `func BottomLeftRect` (line 121)
-- [ ] `func BottomCenterRect` (line 127)
-- [ ] `func BottomRightRect` (line 135)
+- [x] `func SplitVertical` (line 53)
+- [x] `func SplitHorizontal` (line 64)
+- [x] `func CenterRect` (line 73)
+- [x] `func TopLeftRect` (line 85)
+- [x] `func TopCenterRect` (line 91)
+- [x] `func TopRightRect` (line 99)
+- [x] `func RightCenterRect` (line 105)
+- [x] `func LeftCenterRect` (line 113)
+- [x] `func BottomLeftRect` (line 121)
+- [x] `func BottomCenterRect` (line 127)
+- [x] `func BottomRightRect` (line 135)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/layout.cr`
@@ -775,7 +775,7 @@ Methods:
 ### poll_bsd.go
 
 #### Structs
-- [ ] `kqueueReader` (line 54)
+- [x] `kqueueReader` (line 54)
 
 #### Methods/Functions
 - [x] `func newPollReader` (line 19)
@@ -785,7 +785,16 @@ Methods:
 - [x] `(r *kqueueReader) Close` (line 140)
 
 #### Crystal Equivalents
-No Crystal file found.
+Crystal file: `src/ultraviolet/poll_bsd.cr`
+Structs/Classes:
+- `KqueueReader`
+Methods:
+- `initialize`
+- `read`
+- `poll`
+- `cancel`
+- `close`
+- `new_poll_reader` (module method override)
 
 ---
 

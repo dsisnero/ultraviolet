@@ -5,21 +5,9 @@
 
 
 
-## layout.go
-- `func SplitVertical`
-- `func SplitHorizontal`
-- `func CenterRect`
-- `func TopLeftRect`
-- `func TopCenterRect`
-- `func TopRightRect`
-- `func RightCenterRect`
-- `func LeftCenterRect`
-- `func BottomLeftRect`
-- `func BottomCenterRect`
-- `func BottomRightRect`
 
-## poll_bsd.go
-- `kqueueReader`
+
+
 
 ## poll_fallback.go
 - `fallbackReader`
