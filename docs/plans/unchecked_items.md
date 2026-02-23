@@ -26,21 +26,12 @@
 
 
 
-- `(t *Terminal) ColorModel`
-- `(t *Terminal) Convert`
-- `(t *Terminal) SetCell`
-- `(t *Terminal) CellAt`
+
+
 - `func prependLine`
-- `(t *Terminal) EnterAltScreen`
-- `(t *Terminal) ShowCursor`
-- `(t *Terminal) HideCursor`
-- `(t *Terminal) SendEvent`
-- `(t *Terminal) PrependString`
-- `(t *Terminal) PrependLines`
-- `func setAltScreen`
-- `(t *Terminal) inputLoop`
-- `(t *Terminal) eventLoop`
-- `(t *Terminal) restoreState`
+
+
+
 
 ## terminal_other.go
 - `(*Terminal) makeRaw`

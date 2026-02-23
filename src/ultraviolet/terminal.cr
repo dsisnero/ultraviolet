@@ -108,6 +108,14 @@ module Ultraviolet
       @profile = profile
     end
 
+    def color_model : ColorProfile
+      @profile
+    end
+
+    def convert(color : Color) : Color
+      ColorProfileUtil.convert(@profile, color)
+    end
+
     def width_method : WidthMethod
       @method
     end
