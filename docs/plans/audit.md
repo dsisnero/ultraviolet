@@ -66,6 +66,32 @@ Methods:
 - `convert_link`
 
 ---
+
+### event.go
+
+#### Structs
+- [x] `MouseClickEvent` (line ?)
+- [x] `MouseReleaseEvent` (line ?)
+- [x] `MouseWheelEvent` (line ?)
+- [x] `MouseMotionEvent` (line ?)
+
+#### Methods/Functions
+- [x] `(e MouseClickEvent) Mouse` (line ?)
+- [x] `(e MouseReleaseEvent) Mouse` (line ?)
+- [x] `(e MouseWheelEvent) Mouse` (line ?)
+- [x] `(e MouseMotionEvent) Mouse` (line ?)
+
+#### Crystal Equivalents
+Crystal file: `src/ultraviolet/event.cr`
+Structs/Classes:
+- `MouseClickEvent`
+- `MouseReleaseEvent`
+- `MouseWheelEvent`
+- `MouseMotionEvent`
+Methods:
+- `mouse` (property)
+
+---
 ### terminal_bsdly_other.go
 
 #### Structs
