@@ -8,7 +8,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 
 - **Go files**: 50
 - **Structs**: 45 / 51 (88.2%)
-- **Methods/Functions**: 338 / 470 (71.9%)
+- **Methods/Functions**: 339 / 470 (72.1%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -845,7 +845,7 @@ Methods:
 - [x] `(ts *TabStops) Set` (line 112)
 - [x] `(ts *TabStops) Reset` (line 118)
 - [x] `(ts *TabStops) Clear` (line 124)
-- [ ] `(ts *TabStops) mask` (line 129)
+- [x] `(ts *TabStops) mask` (line 129)
 - [x] `(ts *TabStops) init` (line 134)
 
 #### Crystal Equivalents

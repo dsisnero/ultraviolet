@@ -19,7 +19,6 @@
 ## styled.go
 
 ## tabstop.go
-- `(ts *TabStops) mask`
 
 ## terminal.go
 - `state`
