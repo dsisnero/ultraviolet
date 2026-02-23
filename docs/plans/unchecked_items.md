@@ -34,10 +34,7 @@
 
 
 ## terminal_other.go
-- `(*Terminal) makeRaw`
-- `(*Terminal) getSize`
-- `(*Terminal) enableWindowsMouse`
-- `(*Terminal) disableWindowsMouse`
+
 
 ## terminal_reader.go
 - `func NewTerminalReader`
@@ -118,15 +115,9 @@
 - `(s *TerminalRenderer) updateCostBlank`
 
 ## terminal_unix.go
-- `(t *Terminal) makeRaw`
-- `(t *Terminal) getSize`
-- `(t *Terminal) optimizeMovements`
 
 ## terminal_windows.go
-- `(t *Terminal) makeRaw`
-- `(t *Terminal) getSize`
-- `(t *Terminal) optimizeMovements`
-- `func supportsBackspace`
+
 
 ## tty.go
 - `func OpenTTY`

@@ -35,192 +35,11 @@ This document tracks the porting status of each Go file, struct, and method to C
 - [x] `func borderCell` (line 224)
 
 #### Crystal Equivalents
-Crystal file: `src/ultraviolet/poll.cr`
-Structs/Classes:
-- `SelectReader`
+Crystal file: `src/ultraviolet/terminal_unix.cr` and `src/ultraviolet/terminal_windows.cr`
 Methods:
-- `initialize`
-- `read`
-- `poll`
-- `cancel`
-- `close`
+- `enable_windows_mouse`
+- `disable_windows_mouse`
 
-
----
-
-### cancelreader_windows.go
-
-#### Structs
-- [x] `conInputReader` (line 17)
-- [x] `cancelMixin` (line 122)
-
-#### Methods/Functions
-- [x] `func NewCancelReader` (line 28)
-- [x] `(r *conInputReader) Cancel` (line 71)
-- [x] `(r *conInputReader) Close` (line 78)
-- [x] `(r *conInputReader) Read` (line 90)
-- [x] `func prepareConsole` (line 103)
-- [x] `(c *cancelMixin) setCanceled` (line 127)
-- [x] `(c *cancelMixin) isCanceled` (line 134)
-
-#### Crystal Equivalents
-Crystal file: `src/ultraviolet/cancelreader_windows.cr`
-Structs/Classes:
-- `ConInputReader`
-- `CancelReader`
-- `CancelMixin` (module)
-Methods:
-- `initialize`
-- `cancel`
-- `close`
-- `read`
-- `new`
-- `prepare_console`
-
----
-
-### cell.go
-
-#### Structs
-- [x] `Cell` (line 15)
-- [x] `Link` (line 91)
-- [x] `Style` (line 164)
-
-#### Methods/Functions
-- [x] `func NewCell` (line 35)
-- [x] `(c *Cell) String` (line 50)
-- [x] `(c *Cell) Equal` (line 55)
-- [x] `(c *Cell) IsZero` (line 64)
-- [x] `(c *Cell) Clone` (line 69)
-- [x] `(c *Cell) Empty` (line 77)
-- [x] `func NewLink` (line 83)
-- [x] `(h *Link) String` (line 97)
-- [x] `(h *Link) Equal` (line 102)
-- [x] `(h *Link) IsZero` (line 107)
-- [x] `(s *Style) Equal` (line 173)
-- [x] `(s *Style) Styled` (line 182)
-- [x] `(s *Style) String` (line 190)
-- [x] `(s *Style) Diff` (line 252)
-- [x] `func StyleDiff` (line 258)
-- [x] `func colorEqual` (line 410)
-- [x] `(s *Style) IsZero` (line 423)
-- [x] `func ConvertStyle` (line 428)
-- [x] `func ConvertLink` (line 454)
-
-#### Crystal Equivalents
-Crystal file: `src/ultraviolet/cell.cr`
-Structs/Classes:
-- `Link`
-- `Cell`
-- `Style` (in `src/ultraviolet/style.cr`)
-Methods:
-- `initialize`
-- `empty`
-- `string`
-- `start_sequence`
-- `end_sequence`
-- `initialize`
-- `empty`
-- `new_cell`
-- `string`
-- `zero`
-- `clone`
-- `empty`
-- `new_link`
-- `convert_style`
-- `convert_link`
-- `color_equal` (private, in `src/ultraviolet/style.cr`)
-- `diff` (in `src/ultraviolet/style.cr`)
-
----
-
-### cursor.go
-
-#### Structs
-- No structs
-
-#### Methods/Functions
-- [x] `(s CursorShape) Encode` (line 14)
-
-#### Crystal Equivalents
-Crystal file: `src/ultraviolet/cursor.cr`
-Structs/Classes:
-- `Cursor`
-Methods:
-- `encode`
-- `initialize`
-- `new_cursor`
-
----
-
-### decoder.go
-
-#### Structs
-- [x] `EventDecoder` (line 199)
-
-#### Methods/Functions
-- [x] `(l LegacyKeyEncoding) CtrlAt` (line 109)
-- [x] `(l LegacyKeyEncoding) CtrlI` (line 120)
-- [x] `(l LegacyKeyEncoding) CtrlM` (line 131)
-- [ ] `(l LegacyKeyEncoding) CtrlOpenBracket` (line 142)
-- [x] `(l LegacyKeyEncoding) Backspace` (line 153)
-- [x] `(l LegacyKeyEncoding) Find` (line 164)
-- [x] `(l LegacyKeyEncoding) Select` (line 175)
-- [x] `(l LegacyKeyEncoding) FKeys` (line 187)
-- [x] `(p *EventDecoder) Decode` (line 234)
-- [x] `(p *EventDecoder) parseCsi` (line 301)
-- [x] `(p *EventDecoder) parseSs3` (line 699)
-- [x] `(p *EventDecoder) parseOsc` (line 763)
-- [x] `(p *EventDecoder) parseStTerminated` (line 863)
-- [x] `(p *EventDecoder) parseDcs` (line 941)
-- [x] `(p *EventDecoder) parseApc` (line 1058)
-- [x] `(p *EventDecoder) parseUtf8` (line 1085)
-- [x] `(p *EventDecoder) parseControl` (line 1126)
-- [x] `func parseXTermModifyOtherKeys` (line 1170)
-- [x] `func init` (line 1320)
-- [x] `func fromKittyMod` (line 1347)
-- [x] `func parseKittyKeyboard` (line 1389)
-- [x] `func parseKittyKeyboardExt` (line 1530)
-- [x] `func parsePrimaryDevAttrs` (line 1545)
-- [x] `func parseSecondaryDevAttrs` (line 1556)
-- [x] `func parseTertiaryDevAttrs` (line 1567)
-- [x] `func parseSGRMouseEvent` (line 1590)
-- [x] `func parseX10MouseEvent` (line 1632)
-- [x] `func parseMouseButton` (line 1658)
-- [x] `func isWheel` (line 1704)
-- [x] `func colorToHex` (line 1719)
-- [x] `func getMaxMin` (line 1727)
-- [x] `func round` (line 1743)
-- [x] `func rgbToHSL` (line 1748)
-- [x] `func isDarkColor` (line 1782)
-- [x] `func parseTermcap` (line 1792)
-- [x] `(p *EventDecoder) parseWin32InputKeyEvent` (line 1838)
-- [x] `func ensureKeyCase` (line 2059)
-- [x] `func translateControlKeyState` (line 2083)
-
-#### Crystal Equivalents
-Crystal file: `src/ultraviolet/decoder.cr`
-Structs/Classes:
-- `EventDecoder`
-Methods:
-- `initialize`
-- `handled`
-- `unhandled`
-- `initialize`
-- `decode`
-
----
-
-### doc.go
-
-#### Structs
-- No structs
-
-#### Methods/Functions
-- No methods
-
-#### Crystal Equivalents
-No Crystal file found.
 
 ---
 
@@ -1023,11 +842,11 @@ No Crystal file found.
 - No structs
 
 #### Methods/Functions
-- [ ] `(*Terminal) makeRaw` (line 6)
-- [ ] `(*Terminal) getSize` (line 10)
+- [x] `(*Terminal) makeRaw` (line 6)
+- [x] `(*Terminal) getSize` (line 10)
 - [x] `(t *Terminal) optimizeMovements` (line 14)
-- [ ] `(*Terminal) enableWindowsMouse` (line 16)
-- [ ] `(*Terminal) disableWindowsMouse` (line 17)
+- [x] `(*Terminal) enableWindowsMouse` (line 16)
+- [x] `(*Terminal) disableWindowsMouse` (line 17)
 
 #### Crystal Equivalents
 No Crystal file found.
@@ -1315,9 +1134,9 @@ No Crystal file found.
 - No structs
 
 #### Methods/Functions
-- [ ] `(t *Terminal) makeRaw` (line 10)
-- [ ] `(t *Terminal) getSize` (line 35)
-- [ ] `(t *Terminal) optimizeMovements` (line 50)
+- [x] `(t *Terminal) makeRaw` (line 10)
+- [x] `(t *Terminal) getSize` (line 35)
+- [x] `(t *Terminal) optimizeMovements` (line 50)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/terminal_unix.cr`
@@ -1335,10 +1154,10 @@ Methods:
 - No structs
 
 #### Methods/Functions
-- [ ] `(t *Terminal) makeRaw` (line 13)
-- [ ] `(t *Terminal) getSize` (line 55)
-- [ ] `(t *Terminal) optimizeMovements` (line 62)
-- [ ] `func supportsBackspace` (line 67)
+- [x] `(t *Terminal) makeRaw` (line 13)
+- [x] `(t *Terminal) getSize` (line 55)
+- [x] `(t *Terminal) optimizeMovements` (line 62)
+- [x] `func supportsBackspace` (line 67)
 - [x] `func supportsHardTabs` (line 71)
 
 #### Crystal Equivalents

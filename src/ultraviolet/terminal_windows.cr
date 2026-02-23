@@ -42,6 +42,14 @@
         @use_bspace = true
       end
 
+      def enable_windows_mouse : Nil
+        # Windows mouse is enabled by default
+      end
+
+      def disable_windows_mouse : Nil
+        # Windows mouse is disabled by default? Not needed.
+      end
+
       private def make_raw : Nil
         raise ErrNotTerminal if @in_tty.nil? || @out_tty.nil?
         raise ErrNotTerminal unless console_handle?(@in_tty) && console_handle?(@out_tty)

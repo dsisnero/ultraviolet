@@ -19,6 +19,14 @@
         @use_bspace = Ultraviolet.supports_backspace(state.c_lflag.to_u64)
       end
 
+      def enable_windows_mouse : Nil
+        raise ErrPlatformNotSupported
+      end
+
+      def disable_windows_mouse : Nil
+        raise ErrPlatformNotSupported
+      end
+
       private def make_raw : Nil
         raise ErrNotTerminal if @in_tty.nil? && @out_tty.nil?
 
