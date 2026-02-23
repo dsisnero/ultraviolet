@@ -17,7 +17,6 @@
 
 
 ## styled.go
-- `func ReadLink`
 
 ## tabstop.go
 - `(ts *TabStops) mask`

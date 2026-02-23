@@ -252,12 +252,12 @@ module Ultraviolet
     while i < value.bytesize
       byte = value.byte_at(i)
       if byte == 0x07
-        data = value[start_index, i - start_index]
-        return {i + 1, read_link(data, link)}
+        data = value.byte_slice(start_index, i - start_index)
+        return {i + 1, read_link_string(data, link)}
       end
       if byte == 0x1b && i + 1 < value.bytesize && value.byte_at(i + 1) == '\\'.ord
-        data = value[start_index, i - start_index]
-        return {i + 2, read_link(data, link)}
+        data = value.byte_slice(start_index, i - start_index)
+        return {i + 2, read_link_string(data, link)}
       end
       i += 1
     end
@@ -531,16 +531,18 @@ module Ultraviolet
     end
   end
 
-  private def self.read_link(data : String, link : Link) : Link
+  private def self.read_link_string(data : String, link : Link) : Link
     parts = data.split(';', remove_empty: false)
     return link unless parts.size == 3
 
     params = parts[1]
     url = parts[2]
-    if url.empty?
-      Link.new
-    else
-      Link.new(url, params)
-    end
+    Link.new(url, params)
+  end
+
+  def self.read_link(data : Bytes, link : Link) : Link
+    # Convert bytes to string (ASCII safe)
+    str = String.new(data)
+    read_link_string(str, link)
   end
 end

@@ -8,7 +8,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 
 - **Go files**: 50
 - **Structs**: 45 / 51 (88.2%)
-- **Methods/Functions**: 337 / 470 (71.7%)
+- **Methods/Functions**: 338 / 470 (71.9%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -809,7 +809,7 @@ Methods:
 - [x] `(s *StyledString) widthHeight` (line 80)
 - [x] `(s *StyledString) Bounds` (line 90)
 - [x] `func ReadStyle` (line 199)
-- [ ] `func ReadLink` (line 305)
+- [x] `func ReadLink` (line 305)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/styled.cr`
