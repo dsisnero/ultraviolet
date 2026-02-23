@@ -1,46 +1,37 @@
 # Port Audit
 
-This document tracks the porting status of each Go file, struct, and method to Crystal.
-
-## Files
-
-## Summary
-
-- **Go files**: 50
-- **Structs**: 47 / 51 (92.2%)
-- **Methods/Functions**: 393 / 470 (83.6%)
-
-**Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
-
-### border.go
+---
+### buffer.go
 
 #### Structs
-- [x] `Side` (line 147)
-- [x] `Border` (line 154)
+- [x] `Buffer` (line ?)
+- [x] `RenderBuffer` (line ?)
 
 #### Methods/Functions
-- [x] `func NormalBorder` (line 5)
-- [x] `func RoundedBorder` (line 19)
-- [x] `func BlockBorder` (line 33)
-- [x] `func OuterHalfBlockBorder` (line 47)
-- [x] `func InnerHalfBlockBorder` (line 61)
-- [x] `func ThickBorder` (line 76)
-- [x] `func DoubleBorder` (line 90)
-- [x] `func HiddenBorder` (line 107)
-- [x] `func MarkdownBorder` (line 121)
-- [x] `func ASCIIBorder` (line 133)
-- [x] `(b Border) Style` (line 166)
-- [x] `(b Border) Link` (line 179)
-- [x] `(b *Border) Draw` (line 192)
-- [x] `func borderCell` (line 224)
+- [x] `(b *Buffer) InsertCell` (line 527)
+- [x] `(b *Buffer) InsertCellArea` (line 534)
+- [x] `(b *Buffer) DeleteCell` (line 562)
+- [x] `(b *Buffer) DeleteCellArea` (line 569)
+- [x] `func TrimSpace` (line 623)
+- [x] `(b *RenderBuffer) InsertCell` (line 758)
+- [x] `(b *RenderBuffer) InsertCellArea` (line 765)
+- [x] `(b *RenderBuffer) DeleteCell` (line 777)
+- [x] `(b *RenderBuffer) DeleteCellArea` (line 784)
 
 #### Crystal Equivalents
-Crystal files:
-- `src/ultraviolet/cursor.cr` (contains `Cursor` struct and `new_cursor` method)
-- `src/ultraviolet/progress_bar.cr` (contains `ProgressBarState` enum, `ProgressBar` struct, `new_progress_bar` method)
-
+Crystal file: `src/ultraviolet/buffer.cr`
+Structs/Classes:
+- `Buffer`
+- `RenderBuffer`
+Methods:
+- `insert_cell`
+- `insert_cell_area`
+- `delete_cell`
+- `delete_cell_area`
+- `trim_space`
 
 ---
+
 
 ### terminal_bsdly_other.go
 
