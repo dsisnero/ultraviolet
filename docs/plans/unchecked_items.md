@@ -1,23 +1,7 @@
 # Unchecked Items (Missing Ports)
 
 
-## decoder.go
-- `(l LegacyKeyEncoding) CtrlAt`
-- `(l LegacyKeyEncoding) CtrlI`
-- `(l LegacyKeyEncoding) CtrlM`
-- `(l LegacyKeyEncoding) CtrlOpenBracket`
-- `(p *EventDecoder) parseCsi`
-- `(p *EventDecoder) parseSs3`
-- `(p *EventDecoder) parseOsc`
-- `(p *EventDecoder) parseStTerminated`
-- `(p *EventDecoder) parseDcs`
-- `(p *EventDecoder) parseApc`
-- `(p *EventDecoder) parseUtf8`
-- `(p *EventDecoder) parseControl`
-- `func parseSGRMouseEvent`
-- `func isWheel`
-- `func round`
-- `func rgbToHSL`
+
 
 ## environ.go
 - `(p Environ) LookupEnv`

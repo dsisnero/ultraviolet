@@ -529,29 +529,29 @@ module Ultraviolet
     rf = r.to_f64 / 255.0
     gf = g.to_f64 / 255.0
     bf = b.to_f64 / 255.0
-    max, min = max_min(rf, gf, bf)
-    lightness = (max + min) / 2.0
+    cmax, cmin = get_max_min(rf, gf, bf)
+    lightness = (cmax + cmin) / 2.0
 
-    if max == min
-      return {0.0, 0.0, lightness}
+    if cmax == cmin
+      return {0.0, 0.0, round3(lightness)}
     end
 
-    delta = max - min
-    saturation = delta / (1.0 - (2.0 * lightness - 1.0).abs)
-    hue = if max == rf
-            (gf - bf) / delta
-          elsif max == gf
-            (bf - rf) / delta + 2.0
+    delta = cmax - cmin
+    hue = if cmax == rf
+            60.0 * ((gf - bf) / delta % 6.0)
+          elsif cmax == gf
+            60.0 * (((bf - rf) / delta) + 2.0)
           else
-            (rf - gf) / delta + 4.0
+            60.0 * (((rf - gf) / delta) + 4.0)
           end
-    hue *= 60.0
     hue += 360.0 if hue < 0.0
 
-    {round2(hue), round2(saturation), round2(lightness)}
+    saturation = delta / (1.0 - (2.0 * lightness - 1.0).abs)
+
+    {hue, round3(saturation), round3(lightness)}
   end
 
-  private def self.max_min(r : Float64, g : Float64, b : Float64) : {Float64, Float64}
+  private def self.get_max_min(r : Float64, g : Float64, b : Float64) : {Float64, Float64}
     max = r
     max = g if g > max
     max = b if b > max
@@ -559,6 +559,10 @@ module Ultraviolet
     min = g if g < min
     min = b if b < min
     {max, min}
+  end
+
+  private def self.round3(value : Float64) : Float64
+    (value * 1000.0).round / 1000.0
   end
 
   private def self.round2(value : Float64) : Float64
