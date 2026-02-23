@@ -15,8 +15,6 @@
 
 
 
-## poll_windows.go
-- `conReader`
 
 ## styled.go
 - `func ReadLink`

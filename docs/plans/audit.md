@@ -7,7 +7,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 44 / 51 (86.3%)
+- **Structs**: 45 / 51 (88.2%)
 - **Methods/Functions**: 337 / 470 (71.7%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
@@ -743,7 +743,7 @@ No Crystal file found.
 ### poll_windows.go
 
 #### Structs
-- [ ] `conReader` (line 75)
+- [x] `conReader` (line 75)
 
 #### Methods/Functions
 - [x] `func newPollReader` (line 19)
@@ -756,7 +756,7 @@ No Crystal file found.
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/poll_windows.cr`
 Structs/Classes:
-- `WindowsPollReader`
+- `ConReader`
 Methods:
 - `initialize`
 - `read`

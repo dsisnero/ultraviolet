@@ -2,21 +2,21 @@
   require "c/consoleapi"
 
   module Ultraviolet
-    # WindowsPollReader implements PollReader using Windows Console API and
+    # ConReader implements pollReader using Windows Console API and
     # WaitForMultipleObjects for cancelable polling.
-    class WindowsPollReader < PollReader
+    class ConReader < PollReader
       @reader : IO
       @conin : LibC::HANDLE
       @cancel_event : LibC::HANDLE
+      @blocking_read_signal : Channel(Nil)
       @reset_console : -> Nil
-      @fallback : PollReader?
       @mutex : Mutex
       @canceled : Bool
 
       def initialize(@reader : IO)
         @mutex = Mutex.new
         @canceled = false
-        @fallback = nil
+        @blocking_read_signal = Channel(Nil).new(1)
         @conin = LibC::HANDLE.null
         @cancel_event = LibC::HANDLE.null
         @reset_console = -> { }
@@ -35,10 +35,8 @@
             LibC::HANDLE.null
           )
           if @conin == LibC::INVALID_HANDLE_VALUE
-            # Fall back to generic poll reader
-            @conin = LibC::HANDLE.null
-            create_fallback
-            return
+            # Cannot open CONIN$ in overlapped mode, raise to fall back to generic poll reader
+            raise IO::Error.new("open CONIN$ in overlapping mode")
           end
 
           # Prepare console mode
@@ -53,20 +51,15 @@
             LibC.CloseHandle(@conin)
             @conin = LibC::HANDLE.null
             @reset_console.call
-            create_fallback
-            return
+            raise IO::Error.new("create cancel event")
           end
         else
-          # Not a console, use fallback
-          create_fallback
+          # Not a console stdin - should not happen
+          raise IO::Error.new("not a console stdin")
         end
       end
 
       def read(slice : Bytes) : Int32
-        if fallback = @fallback
-          return fallback.read(slice)
-        end
-
         raise PollCanceledError.new("poll canceled") if canceled?
         begin
           @reader.read(slice)
@@ -77,10 +70,6 @@
       end
 
       def poll(timeout : Time::Span) : Bool
-        if fallback = @fallback
-          return fallback.poll(timeout)
-        end
-
         raise PollCanceledError.new("poll canceled") if canceled?
 
         timeout_ms = timeout < 0.seconds ? LibC::INFINITE : timeout.total_milliseconds.to_u32
@@ -95,12 +84,14 @@
         when LibC::WAIT_OBJECT_0 + 1
           # Cancel event signaled
           raise PollCanceledError.new("poll canceled")
+        when LibC::WAIT_ABANDONED...LibC::WAIT_ABANDONED + 2
+          raise IO::Error.new("abandoned")
         when LibC::WAIT_TIMEOUT
           false
         when LibC::WAIT_FAILED
-          false
+          raise IO::Error.new("failed")
         else
-          false
+          raise IO::Error.new("unexpected error")
         end
       end
 
@@ -110,13 +101,21 @@
           @canceled = true
         end
 
-        # Signal cancel event
-        if !@cancel_event.null?
-          LibC.SetEvent(@cancel_event)
-        end
-
-        if fallback = @fallback
-          fallback.cancel
+        # On Windows Terminal, WaitForMultipleObjects sometimes immediately returns
+        # without input being available. In this case, graceful cancelation is not
+        # possible and Cancel() returns false.
+        select
+        when @blocking_read_signal.send(nil)
+          if !@cancel_event.null?
+            LibC.SetEvent(@cancel_event)
+          end
+          @blocking_read_signal.receive
+        else
+          timeout(100.milliseconds)
+          # Read() hangs in a GetOverlappedResult which is likely due to
+          # WaitForMultipleObjects returning without input being available
+          # so we cannot cancel this ongoing read.
+          return false
         end
 
         true
@@ -133,22 +132,10 @@
           LibC.CloseHandle(@conin)
           @conin = LibC::HANDLE.null
         end
-
-        if fallback = @fallback
-          fallback.close
-        end
       end
 
       private def canceled? : Bool
         @mutex.synchronize { @canceled }
-      end
-
-      private def create_fallback : Nil
-        @fallback = if @reader.is_a?(IO::FileDescriptor)
-                      SelectReader.new(@reader.as(IO::FileDescriptor))
-                    else
-                      FallbackReader.new(@reader)
-                    end
       end
 
       private def prepare_poll_console(input : LibC::HANDLE) : -> Nil
@@ -182,9 +169,24 @@
       end
     end
 
-    # Override new_poll_reader to use WindowsPollReader on Windows
+    # Override new_poll_reader to use ConReader on Windows for console stdin
     def self.new_poll_reader(reader : IO) : PollReader
-      WindowsPollReader.new(reader)
+      # Check if reader is stdin (console)
+      if reader.is_a?(IO::FileDescriptor) && reader.fd == STDIN.fd
+        # Try to create ConReader; if fails, fall back to generic poll reader
+        begin
+          return ConReader.new(reader)
+        rescue ex : IO::Error
+          # fall through to generic poll reader
+        end
+      end
+
+      # Use generic poll reader (SelectReader or FallbackReader)
+      if reader.is_a?(IO::FileDescriptor)
+        SelectReader.new(reader)
+      else
+        FallbackReader.new(reader)
+      end
     end
   end
 {% end %}
