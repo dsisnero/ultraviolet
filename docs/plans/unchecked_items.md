@@ -1,16 +1,5 @@
 # Unchecked Items (Missing Ports)
 
-## buffer.go
-- `(b *Buffer) InsertCell`
-- `(b *Buffer) InsertCellArea`
-- `(b *Buffer) DeleteCell`
-- `(b *Buffer) DeleteCellArea`
-- `func TrimSpace`
-- `(b *RenderBuffer) InsertCell`
-- `(b *RenderBuffer) InsertCellArea`
-- `(b *RenderBuffer) DeleteCell`
-- `(b *RenderBuffer) DeleteCellArea`
-
 ## cancelreader_windows.go
 - `cancelMixin`
 - `func prepareConsole`

@@ -8,7 +8,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 
 - **Go files**: 50
 - **Structs**: 38 / 51 (74.5%)
-- **Methods/Functions**: 298 / 470 (63.4%)
+- **Methods/Functions**: 307 / 470 (65.3%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -100,13 +100,13 @@ Methods:
 - [x] `(b *Buffer) InsertLineArea` (line 458)
 - [x] `(b *Buffer) DeleteLineArea` (line 489)
 - [x] `(b *Buffer) DeleteLine` (line 519)
-- [ ] `(b *Buffer) InsertCell` (line 527)
-- [ ] `(b *Buffer) InsertCellArea` (line 534)
-- [ ] `(b *Buffer) DeleteCell` (line 562)
-- [ ] `(b *Buffer) DeleteCellArea` (line 569)
+- [x] `(b *Buffer) InsertCell` (line 527)
+- [x] `(b *Buffer) InsertCellArea` (line 534)
+- [x] `(b *Buffer) DeleteCell` (line 562)
+- [x] `(b *Buffer) DeleteCellArea` (line 569)
 - [x] `func NewScreenBuffer` (line 608)
 - [x] `(s ScreenBuffer) WidthMethod` (line 617)
-- [ ] `func TrimSpace` (line 623)
+- [x] `func TrimSpace` (line 623)
 - [x] `func NewRenderBuffer` (line 649)
 - [x] `(b *RenderBuffer) TouchLine` (line 657)
 - [x] `(b *RenderBuffer) Touch` (line 682)
@@ -116,10 +116,10 @@ Methods:
 - [x] `(b *RenderBuffer) InsertLineArea` (line 726)
 - [x] `(b *RenderBuffer) DeleteLine` (line 737)
 - [x] `(b *RenderBuffer) DeleteLineArea` (line 746)
-- [ ] `(b *RenderBuffer) InsertCell` (line 758)
-- [ ] `(b *RenderBuffer) InsertCellArea` (line 765)
-- [ ] `(b *RenderBuffer) DeleteCell` (line 777)
-- [ ] `(b *RenderBuffer) DeleteCellArea` (line 784)
+- [x] `(b *RenderBuffer) InsertCell` (line 758)
+- [x] `(b *RenderBuffer) InsertCellArea` (line 765)
+- [x] `(b *RenderBuffer) DeleteCell` (line 777)
+- [x] `(b *RenderBuffer) DeleteCellArea` (line 784)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/buffer.cr`
