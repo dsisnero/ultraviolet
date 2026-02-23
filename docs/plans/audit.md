@@ -580,20 +580,20 @@ Crystal file: src/ultraviolet/winch.cr
 - [x] `Window` (line 10)
 
 #### Methods/Functions
-- [ ] `(w *Window) HasParent` (line 25)
+- [x] `(w *Window) HasParent` (line 25)
 - [x] `(w *Window) Parent` (line 31)
-- [ ] `(w *Window) MoveTo` (line 36)
-- [ ] `(w *Window) MoveBy` (line 45)
+- [x] `(w *Window) MoveTo` (line 36)
+- [x] `(w *Window) MoveBy` (line 45)
 - [x] `(w *Window) Clone` (line 55)
 - [x] `(w *Window) CloneArea` (line 63)
 - [x] `(w *Window) Resize` (line 73)
 - [x] `(w *Window) WidthMethod` (line 84)
-- [ ] `(w *Window) Bounds` (line 89)
-- [ ] `(w *Window) NewWindow` (line 97)
-- [ ] `(w *Window) NewView` (line 104)
-- [ ] `func NewScreen` (line 111)
+- [x] `(w *Window) Bounds` (line 89)
+- [x] `(w *Window) NewWindow` (line 97)
+- [x] `(w *Window) NewView` (line 104)
+- [x] `func NewScreen` (line 111)
 - [x] `(w *Window) SetWidthMethod` (line 117)
-- [ ] `func newWindow` (line 123)
+- [x] `func newWindow` (line 123)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/window.cr`
@@ -601,6 +601,7 @@ Structs/Classes:
 - `Window`
 Methods:
 - `initialize`
+- `bounds`
 - `has_parent`
 - `move_to`
 - `move_by`
@@ -615,8 +616,6 @@ Methods:
 - `draw`
 - `new_window`
 - `new_view`
-- `width_method`
-- `new_screen`
 - `new_screen`
 
 ---

@@ -7,11 +7,21 @@
 
 Version: "1.7.0-dev"
 
+
+Excluded:
+  - spec/**/*.cr
+  - lib/**/*
+  - temp/**/*
+  - vendor
+  - crystal
+
 Lint/Formatting:
   Excluded:
     - spec/**/*.cr
     - lib/**/*
     - temp/**/*
+    - vendor
+    - crystal
 
 Lint/NotNil:
   Excluded:

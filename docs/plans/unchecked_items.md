@@ -60,23 +60,11 @@
 
 
 
-## uv.go
-- `Cursor`
-- `ProgressBar`
-- `func NewCursor`
-- `(s ProgressBarState) String`
-- `func NewProgressBar`
 
 
 
 
-## window.go
-- `(w *Window) HasParent`
-- `(w *Window) MoveTo`
-- `(w *Window) MoveBy`
-- `(w *Window) Bounds`
-- `(w *Window) NewWindow`
-- `(w *Window) NewView`
-- `func NewScreen`
-- `func newWindow`
+
+
+
 
