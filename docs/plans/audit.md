@@ -7,8 +7,8 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 38 / 51 (74.5%)
-- **Methods/Functions**: 307 / 470 (65.3%)
+- **Structs**: 40 / 51 (78.4%)
+- **Methods/Functions**: 316 / 470 (67.2%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -210,14 +210,14 @@ No Crystal file found.
 
 #### Structs
 - [x] `conInputReader` (line 17)
-- [ ] `cancelMixin` (line 122)
+- [x] `cancelMixin` (line 122)
 
 #### Methods/Functions
 - [x] `func NewCancelReader` (line 28)
 - [x] `(r *conInputReader) Cancel` (line 71)
 - [x] `(r *conInputReader) Close` (line 78)
 - [x] `(r *conInputReader) Read` (line 90)
-- [ ] `func prepareConsole` (line 103)
+- [x] `func prepareConsole` (line 103)
 - [x] `(c *cancelMixin) setCanceled` (line 127)
 - [x] `(c *cancelMixin) isCanceled` (line 134)
 
@@ -226,12 +226,14 @@ Crystal file: `src/ultraviolet/cancelreader_windows.cr`
 Structs/Classes:
 - `ConInputReader`
 - `CancelReader`
+- `CancelMixin` (module)
 Methods:
 - `initialize`
 - `cancel`
 - `close`
 - `read`
 - `new`
+- `prepare_console`
 
 ---
 
@@ -240,34 +242,35 @@ Methods:
 #### Structs
 - [x] `Cell` (line 15)
 - [x] `Link` (line 91)
-- [ ] `Style` (line 164)
+- [x] `Style` (line 164)
 
 #### Methods/Functions
-- [ ] `func NewCell` (line 35)
+- [x] `func NewCell` (line 35)
 - [x] `(c *Cell) String` (line 50)
-- [ ] `(c *Cell) Equal` (line 55)
+- [x] `(c *Cell) Equal` (line 55)
 - [x] `(c *Cell) IsZero` (line 64)
 - [x] `(c *Cell) Clone` (line 69)
 - [x] `(c *Cell) Empty` (line 77)
-- [ ] `func NewLink` (line 83)
+- [x] `func NewLink` (line 83)
 - [x] `(h *Link) String` (line 97)
-- [ ] `(h *Link) Equal` (line 102)
+- [x] `(h *Link) Equal` (line 102)
 - [x] `(h *Link) IsZero` (line 107)
-- [ ] `(s *Style) Equal` (line 173)
+- [x] `(s *Style) Equal` (line 173)
 - [x] `(s *Style) Styled` (line 182)
 - [x] `(s *Style) String` (line 190)
-- [ ] `(s *Style) Diff` (line 252)
+- [x] `(s *Style) Diff` (line 252)
 - [x] `func StyleDiff` (line 258)
-- [ ] `func colorEqual` (line 410)
+- [x] `func colorEqual` (line 410)
 - [x] `(s *Style) IsZero` (line 423)
 - [x] `func ConvertStyle` (line 428)
-- [ ] `func ConvertLink` (line 454)
+- [x] `func ConvertLink` (line 454)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/cell.cr`
 Structs/Classes:
 - `Link`
 - `Cell`
+- `Style` (in `src/ultraviolet/style.cr`)
 Methods:
 - `initialize`
 - `empty`
@@ -284,6 +287,8 @@ Methods:
 - `new_link`
 - `convert_style`
 - `convert_link`
+- `color_equal` (private, in `src/ultraviolet/style.cr`)
+- `diff` (in `src/ultraviolet/style.cr`)
 
 ---
 

@@ -7,6 +7,8 @@ module Ultraviolet
     def initialize(@r : UInt8, @g : UInt8, @b : UInt8)
     end
 
+    def_equals_and_hash r, g, b
+
     def to_fg_ansi : String
       "\e[#{to_fg_code}m"
     end
@@ -68,6 +70,8 @@ module Ultraviolet
       @attrs : UInt8 = Attr::RESET,
     )
     end
+
+    def_equals_and_hash fg, bg, underline_color, underline, attrs
 
     def zero? : Bool
       @fg.nil? && @bg.nil? && @underline_color.nil? &&

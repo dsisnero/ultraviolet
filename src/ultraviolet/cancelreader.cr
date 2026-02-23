@@ -2,12 +2,25 @@ module Ultraviolet
   class CancelError < Exception
   end
 
+  module CancelMixin
+    @canceled = false
+    @lock = Mutex.new
+
+    def set_canceled : Nil
+      @lock.synchronize { @canceled = true }
+    end
+
+    def canceled? : Bool
+      @lock.synchronize { @canceled }
+    end
+  end
+
   class CancelReader < IO
+    include CancelMixin
+
     DEFAULT_TIMEOUT = 50.milliseconds
 
     def initialize(@io : IO?, @timeout : Time::Span = DEFAULT_TIMEOUT)
-      @canceled = false
-      @lock = Mutex.new
       @timeout_supported = false
       @original_timeout = nil.as(Time::Span?)
       if io = @io
@@ -23,7 +36,7 @@ module Ultraviolet
     end
 
     def cancel : Bool
-      @lock.synchronize { @canceled = true }
+      set_canceled
       unless @timeout_supported
         if io = @io
           begin
@@ -33,10 +46,6 @@ module Ultraviolet
         end
       end
       true
-    end
-
-    def canceled? : Bool
-      @lock.synchronize { @canceled }
     end
 
     def close : Nil

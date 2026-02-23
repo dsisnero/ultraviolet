@@ -15,6 +15,24 @@
   end
 
   module Ultraviolet
+    private def prepare_console(input : LibC::HANDLE, *modes : UInt32) : Tuple(UInt32, UInt32)
+      original_mode = uninitialized LibC::DWORD
+      if LibC.GetConsoleMode(input, pointerof(original_mode)) == 0
+        raise IO::Error.from_winerror("GetConsoleMode")
+      end
+
+      new_mode = original_mode
+      modes.each do |mode|
+        new_mode |= mode
+      end
+
+      if LibC.SetConsoleMode(input, new_mode) == 0
+        raise IO::Error.from_winerror("SetConsoleMode")
+      end
+
+      {original_mode, new_mode}
+    end
+
     class ConInputReader < CancelReader
       @conin : LibC::HANDLE
       @original_mode : UInt32 = 0
@@ -23,17 +41,12 @@
       def initialize(@conin : LibC::HANDLE)
         super(nil)
         # Store original console mode and set new mode
-        mode = uninitialized LibC::DWORD
-        if LibC.GetConsoleMode(@conin, pointerof(mode)) == 0
-          raise IO::Error.from_winerror("GetConsoleMode")
-        end
-        @original_mode = mode
-
-        new_mode = mode | LibC::ENABLE_VIRTUAL_TERMINAL_INPUT | LibC::ENABLE_WINDOW_INPUT | LibC::ENABLE_EXTENDED_FLAGS
-        if LibC.SetConsoleMode(@conin, new_mode) == 0
-          raise IO::Error.from_winerror("SetConsoleMode")
-        end
-        @new_mode = new_mode
+        modes = [
+          LibC::ENABLE_VIRTUAL_TERMINAL_INPUT,
+          LibC::ENABLE_WINDOW_INPUT,
+          LibC::ENABLE_EXTENDED_FLAGS,
+        ]
+        @original_mode, @new_mode = prepare_console(@conin, *modes)
 
         # Flush any pending input
         if LibC.FlushConsoleInputBuffer(@conin) == 0

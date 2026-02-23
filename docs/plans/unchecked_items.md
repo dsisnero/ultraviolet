@@ -1,19 +1,5 @@
 # Unchecked Items (Missing Ports)
 
-## cancelreader_windows.go
-- `cancelMixin`
-- `func prepareConsole`
-
-## cell.go
-- `Style`
-- `func NewCell`
-- `(c *Cell) Equal`
-- `func NewLink`
-- `(h *Link) Equal`
-- `(s *Style) Equal`
-- `(s *Style) Diff`
-- `func colorEqual`
-- `func ConvertLink`
 
 ## decoder.go
 - `(l LegacyKeyEncoding) CtrlAt`

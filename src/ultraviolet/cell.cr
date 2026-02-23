@@ -31,6 +31,8 @@ module Ultraviolet
       return "" if @url.empty?
       "\e]8;;\a"
     end
+
+    def_equals_and_hash url, params
   end
 
   struct Cell
@@ -73,6 +75,8 @@ module Ultraviolet
       @content = " "
       @width = 1
     end
+
+    def_equals_and_hash content, width, style, link
   end
 
   EMPTY_CELL = Cell.empty
