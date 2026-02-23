@@ -9,8 +9,7 @@
 
 
 
-## poll_fallback.go
-- `fallbackReader`
+
 
 ## poll_linux.go
 - `epollReader`

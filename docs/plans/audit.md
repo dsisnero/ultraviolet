@@ -7,7 +7,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 ## Summary
 
 - **Go files**: 50
-- **Structs**: 41 / 51 (80.4%)
+- **Structs**: 42 / 51 (82.4%)
 - **Methods/Functions**: 337 / 470 (71.7%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
@@ -814,7 +814,7 @@ No Crystal file found.
 ### poll_fallback.go
 
 #### Structs
-- [ ] `fallbackReader` (line 21)
+- [x] `fallbackReader` (line 21)
 
 #### Methods/Functions
 - [x] `func newFallbackReader` (line 11)
@@ -825,7 +825,19 @@ No Crystal file found.
 - [x] `(r *fallbackReader) Close` (line 155)
 
 #### Crystal Equivalents
-No Crystal file found.
+Crystal file: `src/ultraviolet/poll.cr`
+Structs/Classes:
+- `FallbackReader`
+- `BufferedReader` (wrapper for buffered IO)
+Methods:
+- `new_fallback_reader`
+- `initialize`
+- `read`
+- `poll`
+- `check_buffered` (private)
+- `cancel`
+- `close`
+- `canceled?` (private)
 
 ---
 
