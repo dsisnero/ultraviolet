@@ -67,20 +67,8 @@
 - `(s ProgressBarState) String`
 - `func NewProgressBar`
 
-## winch.go
-- `func NewSizeNotifier`
-- `(n *SizeNotifier) GetWindowSize`
-- `(n *SizeNotifier) GetSize`
 
-## winch_other.go
-- `(n *SizeNotifier) start`
-- `(n *SizeNotifier) stop`
-- `(n *SizeNotifier) getWindowSize`
 
-## winch_unix.go
-- `(n *SizeNotifier) start`
-- `(n *SizeNotifier) stop`
-- `(n *SizeNotifier) getWindowSize`
 
 ## window.go
 - `(w *Window) HasParent`

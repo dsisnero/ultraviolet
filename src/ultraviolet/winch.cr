@@ -29,6 +29,12 @@
 module Ultraviolet
   class SizeNotifier
     getter sig : Channel(Nil)
+    getter c : Channel(Nil) { @sig }
+
+    def self.new_size_notifier(tty : IO::FileDescriptor?) : SizeNotifier
+      raise "no file set" unless tty
+      new(tty)
+    end
 
     def initialize(@tty : IO::FileDescriptor?)
       @sig = Channel(Nil).new(1)
@@ -82,6 +88,13 @@ module Ultraviolet
         pixels = Size.new(winsize.ws_xpixel.to_i, winsize.ws_ypixel.to_i)
         {cells, pixels}
       {% end %}
+    end
+
+    def size : {Int32, Int32}
+      @lock.synchronize do
+        cells, _ = window_size
+        {cells.width, cells.height}
+      end
     end
 
     private def terminal?(tty : IO::FileDescriptor?) : Bool

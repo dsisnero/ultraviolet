@@ -521,11 +521,11 @@ No Crystal file found.
 - [x] `SizeNotifier` (line 12)
 
 #### Methods/Functions
-- [ ] `func NewSizeNotifier` (line 23)
+- [x] `func NewSizeNotifier` (line 23)
 - [x] `(n *SizeNotifier) Start` (line 37)
 - [x] `(n *SizeNotifier) Stop` (line 42)
-- [ ] `(n *SizeNotifier) GetWindowSize` (line 47)
-- [ ] `(n *SizeNotifier) GetSize` (line 52)
+- [x] `(n *SizeNotifier) GetWindowSize` (line 47)
+- [x] `(n *SizeNotifier) GetSize` (line 52)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/winch.cr`
@@ -539,6 +539,8 @@ Methods:
 - `start`
 - `stop`
 - `window_size`
+- `new_size_notifier`
+- `size`
 
 ---
 
@@ -548,12 +550,12 @@ Methods:
 - No structs
 
 #### Methods/Functions
-- [ ] `(n *SizeNotifier) start` (line 6)
-- [ ] `(n *SizeNotifier) stop` (line 10)
-- [ ] `(n *SizeNotifier) getWindowSize` (line 14)
+- [x] `(n *SizeNotifier) start` (line 6)
+- [x] `(n *SizeNotifier) stop` (line 10)
+- [x] `(n *SizeNotifier) getWindowSize` (line 14)
 
 #### Crystal Equivalents
-No Crystal file found.
+Crystal file: src/ultraviolet/winch.cr
 
 ---
 
@@ -563,12 +565,12 @@ No Crystal file found.
 - No structs
 
 #### Methods/Functions
-- [ ] `(n *SizeNotifier) start` (line 14)
-- [ ] `(n *SizeNotifier) stop` (line 25)
-- [ ] `(n *SizeNotifier) getWindowSize` (line 32)
+- [x] `(n *SizeNotifier) start` (line 14)
+- [x] `(n *SizeNotifier) stop` (line 25)
+- [x] `(n *SizeNotifier) getWindowSize` (line 32)
 
 #### Crystal Equivalents
-No Crystal file found.
+Crystal file: src/ultraviolet/winch.cr
 
 ---
 
