@@ -3,8 +3,6 @@
 
 
 
-## environ.go
-- `(p Environ) LookupEnv`
 
 ## event.go
 - `(e MouseClickEvent) Mouse`

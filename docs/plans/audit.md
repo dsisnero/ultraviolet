@@ -8,7 +8,7 @@ This document tracks the porting status of each Go file, struct, and method to C
 
 - **Go files**: 50
 - **Structs**: 40 / 51 (78.4%)
-- **Methods/Functions**: 332 / 470 (70.6%)
+- **Methods/Functions**: 333 / 470 (70.9%)
 
 **Note**: Checkboxes indicate ported items. Missing items have corresponding bd issues created.
 
@@ -389,7 +389,7 @@ No Crystal file found.
 
 #### Methods/Functions
 - [x] `(p Environ) Getenv` (line 14)
-- [ ] `(p Environ) LookupEnv` (line 23)
+- [x] `(p Environ) LookupEnv` (line 23)
 
 #### Crystal Equivalents
 Crystal file: `src/ultraviolet/environ.cr`
