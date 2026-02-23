@@ -53,7 +53,7 @@ module Ultraviolet
 
       spawn do
         begin
-          send_bytes(readc, stop)
+          stream_data(readc, stop)
           errc.send(nil)
         rescue ex
           errc.send(ex)
@@ -158,6 +158,10 @@ module Ultraviolet
         end
         readc.send(buf[0, n])
       end
+    end
+
+    private def stream_data(readc : Channel(Bytes), stop : Channel(Nil)?) : Nil
+      send_bytes(readc, stop)
     end
 
     private def send_events(buf : Bytes, expired : Bool, eventc : Channel(Event)) : Int32
