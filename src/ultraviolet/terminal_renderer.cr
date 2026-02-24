@@ -24,6 +24,17 @@ module Ultraviolet
     SU
     HT
     BS
+
+    # Resets (clears) the given capabilities from this value.
+    # Returns a new Capabilities value with the bits cleared.
+    def reset(cap : Capabilities) : Capabilities
+      self & ~cap
+    end
+
+    # Returns whether this capabilities value contains all the given capabilities.
+    def contains(cap : Capabilities) : Bool
+      (self & cap) == cap
+    end
   end
 
   @[Flags]
@@ -33,6 +44,17 @@ module Ultraviolet
     Fullscreen
     MapNewline
     ScrollOptim
+
+    # Resets (clears) the given flags from this value.
+    # Returns a new TerminalFlags value with the bits cleared.
+    def reset(flag : TerminalFlags) : TerminalFlags
+      self & ~flag
+    end
+
+    # Returns whether this flags value contains all the given flags.
+    def contains(flag : TerminalFlags) : Bool
+      (self & flag) == flag
+    end
   end
 
   struct CursorState
