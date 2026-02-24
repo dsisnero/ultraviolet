@@ -108,6 +108,10 @@ module Ultraviolet
       @profile = profile
     end
 
+    def state : TerminalState
+      @state
+    end
+
     def color_model : ColorProfile
       @profile
     end
@@ -349,7 +353,7 @@ module Ultraviolet
       @scr.render(@buf)
 
       if @prepend.size > 0
-        @prepend.each { |line| @scr.prepend_string(@buf, line) }
+        @prepend.each { |line| prepend_line(line) }
         @prepend.clear
       end
 
@@ -408,6 +412,14 @@ module Ultraviolet
       end
     end
 
+    private def prepend_line(line : String) : Nil
+      str_lines = line.split("\n")
+      str_lines.each_with_index do |str, i|
+        str_lines[i] = Ansi.truncate(str, @size.width, "")
+      end
+      @scr.prepend_string(@buf, str_lines.join("\n"))
+    end
+
     private def initialize_state : Nil
       if last = @last_state
         set_alt_screen(last.altscreen?)
@@ -437,6 +449,27 @@ module Ultraviolet
       @scr.flush
       @scr.set_position(-1, -1)
       restore_tty
+    end
+
+    private def restore_state : Nil
+      stop_input
+      # Wait for event loop to exit
+      select
+      when @evloop.receive
+      when timeout(500.milliseconds)
+      end
+      if last = @last_state
+        if last.altscreen?
+          set_alt_screen(false)
+        else
+          bottom = @buf.height > 0 ? @buf.height - 1 : 0
+          @scr.move_to(0, bottom)
+          @scr.write_string("\r\e[J")
+        end
+        @scr.write_string("\e[?25h") if last.cur_hidden?
+      end
+      @scr.flush
+      @scr.set_position(-1, -1)
     end
 
     private def start_winch : Nil
@@ -521,6 +554,21 @@ module Ultraviolet
       end
     end
 
+    private def input_loop(reader : TerminalReader, stop : Channel(Nil), done : Channel(Nil)) : Nil
+      STDERR.puts("uv: reader start") if ENV["UV_DEBUG_IO"]?
+      reader.stream_events(@evch, stop)
+    rescue ex
+      STDERR.puts("uv: reader error #{ex.class}: #{ex.message}") if ENV["UV_DEBUG_IO"]?
+      if logger = @logger
+        logger.printf("terminal reader error: %s\n", ex.message)
+      end
+    ensure
+      begin
+        done.send(nil)
+      rescue Channel::ClosedError
+      end
+    end
+
     private def start_input : Nil
       return if @reader
 
@@ -535,22 +583,7 @@ module Ultraviolet
       @reader_stop = stop
       @reader_done = done
 
-      spawn do
-        begin
-          STDERR.puts("uv: reader start") if ENV["UV_DEBUG_IO"]?
-          reader.stream_events(@evch, stop)
-        rescue ex
-          STDERR.puts("uv: reader error #{ex.class}: #{ex.message}") if ENV["UV_DEBUG_IO"]?
-          if logger = @logger
-            logger.printf("terminal reader error: %s\n", ex.message)
-          end
-        ensure
-          begin
-            done.send(nil)
-          rescue Channel::ClosedError
-          end
-        end
-      end
+      spawn { input_loop(reader, stop, done) }
     end
 
     private def stop_input : Nil
