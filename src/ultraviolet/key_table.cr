@@ -49,17 +49,50 @@ module Ultraviolet
       update_flag(FLAG_FKEYS, v)
     end
 
+    def ctrl_at? : Bool
+      contains?(FLAG_CTRL_AT)
+    end
+
+    def ctrl_i? : Bool
+      contains?(FLAG_CTRL_I)
+    end
+
+    def ctrl_m? : Bool
+      contains?(FLAG_CTRL_M)
+    end
+
+    def ctrl_open_bracket? : Bool
+      contains?(FLAG_CTRL_OPEN_BRACKET)
+    end
+
+    def backspace? : Bool
+      contains?(FLAG_BACKSPACE)
+    end
+
+    def find? : Bool
+      contains?(FLAG_FIND)
+    end
+
+    def select? : Bool
+      contains?(FLAG_SELECT)
+    end
+
+    def fkeys? : Bool
+      contains?(FLAG_FKEYS)
+    end
+
     def contains?(flag : UInt32) : Bool
       (@value & flag) == flag
     end
 
     private def update_flag(flag : UInt32, enabled : Bool) : LegacyKeyEncoding
+      new_value = @value
       if enabled
-        @value |= flag
+        new_value |= flag
       else
-        @value &= ~flag
+        new_value &= ~flag
       end
-      self
+      LegacyKeyEncoding.new(new_value)
     end
   end
 

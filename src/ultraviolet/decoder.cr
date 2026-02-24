@@ -34,6 +34,10 @@ module Ultraviolet
     def initialize(@legacy : LegacyKeyEncoding = LegacyKeyEncoding.new, @use_terminfo : Bool = false)
     end
 
+    private def round(x : Float64) : Float64
+      (x * 1000).round / 1000.0
+    end
+
     def decode(buf : Bytes) : {Int32, Event?}
       return {0, nil} if buf.empty?
 
