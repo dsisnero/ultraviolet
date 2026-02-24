@@ -8,7 +8,7 @@ module Ultraviolet
 
     def self.suspend : Nil
     end
-  {% else %}
+  {% elsif flag?(:darwin) || flag?(:dragonfly) || flag?(:freebsd) || flag?(:linux) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) || flag?(:aix) %}
     def self.open_tty : {File, File}
       tty = File.open("/dev/tty", "r+")
       {tty, tty}
@@ -21,6 +21,15 @@ module Ultraviolet
       resumed.receive
     ensure
       Signal::CONT.reset
+    end
+  {% else %}
+    # Unsupported platform (matching Go's tty_other.go build tags)
+    def self.open_tty : {File, File}
+      raise ErrPlatformNotSupported
+    end
+
+    def self.suspend : Nil
+      raise ErrPlatformNotSupported
     end
   {% end %}
 end
