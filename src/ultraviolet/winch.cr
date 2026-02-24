@@ -45,7 +45,7 @@ module Ultraviolet
     def start : Nil
       {% if flag?(:win32) %}
         raise ErrPlatformNotSupported
-      {% else %}
+      {% elsif flag?(:darwin) || flag?(:dragonfly) || flag?(:freebsd) || flag?(:linux) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) || flag?(:aix) %}
         @lock.synchronize do
           raise ErrNotTerminal unless terminal?(@tty)
           return if @running
@@ -57,18 +57,22 @@ module Ultraviolet
           end
           @running = true
         end
+      {% else %}
+        raise ErrPlatformNotSupported
       {% end %}
     end
 
     def stop : Nil
       {% if flag?(:win32) %}
         return
-      {% else %}
+      {% elsif flag?(:darwin) || flag?(:dragonfly) || flag?(:freebsd) || flag?(:linux) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) || flag?(:aix) %}
         @lock.synchronize do
           return unless @running
           Signal::WINCH.reset
           @running = false
         end
+      {% else %}
+        raise ErrPlatformNotSupported
       {% end %}
     end
 
@@ -76,7 +80,7 @@ module Ultraviolet
       {% if flag?(:win32) %}
         width, height = console_size
         {Size.new(width, height), Size.new(0, 0)}
-      {% else %}
+      {% elsif flag?(:darwin) || flag?(:dragonfly) || flag?(:freebsd) || flag?(:linux) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) || flag?(:aix) %}
         raise ErrNotTerminal unless terminal?(@tty)
 
         winsize = uninitialized LibC::Winsize
@@ -87,6 +91,8 @@ module Ultraviolet
         cells = Size.new(winsize.ws_col.to_i, winsize.ws_row.to_i)
         pixels = Size.new(winsize.ws_xpixel.to_i, winsize.ws_ypixel.to_i)
         {cells, pixels}
+      {% else %}
+        raise ErrPlatformNotSupported
       {% end %}
     end
 
@@ -101,9 +107,11 @@ module Ultraviolet
       {% if flag?(:win32) %}
         return false unless tty
         LibC.GetConsoleMode(LibC::HANDLE.new(tty.fd), out _) != 0
-      {% else %}
+      {% elsif flag?(:darwin) || flag?(:dragonfly) || flag?(:freebsd) || flag?(:linux) || flag?(:netbsd) || flag?(:openbsd) || flag?(:solaris) || flag?(:aix) %}
         return false unless tty
         LibC.isatty(tty.fd) == 1
+      {% else %}
+        false
       {% end %}
     end
 

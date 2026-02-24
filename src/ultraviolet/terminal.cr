@@ -19,6 +19,9 @@ module Ultraviolet
     getter size : Size
     getter pixel_size : Size
     getter? running : Bool
+    property logger : Logger?
+    property profile : ColorProfile
+    getter method : WidthMethod
 
     @in : IO
     @out : IO
@@ -182,6 +185,44 @@ module Ultraviolet
 
     def move_to(x : Int32, y : Int32) : Nil
       @state.cur = Position.new(x, y)
+    end
+
+    def draw(d : Drawable) : Nil
+      frame_area = @size.bounds
+      if d.nil?
+        # If the component is nil, we should clear the screen buffer.
+        frame_area = Ultraviolet.rect(frame_area.min.x, frame_area.min.y, frame_area.dx, 0)
+      end
+
+      # We need to resize the screen based on the frame height and
+      # terminal width. This is because the frame height can change based on
+      # the content of the frame.
+      frame_height = frame_area.dy
+      case d
+      when StyledString
+        frame_height = d.height
+      else
+        # For other Drawable types, use default height
+        # Note: In Go, there are type switches for interfaces with Height() and Bounds() methods
+        # In Crystal, we would need to define those interfaces separately
+      end
+
+      if frame_height != frame_area.dy
+        frame_area = Ultraviolet.rect(frame_area.min.x, frame_area.min.y, frame_area.dx, frame_height)
+      end
+
+      # Resize the screen buffer to match the frame area
+      @buf.resize(frame_area.dx, frame_area.dy)
+
+      # Clear our screen buffer before copying the new frame into it
+      @buf.clear
+      d.draw(self, @buf.bounds) unless d.nil?
+
+      # If the frame height is greater than the screen height, we drop the
+      # lines from the top of the buffer.
+      if frame_height > @size.height
+        @buf.lines = @buf.lines[frame_height - @size.height..]
+      end
     end
 
     def size_now : {Int32, Int32}
@@ -369,6 +410,19 @@ module Ultraviolet
       @buf.touched = [] of LineData?
       @scr.erase
       clear
+    end
+
+    def buffered : Int32
+      @scr.buffered
+    end
+
+    def display : Nil
+      @scr.render(@buf)
+      @scr.flush
+    end
+
+    def flush : Nil
+      @scr.flush
     end
 
     def buffered : Int32

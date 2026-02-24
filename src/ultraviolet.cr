@@ -3,6 +3,7 @@
 require "./ultraviolet/geometry"
 require "./ultraviolet/utils"
 require "./ultraviolet/environ"
+require "./ultraviolet/platform"
 require "./ultraviolet/logger"
 require "./ultraviolet/cancelreader"
 require "./ultraviolet/cancelreader_windows"

@@ -15,6 +15,17 @@ module Ultraviolet
     abstract def draw(screen : Screen, area : Rectangle) : Nil
   end
 
+  struct DrawableFunc
+    include Drawable
+
+    def initialize(&@proc : Screen, Rectangle -> Nil)
+    end
+
+    def draw(screen : Screen, area : Rectangle) : Nil
+      @proc.call(screen, area)
+    end
+  end
+
   class Line
     MAX_CELL_WIDTH = 5
 

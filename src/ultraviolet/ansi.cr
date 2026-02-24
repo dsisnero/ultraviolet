@@ -643,5 +643,28 @@ module Ultraviolet
     def self.string_width(value : String) : Int32
       UnicodeCharWidth.width(Ultraviolet.strip_ansi(value))
     end
+
+    def self.truncate(str : String, width : Int32, suffix : String) : String
+      return str if width <= 0
+      return suffix if width <= suffix.bytesize
+
+      current_width = 0
+      result = String::Builder.new
+
+      str.each_char do |char|
+        char_width = UnicodeCharWidth.width(char.to_s)
+        if current_width + char_width > width
+          break
+        end
+        result << char
+        current_width += char_width
+      end
+
+      if result.empty?
+        suffix
+      else
+        result.to_s + suffix
+      end
+    end
   end
 end
