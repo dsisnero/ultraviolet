@@ -5,6 +5,7 @@ require "./colorprofile"
 require "./tabstop"
 require "./terminal_renderer_hashmap"
 require "./terminal_renderer_hardscroll"
+require "./logger"
 
 module Ultraviolet
   ErrInvalidDimensions = Exception.new("invalid dimensions")
@@ -357,18 +358,18 @@ module Ultraviolet
     def put_cell_lr(newbuf : RenderBuffer, cell : Cell?) : Nil
       cur_x = @cur.x
       if cell.nil? || !cell.zero?
-        @buf << Ansi.reset_mode_auto_wrap
+        @buf << Ansi::ResetAutoWrapMode
         put_attr_cell(newbuf, cell)
         @at_phantom = false
         @cur.x = cur_x
-        @buf << Ansi.set_mode_auto_wrap
+        @buf << Ansi::SetAutoWrapMode
       end
     end
 
     def update_pen(cell : Cell?) : Nil
       if cell.nil?
         unless @cur.cell.style.zero?
-          @buf << Ansi.reset_style
+          @buf << Ansi::ResetStyle
           @cur.cell = Cell.new(@cur.cell.content, @cur.cell.width, Style.new, @cur.cell.link)
         end
         unless @cur.cell.link.empty?
@@ -384,8 +385,8 @@ module Ultraviolet
 
       unless new_style == old_style
         seq = new_style.diff(old_style, @profile)
-        if new_style.zero? && seq.bytesize > Ansi.reset_style.bytesize
-          seq = Ansi.reset_style
+        if new_style.zero? && seq.bytesize > Ansi::ResetStyle.bytesize
+          seq = Ansi::ResetStyle
         end
         @buf << seq
         @cur.cell = Cell.new(@cur.cell.content, @cur.cell.width, cell.style, @cur.cell.link)
@@ -536,7 +537,7 @@ module Ultraviolet
         update_pen(blank)
         count = newbuf.width - @cur.x
         if el0_cost <= count
-          @buf << Ansi.erase_line_right
+          @buf << Ansi::EraseLineRight
         else
           i = 0
           while i < count
@@ -556,7 +557,7 @@ module Ultraviolet
       if supports_ich
         @buf << Ansi.insert_character(count)
       else
-        @buf << Ansi.set_mode_insert_replace
+        @buf << Ansi::SetInsertReplaceMode
       end
 
       i = 0
@@ -567,12 +568,12 @@ module Ultraviolet
         remaining -= 1
       end
 
-      @buf << Ansi.reset_mode_insert_replace unless supports_ich
+      @buf << Ansi::ResetInsertReplaceMode unless supports_ich
     end
 
     def el0_cost : Int32
       return 0 if @caps != Capabilities::None
-      Ansi.erase_line_right.bytesize
+      Ansi::EraseLineRight.bytesize
     end
 
     # ameba:disable Metrics/CyclomaticComplexity
@@ -611,16 +612,16 @@ module Ultraviolet
           first_cell = n_first
         else
           first_cell = o_first
-          el1_cost = Ansi.erase_line_left.bytesize
+          el1_cost = Ansi::EraseLineLeft.bytesize
           if el1_cost < n_first - o_first
             if n_first >= newbuf.width
               move(newbuf, 0, y)
               update_pen(blank)
-              @buf << Ansi.erase_line_right
+              @buf << Ansi::EraseLineRight
             else
               move(newbuf, n_first - 1, y)
               update_pen(blank)
-              @buf << Ansi.erase_line_left
+              @buf << Ansi::EraseLineLeft
             end
 
             while first_cell < n_first
@@ -729,7 +730,7 @@ module Ultraviolet
         elsif o_last > n_last
           move(newbuf, n + 1, y)
           dch_cost = 3 + o_last - n_last
-          if dch_cost > Ansi.erase_line_right.bytesize + n_last_non_blank - (n + 1)
+          if dch_cost > Ansi::EraseLineRight.bytesize + n_last_non_blank - (n + 1)
             if put_range(newbuf, old_line, new_line, y, n + 1, n_last_non_blank)
               move(newbuf, n_last_non_blank + 1, y)
             end
@@ -756,7 +757,7 @@ module Ultraviolet
       row = 0 if row < 0
 
       update_pen(blank)
-      @buf << Ansi.erase_screen_below
+      @buf << Ansi::EraseScreenBelow
       if curbuf = @curbuf
         curbuf.clear_area(Ultraviolet.rect(col, row, curbuf.width - col, 1))
         curbuf.clear_area(Ultraviolet.rect(0, row + 1, curbuf.width, curbuf.height - row - 1))
@@ -825,8 +826,8 @@ module Ultraviolet
 
     def clear_screen(blank : Cell?) : Nil
       update_pen(blank)
-      @buf << Ansi.cursor_home_position
-      @buf << Ansi.erase_entire_screen
+      @buf << Ansi::CursorHomePosition
+      @buf << Ansi::EraseEntireScreen
       @cur.x = 0
       @cur.y = 0
       @curbuf.try &.fill(blank)
@@ -1080,7 +1081,7 @@ module Ultraviolet
           yseq = cuu if yseq.empty? || cuu.bytesize < yseq.bytesize
           if n == 1 && fy - 1 > 0
             # TODO: Ensure we're not unintentionally scrolling the screen up.
-            yseq = Ansi.reverse_index
+            yseq = "\eM"
           end
         end
 
@@ -1169,7 +1170,7 @@ module Ultraviolet
             end
 
             if cbt > 0
-              seq << Ansi.cursor_horizontal_backward_tab(cbt)
+              seq << Ansi.cursor_backward_tab(cbt)
               n = col - tx
             end
           end
@@ -1237,7 +1238,7 @@ module Ultraviolet
 
         if (@flags & TerminalFlags::RelativeCursor) == TerminalFlags::None
           nseq3, nscroll3 = relative_cursor_move(newbuf, 0, 0, x, y, overwrite, use_tabs, use_backspace)
-          nseq3 = Ansi.cursor_home_position + nseq3
+          nseq3 = Ansi::CursorHomePosition + nseq3
           if nseq3.bytesize < seq.bytesize
             seq = nseq3
             scroll_height = Math.max(scroll_height, nscroll3)

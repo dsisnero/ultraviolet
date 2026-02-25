@@ -1,6 +1,14 @@
 require "./spec_helper"
 
 module Ultraviolet
+  private def self.uv_color(str : String) : Color
+    if color = Ansi.x_parse_color(str)
+      Color.new(color.r, color.g, color.b)
+    else
+      raise "Failed to parse color: #{str}"
+    end
+  end
+
   private class TestTerminalReader < TerminalReader
     def scan_events_public(buf : Bytes, expired : Bool)
       scan_events(buf, expired)
@@ -281,7 +289,7 @@ module Ultraviolet
           "\x1b\\".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          BackgroundColorEvent.new(Ansi.x_parse_color("rgb:1a1a/1b1b/2c2c")),
+          BackgroundColorEvent.new(uv_color("rgb:1a1a/1b1b/2c2c")),
         ])
       end
 
@@ -291,7 +299,7 @@ module Ultraviolet
           "\a".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          BackgroundColorEvent.new(Ansi.x_parse_color("rgb:1a1a/1b1b/2c2c")),
+          BackgroundColorEvent.new(uv_color("rgb:1a1a/1b1b/2c2c")),
         ])
       end
 
@@ -319,7 +327,7 @@ module Ultraviolet
           "0000\x1b\\".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          ForegroundColorEvent.new(Ansi.x_parse_color("rgb:ffff/0000/0000")),
+          ForegroundColorEvent.new(uv_color("rgb:ffff/0000/0000")),
         ])
       end
 
@@ -329,7 +337,7 @@ module Ultraviolet
           "8080/8080/8080\a".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          CursorColorEvent.new(Ansi.x_parse_color("rgb:8080/8080/8080")),
+          CursorColorEvent.new(uv_color("rgb:8080/8080/8080")),
         ])
       end
 
@@ -352,7 +360,7 @@ module Ultraviolet
           "5678/9abc\a".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          BackgroundColorEvent.new(Ansi.x_parse_color("rgb:1234/5678/9abc")),
+          BackgroundColorEvent.new(uv_color("rgb:1234/5678/9abc")),
         ])
       end
 
@@ -362,7 +370,7 @@ module Ultraviolet
           "\ax".to_slice,
         ]), "xterm-256color")
         collect_stream_events(reader).should eq([
-          BackgroundColorEvent.new(Ansi.x_parse_color("rgb:1111/2222/3333")),
+          BackgroundColorEvent.new(uv_color("rgb:1111/2222/3333")),
           Key.new(code: 'x'.ord, text: "x"),
         ])
       end

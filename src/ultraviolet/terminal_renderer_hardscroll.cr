@@ -191,7 +191,7 @@ module Ultraviolet
       if n == 1 && top == min_y && bot == max_y
         move(newbuf, 0, top)
         update_pen(blank)
-        @buf << Ansi.reverse_index
+        @buf << Ansi::ReverseIndex
       elsif n == 1 && bot == max_y
         move(newbuf, 0, top)
         update_pen(blank)
@@ -202,7 +202,7 @@ module Ultraviolet
         if (@caps & Capabilities::SD) == Capabilities::SD
           @buf << Ansi.scroll_down(n)
         else
-          @buf << Ansi.reverse_index * n
+          @buf << Ansi::ReverseIndex * n
         end
       elsif bot == max_y
         move(newbuf, 0, top)

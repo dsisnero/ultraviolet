@@ -173,7 +173,9 @@ module Ultraviolet
   KeyBackspace = Ansi::BS.to_i
   KeyTab       = Ansi::HT.to_i
   KeyEnter     = Ansi::CR.to_i
+  KeyReturn    = KeyEnter
   KeyEscape    = Ansi::ESC.to_i
+  KeyEsc       = KeyEscape
   KeySpace     = Ansi::SP.to_i
 
   struct Key

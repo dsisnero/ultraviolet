@@ -6,6 +6,8 @@ module Ultraviolet
     property legacy : LegacyKeyEncoding
     property? use_terminfo : Bool
 
+    @@kitty_key_map : Hash(Int32, Key)? = nil
+
     @last_cks : UInt32 = 0
 
     private UNHANDLED_EVENT = UnknownEvent.new("")
@@ -32,6 +34,19 @@ module Ultraviolet
     end
 
     def initialize(@legacy : LegacyKeyEncoding = LegacyKeyEncoding.new, @use_terminfo : Bool = false)
+    end
+
+    private def param_value(param : Ansi::Param, default : Int32) : Int32
+      p = param & Ansi::ParserTransition::ParamMask
+      p == Ansi::ParserTransition::MissingParam ? default : p
+    end
+
+    private def param_has_more?(param : Ansi::Param) : Bool
+      (param & Ansi::ParserTransition::HasMoreFlag) != 0
+    end
+
+    private def uv_color(color : Ansi::Color) : Ultraviolet::Color
+      Ultraviolet::Color.new(color.r, color.g, color.b)
     end
 
     private def round(x : Float64) : Float64
@@ -139,7 +154,7 @@ module Ultraviolet
       cmd, i = parse_csi_prefix(buf, i)
       params, i = parse_csi_params(buf, i)
       intermed, i = parse_csi_intermed(buf, i)
-      cmd |= (intermed.to_i << Ansi::Parser::IntermedShift)
+      cmd |= (intermed.to_i << Ansi::ParserTransition::IntermedShift)
       cmd, i, ok = parse_csi_final(buf, cmd, i)
 
       {cmd, params, i, intermed, ok}
@@ -154,20 +169,20 @@ module Ultraviolet
         i += 1
       end
       if i < buf.size && buf[i] >= '<'.ord && buf[i] <= '?'.ord
-        cmd |= (buf[i].to_i << Ansi::Parser::PrefixShift)
+        cmd |= (buf[i].to_i << Ansi::ParserTransition::PrefixShift)
       end
       {cmd, i}
     end
 
     private def parse_csi_params(buf : Bytes, i : Int32) : {Array(Ansi::Param), Int32}
-      params, i, _ = parse_params(buf, i, Ansi::Parser::MaxParamsSize)
+      params, i, _ = parse_params(buf, i, Ansi::ParserTransition::MaxParamsSize)
       {params, i}
     end
 
     private def parse_params(buf : Bytes, i : Int32, max : Int32) : {Array(Ansi::Param), Int32, Int32}
       params = [] of Ansi::Param
       param_bytes = 0
-      current = Ansi::Param.new
+      current = Ansi::ParserTransition::MissingParam
       while i < buf.size && params.size < max && csi_param_byte?(buf[i])
         param_bytes += 1
         current = update_param_from_byte(current, params, buf[i])
@@ -191,16 +206,17 @@ module Ultraviolet
 
     private def update_param_from_byte(current : Ansi::Param, params : Array(Ansi::Param), byte : UInt8) : Ansi::Param
       if csi_digit?(byte)
-        unless current.present?
-          current.present = true
-          current.value = 0
+        if current == Ansi::ParserTransition::MissingParam
+          current = 0
         end
-        current.value = current.value * 10 + (byte - '0'.ord)
+        current = (current & Ansi::ParserTransition::ParamMask) * 10 + (byte - '0'.ord)
       end
-      current.has_more = true if byte == ':'.ord
+      if byte == ':'.ord
+        current |= Ansi::ParserTransition::HasMoreFlag
+      end
       if byte == ';'.ord || byte == ':'.ord
         params << current
-        return Ansi::Param.new
+        return Ansi::ParserTransition::MissingParam
       end
       current
     end
@@ -237,21 +253,21 @@ module Ultraviolet
 
     private def handle_csi_prefixed(cmd : Int32, params : Array(Ansi::Param), pa : Ansi::Params, buf : Bytes, i : Int32) : CsiResult
       case cmd
-      when ('y'.ord | ('?'.ord << Ansi::Parser::PrefixShift) | ('$'.ord << Ansi::Parser::IntermedShift))
+      when ('y'.ord | ('?'.ord << Ansi::ParserTransition::PrefixShift) | ('$'.ord << Ansi::ParserTransition::IntermedShift))
         handle_csi_mode_report('y'.ord, params, pa, buf, i)
-      when ('c'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+      when ('c'.ord | ('?'.ord << Ansi::ParserTransition::PrefixShift))
         handled_csi(i, parse_primary_dev_attrs(pa))
-      when ('c'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+      when ('c'.ord | ('>'.ord << Ansi::ParserTransition::PrefixShift))
         handled_csi(i, parse_secondary_dev_attrs(pa))
-      when ('u'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+      when ('u'.ord | ('?'.ord << Ansi::ParserTransition::PrefixShift))
         handle_csi_keyboard_enhancements('u'.ord, pa, i)
-      when ('R'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+      when ('R'.ord | ('?'.ord << Ansi::ParserTransition::PrefixShift))
         handle_csi_cursor_report('R'.ord, pa, buf, i)
-      when ('m'.ord | ('<'.ord << Ansi::Parser::PrefixShift)), ('M'.ord | ('<'.ord << Ansi::Parser::PrefixShift))
+      when ('m'.ord | ('<'.ord << Ansi::ParserTransition::PrefixShift)), ('M'.ord | ('<'.ord << Ansi::ParserTransition::PrefixShift))
         handle_csi_mouse_sgr(cmd & 0xff, params, pa, i)
-      when ('m'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+      when ('m'.ord | ('>'.ord << Ansi::ParserTransition::PrefixShift))
         handle_csi_modify_other_keys('m'.ord, pa, buf, i)
-      when ('n'.ord | ('?'.ord << Ansi::Parser::PrefixShift))
+      when ('n'.ord | ('?'.ord << Ansi::ParserTransition::PrefixShift))
         handle_csi_color_scheme('n'.ord, pa, i)
       else
         CsiResult.unhandled
@@ -268,7 +284,7 @@ module Ultraviolet
         handle_csi_cursor_or_f3('R'.ord, params, pa, buf, i)
       when 'M'.ord
         handle_csi_x10_mouse('M'.ord, buf, i)
-      when ('y'.ord | ('$'.ord << Ansi::Parser::IntermedShift))
+      when ('y'.ord | ('$'.ord << Ansi::ParserTransition::IntermedShift))
         handle_csi_mode_report('y'.ord, params, pa, buf, i)
       when 'u'.ord
         handle_csi_kitty_keyboard('u'.ord, params, pa, buf, i)
@@ -287,7 +303,7 @@ module Ultraviolet
       mode, _, ok = pa.param(0, -1)
       return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) unless ok && mode != -1
       return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i]))) if params.size < 2
-      value, _, _ = pa.param(1, Ultraviolet::Ansi::ModeNotRecognized)
+      value, _, _ = pa.param(1, Ansi::ModeNotRecognized.value.to_i)
       handled_csi(i, ModeReportEvent.new(mode, value))
     end
 
@@ -353,7 +369,7 @@ module Ultraviolet
       key = simple_csi_key(cmd)
       id, _, _ = pa.param(0, 1)
       mod, _, _ = pa.param(1, 1)
-      if (params.size > 2 && !pa[1].has_more?) || id != 1
+      if (params.size > 2 && !param_has_more?(pa[1])) || id != 1
         return handled_csi(i, UnknownCsiEvent.new(String.new(buf[0, i])))
       end
       if params.size > 1 && id == 1 && mod != -1
@@ -740,11 +756,23 @@ module Ultraviolet
     private def osc_event_for(cmd : Int32, data : String) : Event?
       case cmd
       when 10
-        ForegroundColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
+        if color = Ansi.x_parse_color(data)
+          ForegroundColorEvent.new(uv_color(color))
+        else
+          ForegroundColorEvent.new(Ultraviolet::Color.new(0_u8, 0_u8, 0_u8))
+        end
       when 11
-        BackgroundColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
+        if color = Ansi.x_parse_color(data)
+          BackgroundColorEvent.new(uv_color(color))
+        else
+          BackgroundColorEvent.new(Ultraviolet::Color.new(0_u8, 0_u8, 0_u8))
+        end
       when 12
-        CursorColorEvent.new(Ultraviolet::Ansi.x_parse_color(data))
+        if color = Ansi.x_parse_color(data)
+          CursorColorEvent.new(uv_color(color))
+        else
+          CursorColorEvent.new(Ultraviolet::Color.new(0_u8, 0_u8, 0_u8))
+        end
       when 52
         osc_clipboard_event(data)
       else
@@ -876,12 +904,12 @@ module Ultraviolet
       end
 
       if i < buf.size && buf[i] >= '<'.ord && buf[i] <= '?'.ord
-        cmd |= (buf[i].to_i << Ansi::Parser::PrefixShift)
+        cmd |= (buf[i].to_i << Ansi::ParserTransition::PrefixShift)
       end
 
       params, i, _ = parse_params(buf, i, 16)
       intermed, i = parse_csi_intermed(buf, i)
-      cmd |= (intermed.to_i << Ansi::Parser::IntermedShift)
+      cmd |= (intermed.to_i << Ansi::ParserTransition::IntermedShift)
       cmd, i, ok = parse_csi_final(buf, cmd, i)
       {cmd, params, i, ok}
     end
@@ -906,12 +934,12 @@ module Ultraviolet
 
     private def dcs_event_for(cmd : Int32, params : Ansi::Params, payload : Bytes) : Event?
       case cmd
-      when ('r'.ord | ('+'.ord << Ansi::Parser::IntermedShift))
+      when ('r'.ord | ('+'.ord << Ansi::ParserTransition::IntermedShift))
         param, _, _ = params.param(0, 0)
         return parse_termcap(payload) if param == 1
-      when ('|'.ord | ('>'.ord << Ansi::Parser::PrefixShift))
+      when ('|'.ord | ('>'.ord << Ansi::ParserTransition::PrefixShift))
         return TerminalVersionEvent.new(String.new(payload))
-      when ('|'.ord | ('!'.ord << Ansi::Parser::IntermedShift))
+      when ('|'.ord | ('!'.ord << Ansi::ParserTransition::IntermedShift))
         return parse_tertiary_dev_attrs(payload)
       end
       nil
@@ -1081,7 +1109,7 @@ module Ultraviolet
         key, is_release = apply_kitty_param(param_idx, sub_idx, param, key, is_release)
 
         sub_idx += 1
-        unless param.has_more?
+        unless param_has_more?(param)
           param_idx += 1
           sub_idx = 0
         end
@@ -1107,16 +1135,16 @@ module Ultraviolet
     private def apply_kitty_key_param(sub_idx : Int32, param : Ansi::Param, key : Key) : Key
       case sub_idx
       when 0
-        code = param.param(1)
+        code = param_value(param, 1)
         mapped = kitty_key_map[code]?
         return mapped || Key.new(code: code)
       when 1
-        shifted = param.param(1)
+        shifted = param_value(param, 1)
         if Ultraviolet.printable_char?(shifted)
           key.shifted_code = shifted
         end
       when 2
-        shifted = param.param(1)
+        shifted = param_value(param, 1)
         if Ultraviolet.printable_char?(shifted)
           key.base_code = shifted
           key.shifted_code = shifted
@@ -1128,13 +1156,13 @@ module Ultraviolet
     private def apply_kitty_mod_param(sub_idx : Int32, param : Ansi::Param, key : Key, is_release : Bool) : {Key, Bool}
       case sub_idx
       when 0
-        mod = param.param(1)
+        mod = param_value(param, 1)
         if mod > 1
           key.mod = from_kitty_mod(mod - 1)
           key.text = "" if key.mod > ModShift
         end
       when 1
-        case param.param(1)
+        case param_value(param, 1)
         when 2
           key.is_repeat = true
         when 3
@@ -1145,7 +1173,7 @@ module Ultraviolet
     end
 
     private def apply_kitty_text_param(param : Ansi::Param, key : Key) : Key
-      code = param.param(0)
+      code = param_value(param, 0)
       key.text += Ultraviolet.safe_char(code).to_s if code != 0
       key
     end
@@ -1153,9 +1181,9 @@ module Ultraviolet
     private def parse_kitty_keyboard_ext(params : Ansi::Params, key : Key) : Event
       return key if params.empty?
       return key if params.size < 3
-      return key unless params[0].param(1) == 1 && params[2].param(1) == 1
+      return key unless param_value(params[0], 1) == 1 && param_value(params[2], 1) == 1
 
-      mod = params[1].param(1)
+      mod = param_value(params[1], 1)
       return key if mod < 2
 
       key.mod |= from_kitty_mod(mod - 1)
@@ -1166,7 +1194,7 @@ module Ultraviolet
     protected def parse_primary_dev_attrs(params : Ansi::Params) : Event
       attrs = [] of Int32
       params.each do |param|
-        attrs << param.param(0) unless param.has_more?
+        attrs << param_value(param, 0) unless param_has_more?(param)
       end
       attrs
     end
@@ -1174,7 +1202,7 @@ module Ultraviolet
     protected def parse_secondary_dev_attrs(params : Ansi::Params) : Event
       attrs = [] of Int32
       params.each do |param|
-        attrs << param.param(0) unless param.has_more?
+        attrs << param_value(param, 0) unless param_has_more?(param)
       end
       attrs
     end
@@ -1332,128 +1360,146 @@ module Ultraviolet
     end
 
     private def kitty_key_map : Hash(Int32, Key)
-      @@kitty_key_map ||= {
-        Ansi::BS  => Key.new(code: KeyBackspace),
-        Ansi::HT  => Key.new(code: KeyTab),
-        Ansi::CR  => Key.new(code: KeyEnter),
-        Ansi::ESC => Key.new(code: KeyEscape),
-        Ansi::DEL => Key.new(code: KeyBackspace),
+      @@kitty_key_map ||= begin
+        map = {
+          Ansi::BS.to_i  => Key.new(code: KeyBackspace),
+          Ansi::HT.to_i  => Key.new(code: KeyTab),
+          Ansi::CR.to_i  => Key.new(code: KeyEnter),
+          Ansi::ESC.to_i => Key.new(code: KeyEscape),
+          Ansi::DEL.to_i => Key.new(code: KeyBackspace),
 
-        57344 => Key.new(code: KeyEscape),
-        57345 => Key.new(code: KeyEnter),
-        57346 => Key.new(code: KeyTab),
-        57347 => Key.new(code: KeyBackspace),
-        57348 => Key.new(code: KeyInsert),
-        57349 => Key.new(code: KeyDelete),
-        57350 => Key.new(code: KeyLeft),
-        57351 => Key.new(code: KeyRight),
-        57352 => Key.new(code: KeyUp),
-        57353 => Key.new(code: KeyDown),
-        57354 => Key.new(code: KeyPgUp),
-        57355 => Key.new(code: KeyPgDown),
-        57356 => Key.new(code: KeyHome),
-        57357 => Key.new(code: KeyEnd),
-        57358 => Key.new(code: KeyCapsLock),
-        57359 => Key.new(code: KeyScrollLock),
-        57360 => Key.new(code: KeyNumLock),
-        57361 => Key.new(code: KeyPrintScreen),
-        57362 => Key.new(code: KeyPause),
-        57363 => Key.new(code: KeyMenu),
-        57364 => Key.new(code: KeyF1),
-        57365 => Key.new(code: KeyF2),
-        57366 => Key.new(code: KeyF3),
-        57367 => Key.new(code: KeyF4),
-        57368 => Key.new(code: KeyF5),
-        57369 => Key.new(code: KeyF6),
-        57370 => Key.new(code: KeyF7),
-        57371 => Key.new(code: KeyF8),
-        57372 => Key.new(code: KeyF9),
-        57373 => Key.new(code: KeyF10),
-        57374 => Key.new(code: KeyF11),
-        57375 => Key.new(code: KeyF12),
-        57376 => Key.new(code: KeyF13),
-        57377 => Key.new(code: KeyF14),
-        57378 => Key.new(code: KeyF15),
-        57379 => Key.new(code: KeyF16),
-        57380 => Key.new(code: KeyF17),
-        57381 => Key.new(code: KeyF18),
-        57382 => Key.new(code: KeyF19),
-        57383 => Key.new(code: KeyF20),
-        57384 => Key.new(code: KeyF21),
-        57385 => Key.new(code: KeyF22),
-        57386 => Key.new(code: KeyF23),
-        57387 => Key.new(code: KeyF24),
-        57388 => Key.new(code: KeyF25),
-        57389 => Key.new(code: KeyF26),
-        57390 => Key.new(code: KeyF27),
-        57391 => Key.new(code: KeyF28),
-        57392 => Key.new(code: KeyF29),
-        57393 => Key.new(code: KeyF30),
-        57394 => Key.new(code: KeyF31),
-        57395 => Key.new(code: KeyF32),
-        57396 => Key.new(code: KeyF33),
-        57397 => Key.new(code: KeyF34),
-        57398 => Key.new(code: KeyF35),
-        57399 => Key.new(code: KeyF36),
-        57400 => Key.new(code: KeyF37),
-        57401 => Key.new(code: KeyF38),
-        57402 => Key.new(code: KeyF39),
-        57403 => Key.new(code: KeyF40),
-        57404 => Key.new(code: KeyF41),
-        57405 => Key.new(code: KeyF42),
-        57406 => Key.new(code: KeyF43),
-        57407 => Key.new(code: KeyF44),
-        57408 => Key.new(code: KeyF45),
-        57409 => Key.new(code: KeyF46),
-        57410 => Key.new(code: KeyF47),
-        57411 => Key.new(code: KeyF48),
-        57412 => Key.new(code: KeyF49),
-        57413 => Key.new(code: KeyF50),
-        57414 => Key.new(code: KeyF51),
-        57415 => Key.new(code: KeyF52),
-        57416 => Key.new(code: KeyF53),
-        57417 => Key.new(code: KeyF54),
-        57418 => Key.new(code: KeyF55),
-        57419 => Key.new(code: KeyF56),
-        57420 => Key.new(code: KeyF57),
-        57421 => Key.new(code: KeyF58),
-        57422 => Key.new(code: KeyF59),
-        57423 => Key.new(code: KeyF60),
-        57424 => Key.new(code: KeyF61),
-        57425 => Key.new(code: KeyF62),
-        57426 => Key.new(code: KeyF63),
-        57427 => Key.new(code: KeyCapsLock),
-        57428 => Key.new(code: KeyScrollLock),
-        57429 => Key.new(code: KeyNumLock),
-        57430 => Key.new(code: KeyPrintScreen),
-        57431 => Key.new(code: KeyPause),
-        57432 => Key.new(code: KeyMenu),
-        57433 => Key.new(code: KeyMediaPlay),
-        57434 => Key.new(code: KeyMediaPause),
-        57435 => Key.new(code: KeyMediaPlayPause),
-        57436 => Key.new(code: KeyMediaReverse),
-        57437 => Key.new(code: KeyMediaStop),
-        57438 => Key.new(code: KeyMediaFastForward),
-        57439 => Key.new(code: KeyMediaRewind),
-        57440 => Key.new(code: KeyMediaNext),
-        57441 => Key.new(code: KeyMediaPrev),
-        57442 => Key.new(code: KeyMediaRecord),
-        57443 => Key.new(code: KeyLowerVol),
-        57444 => Key.new(code: KeyRaiseVol),
-        57445 => Key.new(code: KeyMute),
-        57446 => Key.new(code: KeyLeftShift),
-        57447 => Key.new(code: KeyLeftCtrl),
-        57448 => Key.new(code: KeyLeftAlt),
-        57449 => Key.new(code: KeyLeftMeta),
-        57450 => Key.new(code: KeyLeftSuper),
-        57451 => Key.new(code: KeyLeftHyper),
-        57452 => Key.new(code: KeyRightShift),
-        57453 => Key.new(code: KeyRightCtrl),
-        57454 => Key.new(code: KeyRightAlt),
-        57455 => Key.new(code: KeyRightMeta),
-        57456 => Key.new(code: KeyRightSuper),
-        57457 => Key.new(code: KeyRightHyper),
-      }
+          57344 => Key.new(code: KeyEscape),
+          57345 => Key.new(code: KeyEnter),
+          57346 => Key.new(code: KeyTab),
+          57347 => Key.new(code: KeyBackspace),
+          57348 => Key.new(code: KeyInsert),
+          57349 => Key.new(code: KeyDelete),
+          57350 => Key.new(code: KeyLeft),
+          57351 => Key.new(code: KeyRight),
+          57352 => Key.new(code: KeyUp),
+          57353 => Key.new(code: KeyDown),
+          57354 => Key.new(code: KeyPgUp),
+          57355 => Key.new(code: KeyPgDown),
+          57356 => Key.new(code: KeyHome),
+          57357 => Key.new(code: KeyEnd),
+          57358 => Key.new(code: KeyCapsLock),
+          57359 => Key.new(code: KeyScrollLock),
+          57360 => Key.new(code: KeyNumLock),
+          57361 => Key.new(code: KeyPrintScreen),
+          57362 => Key.new(code: KeyPause),
+          57363 => Key.new(code: KeyMenu),
+          57364 => Key.new(code: KeyF1),
+          57365 => Key.new(code: KeyF2),
+          57366 => Key.new(code: KeyF3),
+          57367 => Key.new(code: KeyF4),
+          57368 => Key.new(code: KeyF5),
+          57369 => Key.new(code: KeyF6),
+          57370 => Key.new(code: KeyF7),
+          57371 => Key.new(code: KeyF8),
+          57372 => Key.new(code: KeyF9),
+          57373 => Key.new(code: KeyF10),
+          57374 => Key.new(code: KeyF11),
+          57375 => Key.new(code: KeyF12),
+          57376 => Key.new(code: KeyF13),
+          57377 => Key.new(code: KeyF14),
+          57378 => Key.new(code: KeyF15),
+          57379 => Key.new(code: KeyF16),
+          57380 => Key.new(code: KeyF17),
+          57381 => Key.new(code: KeyF18),
+          57382 => Key.new(code: KeyF19),
+          57383 => Key.new(code: KeyF20),
+          57384 => Key.new(code: KeyF21),
+          57385 => Key.new(code: KeyF22),
+          57386 => Key.new(code: KeyF23),
+          57387 => Key.new(code: KeyF24),
+          57388 => Key.new(code: KeyF25),
+          57389 => Key.new(code: KeyF26),
+          57390 => Key.new(code: KeyF27),
+          57391 => Key.new(code: KeyF28),
+          57392 => Key.new(code: KeyF29),
+          57393 => Key.new(code: KeyF30),
+          57394 => Key.new(code: KeyF31),
+          57395 => Key.new(code: KeyF32),
+          57396 => Key.new(code: KeyF33),
+          57397 => Key.new(code: KeyF34),
+          57398 => Key.new(code: KeyF35),
+          57399 => Key.new(code: KeyF36),
+          57400 => Key.new(code: KeyF37),
+          57401 => Key.new(code: KeyF38),
+          57402 => Key.new(code: KeyF39),
+          57403 => Key.new(code: KeyF40),
+          57404 => Key.new(code: KeyF41),
+          57405 => Key.new(code: KeyF42),
+          57406 => Key.new(code: KeyF43),
+          57407 => Key.new(code: KeyF44),
+          57408 => Key.new(code: KeyF45),
+          57409 => Key.new(code: KeyF46),
+          57410 => Key.new(code: KeyF47),
+          57411 => Key.new(code: KeyF48),
+          57412 => Key.new(code: KeyF49),
+          57413 => Key.new(code: KeyF50),
+          57414 => Key.new(code: KeyF51),
+          57415 => Key.new(code: KeyF52),
+          57416 => Key.new(code: KeyF53),
+          57417 => Key.new(code: KeyF54),
+          57418 => Key.new(code: KeyF55),
+          57419 => Key.new(code: KeyF56),
+          57420 => Key.new(code: KeyF57),
+          57421 => Key.new(code: KeyF58),
+          57422 => Key.new(code: KeyF59),
+          57423 => Key.new(code: KeyF60),
+          57424 => Key.new(code: KeyF61),
+          57425 => Key.new(code: KeyF62),
+          57426 => Key.new(code: KeyF63),
+          57427 => Key.new(code: KeyCapsLock),
+          57428 => Key.new(code: KeyScrollLock),
+          57429 => Key.new(code: KeyNumLock),
+          57430 => Key.new(code: KeyPrintScreen),
+          57431 => Key.new(code: KeyPause),
+          57432 => Key.new(code: KeyMenu),
+          57433 => Key.new(code: KeyMediaPlay),
+          57434 => Key.new(code: KeyMediaPause),
+          57435 => Key.new(code: KeyMediaPlayPause),
+          57436 => Key.new(code: KeyMediaReverse),
+          57437 => Key.new(code: KeyMediaStop),
+          57438 => Key.new(code: KeyMediaFastForward),
+          57439 => Key.new(code: KeyMediaRewind),
+          57440 => Key.new(code: KeyMediaNext),
+          57441 => Key.new(code: KeyMediaPrev),
+          57442 => Key.new(code: KeyMediaRecord),
+          57443 => Key.new(code: KeyLowerVol),
+          57444 => Key.new(code: KeyRaiseVol),
+          57445 => Key.new(code: KeyMute),
+          57446 => Key.new(code: KeyLeftShift),
+          57447 => Key.new(code: KeyLeftCtrl),
+          57448 => Key.new(code: KeyLeftAlt),
+          57449 => Key.new(code: KeyLeftMeta),
+          57450 => Key.new(code: KeyLeftSuper),
+          57451 => Key.new(code: KeyLeftHyper),
+          57452 => Key.new(code: KeyRightShift),
+          57453 => Key.new(code: KeyRightCtrl),
+          57454 => Key.new(code: KeyRightAlt),
+          57455 => Key.new(code: KeyRightMeta),
+          57456 => Key.new(code: KeyRightSuper),
+          57457 => Key.new(code: KeyRightHyper),
+        }
+
+        # Add faulty C0 mappings per Go init()
+        # NUL maps to Ctrl+Space
+        map[Ansi::NUL.to_i] = Key.new(code: KeySpace, mod: ModCtrl)
+
+        # SOH to SUB (0x01-0x1A) map to Ctrl+letter
+        (Ansi::SOH..Ansi::SUB).each do |i|
+          map[i.to_i] = Key.new(code: i.to_i + 0x60, mod: ModCtrl)
+        end
+
+        # FS to US (0x1C-0x1F) map to Ctrl+symbol
+        (Ansi::FS..Ansi::US).each do |i|
+          map[i.to_i] = Key.new(code: i.to_i + 0x40, mod: ModCtrl)
+        end
+
+        map
+      end
     end
 
     private def parse_win32_input_key_event(vkc : UInt16, _scan : UInt16, rune_value : Int32, key_down : Bool, cks : UInt32, repeat_count : UInt16) : Event
@@ -1509,6 +1555,27 @@ module Ultraviolet
       mod |= ModNumLock if (cks & num) != 0
       mod |= ModScrollLock if (cks & scroll) != 0
       mod
+    end
+
+    private def ensure_key_case(key : Key, cks : UInt32) : Key
+      return key if key.text.empty?
+
+      has_shift = (cks & (1_u32 << 4)) != 0 # SHIFT_PRESSED
+      has_caps = (cks & (1_u32 << 5)) != 0  # CAPSLOCK_ON
+
+      if has_shift || has_caps
+        if key.code.chr?.try(&.lowercase?)
+          key.shifted_code = key.code.chr.upcase.ord
+          key.text = key.shifted_code.chr.to_s
+        end
+      else
+        if key.code.chr?.try(&.uppercase?)
+          key.shifted_code = key.code.chr.downcase.ord
+          key.text = key.shifted_code.chr.to_s
+        end
+      end
+
+      key
     end
 
     private def hex_decode(value : String) : Bytes

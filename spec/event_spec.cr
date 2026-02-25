@@ -197,8 +197,12 @@ describe "Event types" do
     ]
 
     tests.each do |hex, dark|
-      color = Ultraviolet::Ansi.x_parse_color(hex)
-      Ultraviolet.dark_color?(color).should eq(dark)
+      color = Ansi.x_parse_color(hex)
+      if color
+        Ultraviolet.dark_color?(Ultraviolet::Color.new(color.r, color.g, color.b)).should eq(dark)
+      else
+        fail "Failed to parse color #{hex}"
+      end
     end
   end
 
@@ -222,7 +226,7 @@ describe "Event types" do
     Ultraviolet::PrimaryDeviceAttributesEvent.new(3) { |i| i + 1 }
     Ultraviolet::SecondaryDeviceAttributesEvent.new(3) { |i| i + 1 }
     "test".as(Ultraviolet::TertiaryDeviceAttributesEvent).should eq("test")
-    Ultraviolet::ModeReportEvent.new(1000, Ultraviolet::Ansi::ModeSet)
+    Ultraviolet::ModeReportEvent.new(1000, Ansi::ModeSet.value)
     Ultraviolet::WindowOpEvent.new(1, [100, 200])
     Ultraviolet::CapabilityEvent.new("RGB")
     "ignored".as(Ultraviolet::IgnoredEvent).should eq("ignored")

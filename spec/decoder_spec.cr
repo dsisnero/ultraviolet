@@ -21,6 +21,14 @@ module DecoderSpecHelper
     signatures
   end
 
+  def self.uv_color(str : String) : Ultraviolet::Color
+    if color = Ansi.x_parse_color(str)
+      Ultraviolet::Color.new(color.r, color.g, color.b)
+    else
+      raise "Failed to parse color: #{str}"
+    end
+  end
+
   # ameba:disable Metrics/CyclomaticComplexity
   def self.event_signature(event) : String
     case event
@@ -146,7 +154,7 @@ describe "EventDecoder" do
 
     tests << {
       seq:    "\e]11;rgb:ffff/0000/ffff\a".to_slice,
-      events: [DecoderSpecHelper.event_signature(Ultraviolet::BackgroundColorEvent.new(Ultraviolet::Ansi.x_parse_color("rgb:ff/00/ff")))],
+      events: [DecoderSpecHelper.event_signature(Ultraviolet::BackgroundColorEvent.new(DecoderSpecHelper.uv_color("rgb:ff/00/ff")))],
     }
 
     tests << {
@@ -204,10 +212,10 @@ describe "EventDecoder" do
     tests << {
       seq:    "\e[2;1$y\e[$y\e[2$y\e[2;$y".to_slice,
       events: [
-        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ultraviolet::Ansi::KeyboardActionMode, Ultraviolet::Ansi::ModeSet)),
+        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ansi::KeyboardActionMode.mode, Ansi::ModeSet.value)),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownCsiEvent.new("\e[$y")),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownCsiEvent.new("\e[2$y")),
-        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ultraviolet::Ansi::KeyboardActionMode, Ultraviolet::Ansi::ModeNotRecognized)),
+        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ansi::KeyboardActionMode.mode, Ansi::ModeNotRecognized.value)),
       ],
     }
 
@@ -225,7 +233,7 @@ describe "EventDecoder" do
       events: [
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownCsiEvent.new("\e[?$y")),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownCsiEvent.new("\e[?1049$y")),
-        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ultraviolet::Ansi::AltScreenSaveCursorMode, Ultraviolet::Ansi::ModeNotRecognized)),
+        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ansi::AltScreenSaveCursorMode.mode, Ansi::ModeNotRecognized.value)),
       ],
     }
 
@@ -282,7 +290,7 @@ describe "EventDecoder" do
       seq:    "\e\e[?2004;1$y".to_slice,
       events: [
         DecoderSpecHelper.key_signature(Ultraviolet::Key.new(code: Ultraviolet::KeyEscape)),
-        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ultraviolet::Ansi::BracketedPasteMode, Ultraviolet::Ansi::ModeSet)),
+        DecoderSpecHelper.event_signature(Ultraviolet::ModeReportEvent.new(Ansi::BracketedPasteMode.mode, Ansi::ModeSet.value)),
       ],
     }
 
@@ -292,7 +300,7 @@ describe "EventDecoder" do
         DecoderSpecHelper.key_signature(Ultraviolet::Key.new(code: Ultraviolet::KeyUp)),
         DecoderSpecHelper.key_signature(Ultraviolet::Key.new(code: Ultraviolet::KeyUp)),
         DecoderSpecHelper.event_signature(Ultraviolet::TerminalVersionEvent.new("Ultraviolet")),
-        DecoderSpecHelper.event_signature(Ultraviolet::BackgroundColorEvent.new(Ultraviolet::Ansi.x_parse_color("#123456"))),
+        DecoderSpecHelper.event_signature(Ultraviolet::BackgroundColorEvent.new(DecoderSpecHelper.uv_color("#123456"))),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownSosEvent.new("\x98hi\x9c")),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownApcEvent.new("\x9fhello\x9c")),
         DecoderSpecHelper.event_signature(Ultraviolet::UnknownPmEvent.new("\x9ebye\x9c")),
