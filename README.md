@@ -31,6 +31,14 @@ See `TUTORIAL.md` and `examples/helloworld.cr` for a minimal working example.
 - `src/` Crystal implementation (in progress)
 - `spec/` Crystal specs
 - `ultraviolet_go/` upstream Go Ultraviolet source (git submodule)
+- `docs/go_test_parity.tsv` Go test parity manifest
+- `docs/go_source_parity.tsv` Go exported-source parity manifest
+
+### Upstream pin
+
+Current upstream target:
+
+`github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8`
 
 ### Syncing the upstream submodule
 
@@ -52,6 +60,15 @@ See `TUTORIAL.md` and `examples/helloworld.cr` for a minimal working example.
 
 ```bash
 git submodule update --init --recursive
+```
+
+### Parity checks
+
+Use these checks to verify Crystal stays aligned with upstream Go:
+
+```bash
+make check-go-test-parity
+make check-go-source-parity
 ```
 
 ## Contributing
