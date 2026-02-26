@@ -245,7 +245,9 @@ module Ultraviolet
       break if current == 0x1b || current == '\n'.ord || current == '\r'.ord
       i += 1
     end
-    {value[segment_start, i - segment_start], i}
+    segment_len = i - segment_start
+    segment = value.byte_slice(segment_start, segment_len) || ""
+    {segment, i}
   end
 
   private def self.render_segment(

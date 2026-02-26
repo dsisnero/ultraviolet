@@ -24,6 +24,16 @@ module StyledSpecHelper
 end
 
 describe "StyledString" do
+  it "reads UTF-8 print segments without index errors on byte offsets" do
+    segment, next_index = Ultraviolet.read_print_segment("┃\n", 0)
+    segment.should eq("┃")
+    next_index.should eq("┃".bytesize)
+
+    segment2, next_index2 = Ultraviolet.read_print_segment("a┃b", 1)
+    segment2.should eq("┃b")
+    next_index2.should eq("a┃b".bytesize)
+  end
+
   it "renders styled strings into buffers" do
     red = Ultraviolet::AnsiColor.basic(1)
     green = Ultraviolet::AnsiColor.basic(2)
