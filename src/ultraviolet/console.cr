@@ -243,7 +243,8 @@ module Ultraviolet
         last_error = nil.as(Exception?)
         if tty = input_tty
           if state = @input_state
-            if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(state)) != 0
+            tty_state = state.as(TtyState)
+            if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(tty_state)) != 0
               last_error = IO::Error.from_errno("tcsetattr")
             end
           end
@@ -251,7 +252,8 @@ module Ultraviolet
 
         if tty = output_tty
           if state = @output_state
-            if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(state)) != 0
+            tty_state = state.as(TtyState)
+            if LibC.tcsetattr(tty.fd, LibC::TCSANOW, pointerof(tty_state)) != 0
               last_error = IO::Error.from_errno("tcsetattr")
             end
           end
