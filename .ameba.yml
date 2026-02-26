@@ -31,3 +31,11 @@ Lint/NotNil:
 # Excluded:
 # - src/ultraviolet/border.cr
 
+Naming/AccessorMethodName:
+  Excluded:
+    - src/ultraviolet/screen_context.cr
+    - src/ultraviolet/terminal_screen.cr
+
+Metrics/CyclomaticComplexity:
+  Excluded:
+    - src/ultraviolet/screen_context.cr

@@ -420,4 +420,39 @@ describe "StyledString" do
       end
     end
   end
+
+  it "builds lines with the provided width method" do
+    method = ->(value : String) do
+      if value == "a" || value == "b" || value == "c"
+        2
+      else
+        UnicodeCharWidth.width(value)
+      end
+    end
+
+    lines = Ultraviolet::StyledString.new("ab\nc").lines(method)
+    lines.size.should eq(2)
+    lines[0].cells[0].string.should eq("a")
+    lines[0].cells[0].width.should eq(2)
+    lines[0].cells[2].string.should eq("b")
+    lines[0].cells[2].width.should eq(2)
+    lines[1].cells[0].string.should eq("c")
+    lines[1].cells[0].width.should eq(2)
+  end
+
+  it "uses screen width method while drawing wrapped text" do
+    method = ->(value : String) do
+      if value == "a" || value == "b"
+        2
+      else
+        UnicodeCharWidth.width(value)
+      end
+    end
+
+    screen = Ultraviolet::ScreenBuffer.new(2, 2, method)
+    Ultraviolet::StyledString.new("ab", wrap: true).draw(screen, screen.bounds)
+
+    screen.cell_at(0, 0).try(&.string).should eq("a")
+    screen.cell_at(0, 1).try(&.string).should eq("b")
+  end
 end

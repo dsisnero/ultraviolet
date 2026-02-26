@@ -27,8 +27,6 @@ module Ultraviolet
   end
 
   class Line
-    MAX_CELL_WIDTH = 5
-
     getter cells : Array(Cell)
 
     def initialize(width : Int32)
@@ -138,7 +136,7 @@ module Ultraviolet
 
     private def clear_wide_left(x : Int32) : Nil
       j = 1
-      while j < MAX_CELL_WIDTH && x - j >= 0
+      while x - j >= 0
         wide = at(x - j)
         if wide && wide.width > 1 && j < wide.width
           clear_wide_span(x - j, wide.width)
@@ -673,7 +671,7 @@ module Ultraviolet
   class ScreenBuffer < RenderBuffer
     include Screen
 
-    getter method : WidthMethod
+    property method : WidthMethod
 
     def initialize(width : Int32, height : Int32, @method : WidthMethod = DEFAULT_WIDTH_METHOD)
       super(width, height)

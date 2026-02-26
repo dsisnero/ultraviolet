@@ -59,7 +59,15 @@ module Ultraviolet
     end
 
     def self.default_terminal : Terminal
-      Terminal.new(STDIN, STDOUT, ENV.map { |k, v| "#{k}=#{v}" })
+      Terminal.new(Console.default)
+    end
+
+    def self.controlling_terminal : Terminal
+      Terminal.new(Console.controlling)
+    end
+
+    def initialize(console : Console)
+      initialize(console.reader, console.writer, console.environ)
     end
 
     def initialize(@in : IO, @out : IO, env : Array(String) = [] of String)

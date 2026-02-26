@@ -879,11 +879,7 @@ module Ultraviolet
     end
 
     def touched(buffer : RenderBuffer) : Int32
-      count = 0
-      buffer.touched.each do |line|
-        count += 1 unless line.nil?
-      end
-      count
+      buffer.touched_lines
     end
 
     def redraw(newbuf : RenderBuffer) : Nil
@@ -893,7 +889,7 @@ module Ultraviolet
 
     # ameba:disable Metrics/CyclomaticComplexity
     def render(newbuf : RenderBuffer) : Nil
-      touched_lines = touched(newbuf)
+      touched_lines = newbuf.touched_lines
       return if !@clear && touched_lines == 0
 
       curbuf = @curbuf

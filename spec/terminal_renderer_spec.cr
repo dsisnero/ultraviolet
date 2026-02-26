@@ -261,16 +261,16 @@ module Ultraviolet
       renderer = TerminalRenderer.new(buf, ["TERM=xterm-256color"])
       cellbuf = RenderBuffer.new(5, 3)
 
-      renderer.touched(cellbuf).should eq(0)
+      cellbuf.touched_lines.should eq(0)
 
       cell = Cell.new("X", 1)
       cellbuf.set_cell(0, 0, cell)
       cellbuf.set_cell(0, 2, cell)
 
-      renderer.touched(cellbuf).should eq(2)
+      cellbuf.touched_lines.should eq(2)
 
       renderer.render(cellbuf)
-      renderer.touched(cellbuf).should eq(3)
+      cellbuf.touched_lines.should eq(3)
 
       actual = 0
       cellbuf.touched.each do |line|

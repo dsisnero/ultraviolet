@@ -1,4 +1,4 @@
-.PHONY: build install spec spec-all spec-provider spec-provider-record spec-interactive clean format docs build-examples
+.PHONY: build install spec spec-all spec-provider spec-provider-record spec-interactive clean format docs build-examples check-go-test-parity
 
 # Crystal cache for faster builds
 export CRYSTAL_CACHE_DIR := $(PWD)/.crystal-cache
@@ -20,6 +20,9 @@ update:
 # Run all tests (excluding interactive)
 spec:
 	crystal spec
+
+check-go-test-parity:
+	./bin/check_go_test_parity.sh
 
 
 # Format all Crystal files

@@ -70,6 +70,18 @@ describe Ultraviolet::Line do
     line.cells[9].string.should eq(" ")
   end
 
+  it "clears placeholder chains beyond fixed width limits" do
+    line = Ultraviolet::Line.new(12)
+    line.set(0, Ultraviolet::Cell.new("img", 8))
+    line.set(6, Ultraviolet::Cell.new("x", 1))
+
+    (0...6).each do |idx|
+      line.cells[idx].string.should eq(" ")
+    end
+    line.cells[6].string.should eq("x")
+    line.cells[7].string.should eq(" ")
+  end
+
   it "renders line string" do
     line = Ultraviolet::Line.new(5)
     line.string.should eq("")
