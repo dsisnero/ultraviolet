@@ -345,10 +345,10 @@ module Ultraviolet
     {value.bytesize, link}
   end
 
-  private def self.read_style(params : String, pen : Style) : Style
+  def self.read_style(params : String, pen : Style) : Style
     style = pen
     if params.empty?
-      reset_style(style)
+      style = reset_style(style)
       return style
     end
 
@@ -360,6 +360,16 @@ module Ultraviolet
       i += consumed + 1
     end
     style
+  end
+
+  # Go parity alias: params already split from a CSI sequence payload.
+  def self.read_style_from_params(params : String, pen : Style) : Style
+    read_style(params, pen)
+  end
+
+  # Convenience overload for parser outputs that surface bytes.
+  def self.read_style_from_params(params : Bytes, pen : Style) : Style
+    read_style(String.new(params), pen)
   end
 
   private STYLE_SET_ATTR = {
@@ -625,5 +635,10 @@ module Ultraviolet
     # Convert bytes to string (ASCII safe)
     str = String.new(data)
     read_link_string(str, link)
+  end
+
+  # Go parity alias: raw OSC payload bytes (`8;params;url`).
+  def self.read_link_from_data(data : Bytes, link : Link) : Link
+    read_link(data, link)
   end
 end

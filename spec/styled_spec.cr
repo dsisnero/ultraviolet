@@ -455,4 +455,29 @@ describe "StyledString" do
     screen.cell_at(0, 0).try(&.string).should eq("a")
     screen.cell_at(0, 1).try(&.string).should eq("b")
   end
+
+  describe "public parsing helpers" do
+    it "parses SGR params via read_style_from_params" do
+      parsed = Ultraviolet.read_style_from_params("31;1;4:3", Ultraviolet::Style.new)
+
+      parsed.fg.should eq(Ultraviolet::AnsiColor.basic(1))
+      parsed.underline.should eq(Ultraviolet::Underline::Curly)
+      parsed.attrs.should eq(Ultraviolet::Attr::BOLD)
+    end
+
+    it "resets style with empty SGR params" do
+      pen = Ultraviolet::Style.new(
+        fg: Ultraviolet::AnsiColor.basic(2),
+        underline: Ultraviolet::Underline::Double,
+        attrs: Ultraviolet::Attr::ITALIC
+      )
+      parsed = Ultraviolet.read_style_from_params("", pen)
+      parsed.should eq(Ultraviolet::Style.new)
+    end
+
+    it "parses OSC hyperlink payload via read_link_from_data" do
+      parsed = Ultraviolet.read_link_from_data("8;id=repo;https://example.com".to_slice, Ultraviolet::Link.new)
+      parsed.should eq(Ultraviolet::Link.new("https://example.com", "id=repo"))
+    end
+  end
 end
