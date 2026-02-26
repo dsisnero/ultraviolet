@@ -238,10 +238,18 @@ module Ultraviolet
         end
       end
 
+      def set_url(url : String, *params : String) : Nil
+        set_url(url, params.to_a)
+      end
+
       def with_url(url : String, params : Array(String) = [] of String) : Context
         dup_ctx = copy
         dup_ctx.set_url(url, params)
         dup_ctx
+      end
+
+      def with_url(url : String, *params : String) : Context
+        with_url(url, params.to_a)
       end
 
       def position : {Int32, Int32}
@@ -267,7 +275,7 @@ module Ultraviolet
       end
 
       def println(*values) : Int32
-        write_string("#{values.join}\n")
+        write_string("#{values.join(" ")}\n")
       end
 
       def printf(format : String, *args) : Int32

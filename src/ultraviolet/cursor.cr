@@ -16,12 +16,14 @@ module Ultraviolet
     property color : Color?
     property shape : CursorShape
     property? blink : Bool
+    property? hidden : Bool
 
     def initialize(
       @position : Position,
       @color : Color? = nil,
       @shape : CursorShape = CursorShape::Block,
       @blink : Bool = true,
+      @hidden : Bool = false,
     )
     end
   end

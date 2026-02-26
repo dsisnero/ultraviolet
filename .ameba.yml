@@ -39,3 +39,4 @@ Naming/AccessorMethodName:
 Metrics/CyclomaticComplexity:
   Excluded:
     - src/ultraviolet/screen_context.cr
+    - src/ultraviolet/terminal_screen.cr

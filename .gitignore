@@ -1,5 +1,6 @@
 /docs/*
 !/docs/go_test_parity.tsv
+!/docs/go_source_parity.tsv
 /lib/*
 !/lib/ansi/
 !/lib/ansi/**
@@ -9,6 +10,7 @@
 !/lib/mosaic/**
 /bin/*
 !/bin/check_go_test_parity.sh
+!/bin/check_go_source_parity.sh
 /.shards/
 .crystal-cache/
 *.dwarf

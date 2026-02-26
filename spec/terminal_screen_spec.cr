@@ -27,4 +27,42 @@ describe Ultraviolet::TerminalScreen do
     screen.insert_above("Z")
     output.to_s.includes?("Z").should be_true
   end
+
+  it "tracks cursor state and style settings" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.show_cursor
+    screen.cursor_visible?.should be_true
+
+    screen.set_cursor_position(3, 1)
+    screen.cursor_position.should eq({3, 1})
+
+    screen.set_cursor_style(Ultraviolet::CursorShape::Underline, false)
+    screen.cursor_style.should eq({Ultraviolet::CursorShape::Underline, false})
+
+    color = Ultraviolet::Color.new(1_u8, 2_u8, 3_u8)
+    screen.set_cursor_color(color)
+    screen.cursor_color.should eq(color)
+  end
+
+  it "tracks bracketed paste, mouse mode, title and progress bar" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.enable_bracketed_paste
+    screen.bracketed_paste?.should be_true
+    screen.disable_bracketed_paste
+    screen.bracketed_paste?.should be_false
+
+    screen.set_mouse_mode(Ultraviolet::MouseMode::Drag)
+    screen.mouse_mode.should eq(Ultraviolet::MouseMode::Drag)
+
+    screen.set_window_title("title")
+    screen.window_title.should eq("title")
+
+    pb = Ultraviolet::ProgressBar.new(Ultraviolet::ProgressBarState::Warning, 77)
+    screen.set_progress_bar(pb)
+    screen.progress_bar.should eq(pb)
+  end
 end

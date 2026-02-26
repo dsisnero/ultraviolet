@@ -1,3 +1,15 @@
+module Ultraviolet
+  struct Winsize
+    getter row : UInt16
+    getter col : UInt16
+    getter xpixel : UInt16
+    getter ypixel : UInt16
+
+    def initialize(@row : UInt16 = 0_u16, @col : UInt16 = 0_u16, @xpixel : UInt16 = 0_u16, @ypixel : UInt16 = 0_u16)
+    end
+  end
+end
+
 {% unless flag?(:win32) %}
 lib LibC
   struct Winsize
