@@ -952,7 +952,7 @@ module Ultraviolet
             newbuf.touched[i] = LineData.new(-1, -1)
           end
           if current = @curbuf
-            if i < current.touched.size
+            if i < current.height - 1
               current.touched[i] = LineData.new(-1, -1)
             end
           end
