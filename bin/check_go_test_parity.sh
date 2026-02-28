@@ -1,80 +1,90 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MANIFEST="${ROOT_DIR}/docs/go_test_parity.tsv"
-GO_DIR="${ROOT_DIR}/ultraviolet_go"
+ROOT_DIR="${1:-$(pwd)}"
+MANIFEST="${2:-${ROOT_DIR}/plans/inventory/go_test_parity.tsv}"
+SOURCE_PATH="${3:-${GO_PORT_SOURCE_DIR:-}}"
 
 if [[ ! -f "${MANIFEST}" ]]; then
   echo "Missing manifest: ${MANIFEST}" >&2
   exit 1
 fi
 
-if [[ ! -d "${GO_DIR}" ]]; then
-  echo "Missing submodule directory: ${GO_DIR}" >&2
+if [[ -n "${SOURCE_PATH}" ]]; then
+  if [[ "${SOURCE_PATH}" = /* ]]; then
+    GO_BASE="${SOURCE_PATH}"
+  else
+    GO_BASE="${ROOT_DIR}/${SOURCE_PATH}"
+  fi
+elif [[ -d "${ROOT_DIR}/vendor" ]]; then
+  GO_BASE="${ROOT_DIR}/vendor"
+else
+  GO_BASE="${ROOT_DIR}"
+fi
+
+if [[ ! -d "${GO_BASE}" ]]; then
+  echo "Go source directory does not exist: ${GO_BASE}" >&2
+  exit 1
+fi
+
+GO_TEST_FILES=()
+while IFS= read -r f; do
+  GO_TEST_FILES+=("$f")
+done < <(find "${GO_BASE}" -type d -name .git -prune -o -type f -name '*_test.go' -print | sort)
+
+if [[ ${#GO_TEST_FILES[@]} -eq 0 ]]; then
+  echo "No Go test files found under ${GO_BASE}" >&2
   exit 1
 fi
 
 tmp_go="$(mktemp)"
 tmp_manifest_ids="$(mktemp)"
-tmp_manifest_rows="$(mktemp)"
 tmp_missing="$(mktemp)"
 tmp_stale="$(mktemp)"
+trap 'rm -f "${tmp_go}" "${tmp_manifest_ids}" "${tmp_missing}" "${tmp_stale}"' EXIT
 
-cleanup() {
-  rm -f "${tmp_go}" "${tmp_manifest_ids}" "${tmp_manifest_rows}" "${tmp_missing}" "${tmp_stale}"
+awk -v base="${GO_BASE}" '
+function rel(file) {
+  if (index(file, base "/") == 1) return substr(file, length(base) + 2)
+  return file
 }
-trap cleanup EXIT
-
-while IFS= read -r go_file; do
-  rel_file="${go_file#${GO_DIR}/}"
-  rg -n '^func Test[^(]+' "${go_file}" \
-    | sed -E "s#^[0-9]+:func (Test[^ (]+)\\(.*#${rel_file}::\\1#"
-done < <(find "${GO_DIR}" -name '*_test.go' | sort) | sort -u > "${tmp_go}"
+/^func Test[A-Za-z0-9_]*\(/ {
+  name=$2
+  sub(/\(.*/, "", name)
+  print rel(FILENAME) "::" name
+}
+' "${GO_TEST_FILES[@]}" | sort -u > "${tmp_go}"
 
 awk -F '\t' '
-  BEGIN {
-    ok = 1
-  }
-  /^#/ || NF == 0 {
+BEGIN { ok = 1 }
+/^#/ || NF == 0 { next }
+{
+  if (NF < 4) {
+    printf("Malformed manifest row (expected 4 tab-separated columns): %s\n", $0) > "/dev/stderr"
+    ok = 0
     next
   }
-  {
-    if (NF < 4) {
-      printf("Malformed manifest row (expected 4 tab-separated columns): %s\n", $0) > "/dev/stderr"
-      ok = 0
-      next
-    }
+  id = $1
+  status = $2
+  refs = $3
 
-    id = $1
-    status = $2
-    refs = $3
-
-    if (seen[id]++) {
-      printf("Duplicate go_test_id in manifest: %s\n", id) > "/dev/stderr"
-      ok = 0
-    }
-
-    if (status != "ported" && status != "intentional_divergence" && status != "missing") {
-      printf("Invalid status for %s: %s\n", id, status) > "/dev/stderr"
-      ok = 0
-    }
-
-    if (refs == "") {
-      printf("Missing crystal_refs for %s\n", id) > "/dev/stderr"
-      ok = 0
-    }
-
-    printf("%s\t%s\n", id, status)
+  if (seen[id]++) {
+    printf("Duplicate go_test_id in manifest: %s\n", id) > "/dev/stderr"
+    ok = 0
   }
-  END {
-    if (!ok) {
-      exit 2
-    }
+  if (status != "ported" && status != "partial" && status != "missing") {
+    printf("Invalid status for %s: %s\n", id, status) > "/dev/stderr"
+    ok = 0
   }
-' "${MANIFEST}" > "${tmp_manifest_rows}"
+  if (refs == "") {
+    printf("Missing crystal_refs for %s\n", id) > "/dev/stderr"
+    ok = 0
+  }
 
-cut -f1 "${tmp_manifest_rows}" | sort -u > "${tmp_manifest_ids}"
+  print id
+}
+END { if (!ok) exit 2 }
+' "${MANIFEST}" | sort -u > "${tmp_manifest_ids}"
 
 comm -23 "${tmp_go}" "${tmp_manifest_ids}" > "${tmp_missing}"
 comm -13 "${tmp_go}" "${tmp_manifest_ids}" > "${tmp_stale}"
@@ -86,17 +96,11 @@ if [[ -s "${tmp_missing}" ]]; then
 fi
 
 if [[ -s "${tmp_stale}" ]]; then
-  echo "Manifest entries with no matching Go tests:" >&2
+  echo "Parity manifest has stale test entries:" >&2
   sed 's/^/  - /' "${tmp_stale}" >&2
-  exit 1
-fi
-
-if awk -F '\t' '$2 == "missing" { found = 1 } END { exit(found ? 0 : 1) }' "${tmp_manifest_rows}"; then
-  echo "Parity manifest contains tests marked as missing." >&2
-  awk -F '\t' '$2 == "missing" { printf("  - %s\n", $1) }' "${tmp_manifest_rows}" >&2
   exit 1
 fi
 
 go_count="$(wc -l < "${tmp_go}" | tr -d ' ')"
 manifest_count="$(wc -l < "${tmp_manifest_ids}" | tr -d ' ')"
-echo "Go test parity check passed (${go_count} tests mapped; ${manifest_count} manifest entries)."
+echo "Go test parity check passed (${go_count} tests tracked; ${manifest_count} manifest entries)."

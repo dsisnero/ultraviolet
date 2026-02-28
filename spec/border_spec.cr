@@ -23,6 +23,10 @@ describe "Borders" do
     border.bottom.content.should eq("█")
     border.left.content.should eq("█")
     border.right.content.should eq("█")
+    border.top_left.content.should eq("█")
+    border.top_right.content.should eq("█")
+    border.bottom_left.content.should eq("█")
+    border.bottom_right.content.should eq("█")
 
     border = Ultraviolet.outer_half_block_border
     border.top.content.should eq("▀")
@@ -43,6 +47,10 @@ describe "Borders" do
     border.bottom_right.content.should eq("┛")
 
     border = Ultraviolet.double_border
+    border.top.content.should eq("═")
+    border.bottom.content.should eq("═")
+    border.left.content.should eq("║")
+    border.right.content.should eq("║")
     border.top_left.content.should eq("╔")
     border.top_right.content.should eq("╗")
     border.bottom_left.content.should eq("╚")
@@ -53,16 +61,20 @@ describe "Borders" do
     border.bottom.content.should eq(" ")
     border.left.content.should eq(" ")
     border.right.content.should eq(" ")
+    border.top_left.content.should eq(" ")
+    border.top_right.content.should eq(" ")
+    border.bottom_left.content.should eq(" ")
+    border.bottom_right.content.should eq(" ")
 
     border = Ultraviolet.markdown_border
+    border.top.content.should eq("")
+    border.bottom.content.should eq("")
     border.left.content.should eq("|")
     border.right.content.should eq("|")
     border.top_left.content.should eq("|")
     border.top_right.content.should eq("|")
     border.bottom_left.content.should eq("|")
     border.bottom_right.content.should eq("|")
-    border.top.content.should eq("")
-    border.bottom.content.should eq("")
 
     border = Ultraviolet.ascii_border
     border.top.content.should eq("-")
@@ -177,5 +189,99 @@ describe "Borders" do
     border.draw(dst, Ultraviolet.rect(0, 1, 1, 2))
     dst.cell_at(0, 1).try(&.string).should eq("┌")
     dst.cell_at(0, 2).try(&.string).should eq("└")
+  end
+
+  it "applies style and link to border like Go TestBorderStyleAndLink" do
+    style = Ultraviolet::Style.new(fg: Ultraviolet::Color.new(255, 0, 0))
+    link = Ultraviolet::Link.new("https://example.com")
+
+    border = Ultraviolet.normal_border
+      .style(style)
+      .link(link)
+
+    border.top.style.should eq(style)
+    border.bottom.style.should eq(style)
+    border.left.style.should eq(style)
+    border.right.style.should eq(style)
+    border.top_left.style.should eq(style)
+    border.top_right.style.should eq(style)
+    border.bottom_left.style.should eq(style)
+    border.bottom_right.style.should eq(style)
+
+    border.top.link.should eq(link)
+    border.bottom.link.should eq(link)
+    border.left.link.should eq(link)
+    border.right.link.should eq(link)
+    border.top_left.link.should eq(link)
+    border.top_right.link.should eq(link)
+    border.bottom_left.link.should eq(link)
+    border.bottom_right.link.should eq(link)
+  end
+
+  it "draws normal border like Go TestBorderDrawNormal" do
+    buffer = Ultraviolet::ScreenBuffer.new(10, 5)
+    border = Ultraviolet.normal_border
+    border.draw(buffer, Ultraviolet.rect(0, 0, 10, 5))
+
+    # Check corners are drawn
+    buffer.cell_at(0, 0).not_nil!.string.should eq("┌")
+    buffer.cell_at(9, 0).not_nil!.string.should eq("┐")
+    buffer.cell_at(0, 4).not_nil!.string.should eq("└")
+    buffer.cell_at(9, 4).not_nil!.string.should eq("┘")
+
+    # Check sides are drawn
+    (1..8).each do |x|
+      buffer.cell_at(x, 0).not_nil!.string.should eq("─")
+      buffer.cell_at(x, 4).not_nil!.string.should eq("─")
+    end
+
+    (1..3).each do |y|
+      buffer.cell_at(0, y).not_nil!.string.should eq("│")
+      buffer.cell_at(9, y).not_nil!.string.should eq("│")
+    end
+  end
+
+  it "draws hidden border with style and link like Go TestBorderDrawHiddenStyleLink" do
+    buffer = Ultraviolet::ScreenBuffer.new(10, 5)
+    style = Ultraviolet::Style.new(fg: Ultraviolet::Color.new(255, 0, 0))
+    link = Ultraviolet::Link.new("https://example.com")
+
+    border = Ultraviolet.hidden_border
+      .style(style)
+      .link(link)
+
+    border.draw(buffer, Ultraviolet.rect(0, 0, 10, 5))
+
+    # Hidden border should draw spaces with style and link
+    cell = buffer.cell_at(0, 0)
+    cell.should_not be_nil
+    cell.not_nil!.string.should eq(" ")
+    cell.not_nil!.style.fg.should eq(Ultraviolet::Color.new(255, 0, 0))
+    cell.not_nil!.link.url.should eq("https://example.com")
+  end
+
+  it "draws borders on small areas like Go TestBorderDrawSmallAreas" do
+    # Test 1x1 area
+    buffer = Ultraviolet::ScreenBuffer.new(1, 1)
+    border = Ultraviolet.normal_border
+    border.draw(buffer, Ultraviolet.rect(0, 0, 1, 1))
+    buffer.cell_at(0, 0).not_nil!.string.should eq("┌")
+
+    # Test 2x2 area
+    buffer = Ultraviolet::ScreenBuffer.new(2, 2)
+    border = Ultraviolet.normal_border
+    border.draw(buffer, Ultraviolet.rect(0, 0, 2, 2))
+    buffer.cell_at(0, 0).not_nil!.string.should eq("┌")
+    buffer.cell_at(1, 0).not_nil!.string.should eq("┐")
+    buffer.cell_at(0, 1).not_nil!.string.should eq("└")
+    buffer.cell_at(1, 1).not_nil!.string.should eq("┘")
+
+    # Test 3x1 area (only top border)
+    buffer = Ultraviolet::ScreenBuffer.new(3, 1)
+    border = Ultraviolet.normal_border
+    border.draw(buffer, Ultraviolet.rect(0, 0, 3, 1))
+    buffer.cell_at(0, 0).not_nil!.string.should eq("┌")
+    buffer.cell_at(1, 0).not_nil!.string.should eq("─")
+    buffer.cell_at(2, 0).not_nil!.string.should eq("┐")
   end
 end

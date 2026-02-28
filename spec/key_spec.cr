@@ -134,4 +134,30 @@ describe "Key" do
       test_case[:key].string.should eq(test_case[:want]), test_case[:name]
     end
   end
+
+  it "formats key press event string like Go TestKeyString" do
+    # Test alt+space
+    key = Ultraviolet::Key.new(code: Ultraviolet::KeySpace, mod: Ultraviolet::ModAlt)
+    key.string.should eq("alt+space")
+
+    # Test runes
+    key = Ultraviolet::Key.new(code: 'a'.ord, text: "a")
+    key.string.should eq("a")
+
+    # Test invalid key code (should return replacement character)
+    key = Ultraviolet::Key.new(code: 99999)
+    key.string.should eq("𘚟")
+  end
+
+  it "handles focus and blur events like Go tests" do
+    decoder = Ultraviolet::EventDecoder.new
+
+    # Test focus event - matches Go TestFocus
+    consumed, event = decoder.decode("\x1b[I".to_slice)
+    event.should be_a(Ultraviolet::FocusEvent)
+
+    # Test blur event - matches Go TestBlur
+    consumed, event = decoder.decode("\x1b[O".to_slice)
+    event.should be_a(Ultraviolet::BlurEvent)
+  end
 end

@@ -227,4 +227,136 @@ module Ultraviolet
     cell.link = side.link
     cell
   end
+
+  # Border constructor functions matching Go ultraviolet API
+
+  def self.normal_border : Border
+    Border.new(
+      top: Side.new("─"),
+      bottom: Side.new("─"),
+      left: Side.new("│"),
+      right: Side.new("│"),
+      top_left: Side.new("┌"),
+      top_right: Side.new("┐"),
+      bottom_left: Side.new("└"),
+      bottom_right: Side.new("┘")
+    )
+  end
+
+  def self.rounded_border : Border
+    Border.new(
+      top: Side.new("─"),
+      bottom: Side.new("─"),
+      left: Side.new("│"),
+      right: Side.new("│"),
+      top_left: Side.new("╭"),
+      top_right: Side.new("╮"),
+      bottom_left: Side.new("╰"),
+      bottom_right: Side.new("╯")
+    )
+  end
+
+  def self.block_border : Border
+    Border.new(
+      top: Side.new("█"),
+      bottom: Side.new("█"),
+      left: Side.new("█"),
+      right: Side.new("█"),
+      top_left: Side.new("█"),
+      top_right: Side.new("█"),
+      bottom_left: Side.new("█"),
+      bottom_right: Side.new("█")
+    )
+  end
+
+  def self.outer_half_block_border : Border
+    Border.new(
+      top: Side.new("▀"),
+      bottom: Side.new("▄"),
+      left: Side.new("▌"),
+      right: Side.new("▐"),
+      top_left: Side.new("▛"),
+      top_right: Side.new("▜"),
+      bottom_left: Side.new("▙"),
+      bottom_right: Side.new("▟")
+    )
+  end
+
+  def self.inner_half_block_border : Border
+    Border.new(
+      top: Side.new("▄"),
+      bottom: Side.new("▀"),
+      left: Side.new("▐"),
+      right: Side.new("▌"),
+      top_left: Side.new("▗"),
+      top_right: Side.new("▖"),
+      bottom_left: Side.new("▝"),
+      bottom_right: Side.new("▘")
+    )
+  end
+
+  def self.thick_border : Border
+    Border.new(
+      top: Side.new("━"),
+      bottom: Side.new("━"),
+      left: Side.new("┃"),
+      right: Side.new("┃"),
+      top_left: Side.new("┏"),
+      top_right: Side.new("┓"),
+      bottom_left: Side.new("┗"),
+      bottom_right: Side.new("┛")
+    )
+  end
+
+  def self.double_border : Border
+    Border.new(
+      top: Side.new("═"),
+      bottom: Side.new("═"),
+      left: Side.new("║"),
+      right: Side.new("║"),
+      top_left: Side.new("╔"),
+      top_right: Side.new("╗"),
+      bottom_left: Side.new("╚"),
+      bottom_right: Side.new("╝")
+    )
+  end
+
+  def self.hidden_border : Border
+    Border.new(
+      top: Side.new(" "),
+      bottom: Side.new(" "),
+      left: Side.new(" "),
+      right: Side.new(" "),
+      top_left: Side.new(" "),
+      top_right: Side.new(" "),
+      bottom_left: Side.new(" "),
+      bottom_right: Side.new(" ")
+    )
+  end
+
+  def self.markdown_border : Border
+    Border.new(
+      top: Side.new(""),
+      bottom: Side.new(""),
+      left: Side.new("|"),
+      right: Side.new("|"),
+      top_left: Side.new("|"),
+      top_right: Side.new("|"),
+      bottom_left: Side.new("|"),
+      bottom_right: Side.new("|")
+    )
+  end
+
+  def self.ascii_border : Border
+    Border.new(
+      top: Side.new("-"),
+      bottom: Side.new("-"),
+      left: Side.new("|"),
+      right: Side.new("|"),
+      top_left: Side.new("+"),
+      top_right: Side.new("+"),
+      bottom_left: Side.new("+"),
+      bottom_right: Side.new("+")
+    )
+  end
 end
