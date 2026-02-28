@@ -6,6 +6,14 @@ module Ultraviolet
       parse_termcap(data)
     end
 
+    def parse_primary_dev_attrs_public(params : Ansi::Params) : Event
+      parse_primary_dev_attrs(params)
+    end
+
+    def parse_secondary_dev_attrs_public(params : Ansi::Params) : Event
+      parse_secondary_dev_attrs(params)
+    end
+
     def parse_tertiary_dev_attrs_public(data : Bytes) : Event
       parse_tertiary_dev_attrs(data)
     end
@@ -61,6 +69,26 @@ module Ultraviolet
 
       decoder.parse_tertiary_dev_attrs_public("4368726d".to_slice).should eq("Chrm")
       decoder.parse_tertiary_dev_attrs_public("XYZ".to_slice).should eq(UnknownDcsEvent.new("\eP!|XYZ\e\\"))
+    end
+
+    it "matches primary and secondary device attribute parsing" do
+      decoder = TestDecoder.new
+
+      # Test parse_primary_dev_attrs
+      params1 = Ansi::Params.new([62, 1, 2, 6, 9])
+      event1 = decoder.parse_primary_dev_attrs_public(params1)
+      event1.should be_a(PrimaryDeviceAttributesEvent)
+      if event1.is_a?(PrimaryDeviceAttributesEvent)
+        event1.to_a.should eq([62, 1, 2, 6, 9])
+      end
+
+      # Test parse_secondary_dev_attrs
+      params2 = Ansi::Params.new([1, 2, 3])
+      event2 = decoder.parse_secondary_dev_attrs_public(params2)
+      event2.should be_a(SecondaryDeviceAttributesEvent)
+      if event2.is_a?(SecondaryDeviceAttributesEvent)
+        event2.to_a.should eq([1, 2, 3])
+      end
     end
 
     it "matches parse_utf8 behavior for key and invalid bytes" do

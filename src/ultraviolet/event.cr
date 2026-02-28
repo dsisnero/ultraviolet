@@ -538,7 +538,7 @@ module Ultraviolet
 
     delta = cmax - cmin
     hue = if cmax == rf
-            60.0 * ((gf - bf) / delta % 6.0)
+            60.0 * go_mod((gf - bf) / delta, 6.0)
           elsif cmax == gf
             60.0 * (((bf - rf) / delta) + 2.0)
           else
@@ -549,6 +549,12 @@ module Ultraviolet
     saturation = delta / (1.0 - (2.0 * lightness - 1.0).abs)
 
     {hue, round3(saturation), round3(lightness)}
+  end
+
+  private def self.go_mod(x : Float64, y : Float64) : Float64
+    # Implements Go's math.Mod behavior: returns x - y*floor(x/y)
+    # This preserves the sign of x
+    x - y * (x / y).floor
   end
 
   private def self.get_max_min(r : Float64, g : Float64, b : Float64) : {Float64, Float64}

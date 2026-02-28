@@ -297,6 +297,71 @@ describe Ultraviolet::ScreenBuffer do
     method = buffer.width_method
     method.call("a").should eq(1)
   end
+
+  it "tests buffer width and height methods" do
+    # Test buffer with zero dimensions
+    b1 = Ultraviolet::Buffer.new(0, 0)
+    b1.width.should eq(0)
+    b1.height.should eq(0)
+
+    # Test buffer with dimensions
+    b2 = Ultraviolet::Buffer.new(10, 5)
+    b2.width.should eq(10)
+    b2.height.should eq(5)
+  end
+
+  it "tests cell_at method with bounds checking" do
+    b = Ultraviolet::Buffer.new(10, 5)
+    b.set_cell(2, 1, Ultraviolet::Cell.new("X", 1))
+
+    # Test valid position
+    cell = b.cell_at(2, 1)
+    cell.should_not be_nil
+    cell.try(&.string).should eq("X")
+
+    # Test out of bounds
+    b.cell_at(-1, 0).should be_nil
+    b.cell_at(0, -1).should be_nil
+    b.cell_at(10, 0).should be_nil
+    b.cell_at(0, 5).should be_nil
+  end
+
+  it "tests set_cell method with bounds checking" do
+    b = Ultraviolet::Buffer.new(10, 5)
+
+    # Test setting cell
+    b.set_cell(2, 1, Ultraviolet::Cell.new("A", 1))
+    b.cell_at(2, 1).try(&.string).should eq("A")
+
+    # Test out of bounds (should not panic)
+    b.set_cell(-1, 0, Ultraviolet::Cell.new("B", 1))
+    b.set_cell(0, -1, Ultraviolet::Cell.new("C", 1))
+    b.set_cell(10, 0, Ultraviolet::Cell.new("D", 1))
+    b.set_cell(0, 5, Ultraviolet::Cell.new("E", 1))
+
+    # Test nil cell (should not panic)
+    b.set_cell(3, 1, nil)
+  end
+
+  it "tests resize method" do
+    b = Ultraviolet::Buffer.new(10, 5)
+    b.set_cell(2, 1, Ultraviolet::Cell.new("X", 1))
+
+    # Resize smaller
+    b.resize(5, 3)
+    b.width.should eq(5)
+    b.height.should eq(3)
+
+    # Resize larger
+    b.resize(15, 10)
+    b.width.should eq(15)
+    b.height.should eq(10)
+
+    # Resize to same size
+    b.resize(15, 10)
+    b.width.should eq(15)
+    b.height.should eq(10)
+  end
 end
 
 describe Ultraviolet::Line do

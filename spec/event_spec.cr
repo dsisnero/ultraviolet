@@ -165,6 +165,18 @@ describe "Event types" do
     Ultraviolet::CursorColorEvent.new(black).dark?.should be_true
   end
 
+  it "matches color_to_hex behavior" do
+    tests = [
+      {Ultraviolet::Color.new(255_u8, 128_u8, 64_u8), "#ff8040"},
+      {Ultraviolet::Color.new(0_u8, 0_u8, 0_u8), "#000000"},
+      {Ultraviolet::Color.new(255_u8, 255_u8, 255_u8), "#ffffff"},
+    ]
+
+    tests.each do |color, expected|
+      Ultraviolet.color_to_hex(color).should eq(expected)
+    end
+  end
+
   it "matches rgb_to_hsl behavior" do
     tests = [
       {255_u8, 0_u8, 0_u8, 0.0, 1.0, 0.5},

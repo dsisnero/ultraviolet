@@ -43,6 +43,15 @@ module Ultraviolet
     Dashed
   end
 
+  # Deprecated: Use Underline enum instead
+  # Compatibility constants for Go ultraviolet API
+  UnderlineStyleNone   = Underline::None
+  UnderlineStyleSingle = Underline::Single
+  UnderlineStyleDouble = Underline::Double
+  UnderlineStyleCurly  = Underline::Curly
+  UnderlineStyleDotted = Underline::Dotted
+  UnderlineStyleDashed = Underline::Dashed
+
   module Attr
     BOLD          = 1_u8 << 0
     FAINT         = 1_u8 << 1
@@ -53,6 +62,9 @@ module Ultraviolet
     CONCEAL       = 1_u8 << 6
     STRIKETHROUGH = 1_u8 << 7
     RESET         = 0_u8
+
+    # Aliases for compatibility with Go ultraviolet
+    SLOW_BLINK = BLINK # Deprecated: Use BLINK instead
   end
 
   struct Style
