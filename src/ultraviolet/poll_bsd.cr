@@ -66,9 +66,9 @@
         raise PollCanceledError.new("poll canceled") if canceled?
 
         events = uninitialized LibC::Kevent[1]
+        ts = LibC::Timespec.new
 
         timeout_ptr = if timeout >= 0.seconds
-                        ts = LibC::Timespec.new
                         ts.tv_sec = timeout.seconds.to_i64
                         # Calculate remaining nanoseconds after whole seconds
                         ts.tv_nsec = (timeout - timeout.seconds.seconds).nanoseconds.to_i64
@@ -91,8 +91,9 @@
         end
 
         ident = events[0].ident
+        file_fd = @file.try(&.fd)
         case ident
-        when @file.try(&.fd).to_u64
+        when file_fd.try(&.to_u64)
           return true
         when @cancel_signal_reader.fd.to_u64
           # remove signal from pipe
@@ -154,27 +155,13 @@
       end
     end
 
-    # Override new_poll_reader to use KqueueReader on BSD platforms
-    # with fallback to select for /dev/tty and generic fallback for non-files.
+    # Use select-based polling on BSD/macOS for stability across terminal
+    # devices and Crystal runtime versions.
     def self.new_poll_reader(reader : IO) : PollReader
-      # Check if reader is a file descriptor
       if reader.is_a?(IO::FileDescriptor)
         file = reader.as(IO::FileDescriptor)
-        # kqueue returns instantly when polling /dev/tty so fallback to select
-        # We fallback to select for any TTY since we can't easily check if it's /dev/tty
-        if file.tty?
-          return SelectReader.new(file)
-        end
-
-        # Try to create kqueue reader
-        begin
-          return KqueueReader.new(reader)
-        rescue ex : IO::Error
-          # If kqueue creation fails, fall back to select
-          return SelectReader.new(file)
-        end
+        return SelectReader.new(file)
       else
-        # Not a file descriptor, use fallback reader
         return FallbackReader.new(reader)
       end
     end

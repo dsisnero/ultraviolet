@@ -97,21 +97,37 @@ module Ultraviolet
     def poll(timeout : Time::Span) : Bool
       raise PollCanceledError.new("poll canceled") if canceled?
 
-      # Set up IO.select with file and cancel pipe
-      readers = [@file, @cancel_signal_reader]
+      rfds = uninitialized LibC::FdSet
+      fd_zero(pointerof(rfds))
+      fd_set(@file.fd, pointerof(rfds))
+      fd_set(@cancel_signal_reader.as(IO::FileDescriptor).fd, pointerof(rfds))
 
-      ready = if timeout < 0.seconds
-                IO.select(readers)
-              else
-                IO.select(readers, timeout: timeout)
-              end
+      max_fd = Math.max(@file.fd, @cancel_signal_reader.as(IO::FileDescriptor).fd) + 1
+      tv = LibC::Timeval.new
+
+      tv_ptr = if timeout < 0.seconds
+                 Pointer(LibC::Timeval).null
+               else
+                 tv.tv_sec = timeout.seconds.to_i64
+                 tv.tv_usec = ((timeout - timeout.seconds.seconds).total_microseconds).to_i32
+                 pointerof(tv)
+               end
+
+      ready = loop do
+        n = LibC.select(max_fd, pointerof(rfds), Pointer(LibC::FdSet).null, Pointer(LibC::FdSet).null, tv_ptr)
+        if n < 0 && Errno.value == Errno::EINTR
+          next
+        end
+        break n
+      end
 
       raise PollCanceledError.new("poll canceled") if canceled?
-      return false unless ready
+      return false if ready == 0
+      if ready < 0
+        raise IO::Error.from_errno("select")
+      end
 
-      ready_readers = ready[0]
-
-      if ready_readers.includes?(@cancel_signal_reader)
+      if fd_isset(@cancel_signal_reader.as(IO::FileDescriptor).fd, pointerof(rfds))
         # Remove signal from pipe
         buf = uninitialized UInt8[1]
         begin
@@ -122,7 +138,7 @@ module Ultraviolet
         raise PollCanceledError.new("poll canceled")
       end
 
-      ready_readers.includes?(@file)
+      fd_isset(@file.fd, pointerof(rfds))
     end
 
     def cancel : Bool
@@ -162,6 +178,24 @@ module Ultraviolet
 
     private def canceled? : Bool
       @mutex.synchronize { @canceled }
+    end
+
+    private def fd_zero(set : LibC::FdSet*) : Nil
+      set.value.fds_bits = StaticArray(Int, 32).new(0)
+    end
+
+    private def fd_set(fd : Int32, set : LibC::FdSet*) : Nil
+      bits_per_word = 8 * sizeof(Int)
+      idx = fd // bits_per_word
+      bit = fd % bits_per_word
+      set.value.fds_bits[idx] |= (1_i64 << bit)
+    end
+
+    private def fd_isset(fd : Int32, set : LibC::FdSet*) : Bool
+      bits_per_word = 8 * sizeof(Int)
+      idx = fd // bits_per_word
+      bit = fd % bits_per_word
+      (set.value.fds_bits[idx] & (1_i64 << bit)) != 0
     end
   end
 
@@ -204,7 +238,7 @@ module Ultraviolet
       if timeout < 0.seconds
         select
         when _ = @data_chan.receive?
-          @data_chan.try_send(nil)
+          signal_data_available
           true
         when _ = @cancel_chan.receive?
           raise PollCanceledError.new("poll canceled")
@@ -212,7 +246,7 @@ module Ultraviolet
       else
         select
         when _ = @data_chan.receive?
-          @data_chan.try_send(nil)
+          signal_data_available
           true
         when _ = @cancel_chan.receive?
           raise PollCanceledError.new("poll canceled")
@@ -243,13 +277,21 @@ module Ultraviolet
       loop do
         return if canceled?
         begin
-          @reader.peek(1)
+          data = @reader.peek
+          return if data.empty?
         rescue
           return
         end
 
-        @data_chan.try_send(nil)
+        signal_data_available
         sleep 10.milliseconds
+      end
+    end
+
+    private def signal_data_available : Nil
+      select
+      when @data_chan.send(nil)
+      when timeout(0.seconds)
       end
     end
   end
