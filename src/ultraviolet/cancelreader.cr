@@ -46,12 +46,6 @@ module Ultraviolet
 
     def cancel : Bool
       set_canceled
-      if io = @io
-        begin
-          io.close unless io.same?(STDIN)
-        rescue
-        end
-      end
       true
     end
 
@@ -63,10 +57,6 @@ module Ultraviolet
           end
         end
       {% end %}
-      begin
-        @io.try &.close
-      rescue
-      end
     end
 
     def read(slice : Bytes) : Int32
