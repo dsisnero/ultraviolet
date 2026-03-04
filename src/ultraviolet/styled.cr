@@ -320,7 +320,9 @@ module Ultraviolet
       byte = value.byte_at(i)
       if byte >= 0x40 && byte <= 0x7e
         if byte == 'm'.ord
-          params = value[start_index, i - start_index]
+          # start_index/i are byte offsets from decoder scan; use byte_slice
+          # so multibyte graphemes before CSI don't corrupt parameter parsing.
+          params = value.byte_slice(start_index, i - start_index)
           return {i + 1, read_style(params, style)}
         end
         return {i + 1, style}
