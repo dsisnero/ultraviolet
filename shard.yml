@@ -1,8 +1,8 @@
 name: ultraviolet
-version: 0.1.0
+version: 1.0.0
 
 authors:
-  - Dom <dom@example.com>
+  - Dominic <dsisnero@gmail.com>
 
 crystal: ">= 1.19.1"
 
