@@ -1,6 +1,14 @@
 # Agent Instructions
 
-This is a port of golang ultraviolet available as a submodule in ./ultraviolet_go.  The golang code is the source of truth for functionality both for tests and src.  If you have any implementaton questions, look to golang code.
+This is a port of golang ultraviolet available as a submodule in `./ultraviolet_go`.  The golang code is the source of truth for functionality both for tests and src.  If you have any implementation questions, look to golang code.
+
+## Documentation
+
+- [README.md](README.md) — project overview, features, module map
+- [plans/parity.md](plans/parity.md) — feature status, remaining work
+- [docs/TUTORIAL.md](docs/TUTORIAL.md) — building a terminal app
+- [docs/API_REFERENCE.md](docs/API_REFERENCE.md) — Go-to-Crystal type mapping
+- [examples/](examples/) — runnable Crystal examples
 
 ## Issue Tracking
 

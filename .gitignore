@@ -1,4 +1,5 @@
 /docs/*
+!/docs/*.md
 !/docs/go_test_parity.tsv
 !/docs/go_source_parity.tsv
 /lib/*
