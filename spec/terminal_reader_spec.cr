@@ -3,19 +3,19 @@ require "./spec_helper"
 module Ultraviolet
   private class TestTerminalReader < TerminalReader
     def scan_events_public(buf : Bytes, expired : Bool)
-      scan_events(buf, expired)
+      @scanner.scan_events(buf, expired)
     end
 
     def control_char_public(code : Int32) : Bool
-      control_char?(code)
+      @scanner.control_char?(code)
     end
 
     def encode_grapheme_bufs_public : Bytes
-      encode_grapheme_bufs
+      @scanner.encode_grapheme_bufs
     end
 
     def store_grapheme_rune_public(kd : Int32, code : Int32) : Nil
-      store_grapheme_rune(kd, code)
+      @scanner.store_grapheme_rune(kd, code)
     end
   end
 
@@ -117,6 +117,40 @@ module Ultraviolet
       events.should eq([
         Key.new(code: KeyEscape),
       ])
+    end
+
+    it "waits for more input on incomplete escape when not expired" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      # Feeding ESC alone when not expired should return 0, []
+      bytes = Bytes[0x1b]
+      total, events = reader.scan_events_public(bytes, false)
+      total.should eq(0)
+      events.should be_empty
+    end
+
+    it "returns key on complete sequence after waiting" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      # Full ESC[A sequence (up arrow) should produce KeyUp
+      bytes = Bytes[0x1b, '['.ord.to_u8, 'A'.ord.to_u8]
+      total, events = reader.scan_events_public(bytes, false)
+      total.should eq(3)
+      events.size.should eq(1)
+      events[0].should eq(Key.new(code: KeyUp))
+    end
+
+    it "encodes simple key-down grapheme buffer (kind=1)" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      reader.store_grapheme_rune_public(1, 'a'.ord)
+      result = reader.encode_grapheme_bufs_public
+      String.new(result).should eq("a")
+    end
+
+    it "encodes key-up grapheme buffer as kitty keyboard sequence (kind=0)" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      reader.store_grapheme_rune_public(0, 'a'.ord)
+      result = reader.encode_grapheme_bufs_public
+      # Kitty keyboard sequence for release: CSI code;1:3;codepointsu
+      String.new(result).should eq("\e[97;1:3;97u")
     end
   end
 end
