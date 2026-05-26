@@ -274,40 +274,123 @@ module Ultraviolet
     end
 
     def reset : Nil
+      has_keyboard = !@keyboard_enhancements.nil?
+
       if @alt_screen
+        # Emit KittyKeyboard(0,1) before exiting alt screen to prevent
+        # mis-rendered characters in terminals that support the kitty
+        # keyboard protocol.
+        @renderer.write_string(Ansi.kitty_keyboard(0, 1)) if has_keyboard
         @renderer.write_string(Ansi::ResetModeAltScreenSaveCursor)
       end
-      @renderer.write_string(Ansi::ShowCursor)
-      set_mouse_mode(MouseMode::None) unless @mouse_mode.none?
-      set_cursor_style(CursorShape::Block, true) if @cursor
-      set_cursor_color(nil) if @cursor.try(&.color)
-      set_background_color(nil) if @background_color
-      set_foreground_color(nil) if @foreground_color
-      disable_bracketed_paste if @bracketed_paste
-      set_window_title("") unless @window_title.empty?
-      set_progress_bar(nil) if @progress_bar
-      set_keyboard_enhancements(nil) if @keyboard_enhancements
+
+      # Show the cursor unless the cursor is explicitly hidden.
+      if (cursor = @cursor) ? !cursor.hidden? : true
+        @renderer.write_string(Ansi::ShowCursor)
+      end
+
+      # Emit mouse mode reset directly; don't change @mouse_mode so Restore works.
+      unless @mouse_mode.none?
+        seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, MouseMode::None) }
+        @renderer.write_string(seq)
+      end
+
+      if cursor = @cursor
+        if cursor.shape != CursorShape::Block || !cursor.blink?
+          @renderer.write_string(Ansi.set_cursor_style(0))
+        end
+        if cursor.color
+          @renderer.write_string(Ansi::ResetCursorColor)
+        end
+      end
+
+      if @background_color
+        @renderer.write_string(Ansi::ResetBackgroundColor)
+      end
+
+      if @foreground_color
+        @renderer.write_string(Ansi::ResetForegroundColor)
+      end
+
+      if @bracketed_paste
+        @renderer.write_string(Ansi::ResetModeBracketedPaste)
+      end
+
+      unless @window_title.empty?
+        @renderer.write_string(Ansi.set_window_title(""))
+      end
+
+      if (pb = @progress_bar) && !pb.state.none?
+        seq = String.build { |io| Ultraviolet.encode_progress_bar(io, nil) }
+        @renderer.write_string(seq)
+      end
+
+      # KittyKeyboard(0,1) is also emitted here if keyboard enhancements exist.
+      # Preserve @keyboard_enhancements so Restore can re-emit them.
+      if has_keyboard
+        @renderer.write_string(Ansi.kitty_keyboard(0, 1))
+      end
+
       @renderer.move_to(0, {height - 1, 0}.max)
     end
 
     def restore : Nil
-      enter_alt_screen if @alt_screen
-      if cursor_visible?
+      # Emit raw ANSI sequences (do NOT modify internal state via setters
+      # so state survives reset/restore cycles — matching Go behavior).
+      if @alt_screen
+        @renderer.write_string(Ansi::SetModeAltScreenSaveCursor)
+      end
+
+      if (cursor = @cursor) && !cursor.hidden?
         @renderer.write_string(Ansi::ShowCursor)
       else
         @renderer.write_string(Ansi::HideCursor)
       end
-      set_keyboard_enhancements(@keyboard_enhancements) if @keyboard_enhancements
-      set_mouse_mode(@mouse_mode) unless @mouse_mode.none?
-      if cursor = @cursor
-        set_cursor_style(cursor.shape, cursor.blink?) if cursor.shape != CursorShape::Block || !cursor.blink?
-        set_cursor_color(cursor.color) if cursor.color
+
+      if enh = @keyboard_enhancements
+        seq = String.build { |io| Ultraviolet.encode_keyboard_enhancements(io, enh) }
+        @renderer.write_string(seq)
       end
-      set_background_color(@background_color) if @background_color
-      set_foreground_color(@foreground_color) if @foreground_color
-      enable_bracketed_paste if @bracketed_paste
-      set_window_title(@window_title) unless @window_title.empty?
-      set_progress_bar(@progress_bar) if @progress_bar
+
+      unless @mouse_mode.none?
+        seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, @mouse_mode) }
+        @renderer.write_string(seq)
+      end
+
+      if cursor = @cursor
+        if cursor.shape != CursorShape::Block || !cursor.blink?
+          @renderer.write_string(Ansi.set_cursor_style(cursor.shape.encode(cursor.blink?)))
+        end
+        if cursor.color
+          seq = String.build { |io| Ultraviolet.encode_cursor_color(io, cursor.color) }
+          @renderer.write_string(seq)
+        end
+      end
+
+      if @background_color
+        seq = String.build { |io| Ultraviolet.encode_background_color(io, @background_color) }
+        @renderer.write_string(seq)
+      end
+
+      if @foreground_color
+        seq = String.build { |io| Ultraviolet.encode_foreground_color(io, @foreground_color) }
+        @renderer.write_string(seq)
+      end
+
+      if @bracketed_paste
+        @renderer.write_string(Ansi::SetModeBracketedPaste)
+      end
+
+      unless @window_title.empty?
+        seq = String.build { |io| Ultraviolet.encode_window_title(io, @window_title) }
+        @renderer.write_string(seq)
+      end
+
+      if (pb = @progress_bar) && !pb.state.none?
+        seq = String.build { |io| Ultraviolet.encode_progress_bar(io, pb) }
+        @renderer.write_string(seq)
+      end
+
       render
     end
 
