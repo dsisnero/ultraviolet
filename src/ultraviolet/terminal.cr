@@ -23,6 +23,9 @@ module Ultraviolet
     property profile : ColorProfile
     getter method : WidthMethod
 
+    # opts holds the terminal options (matching Go's t.opts).
+    @opts : Options
+
     @in : IO
     @out : IO
     @in_tty : IO::FileDescriptor?
@@ -48,6 +51,7 @@ module Ultraviolet
     @reader_done : Channel(Nil)?
     @cancel_reader : CancelReader?
     @logger : Logger?
+    @opts : Options
 
     struct TerminalState
       property? altscreen : Bool
@@ -59,18 +63,26 @@ module Ultraviolet
     end
 
     def self.default_terminal : Terminal
-      Terminal.new(Console.default)
+      Terminal.new(Console.default, Options.default)
     end
 
     def self.controlling_terminal : Terminal
-      Terminal.new(Console.controlling)
+      Terminal.new(Console.controlling, Options.default)
     end
 
-    def initialize(console : Console)
-      initialize(console.reader, console.writer, console.environ)
+    def initialize(console : Console, options : Options = Options.default)
+      @opts = options
+      initialize(console.reader, console.writer, console.environ, options)
     end
 
-    def initialize(@in : IO, @out : IO, env : Array(String) = [] of String)
+    def initialize(@in : IO, @out : IO, env : Array(String) = [] of String, @opts : Options = Options.default)
+      @opts = Options.new(
+        buffer_size: @opts.buffer_size <= 0 ? DEFAULT_BUFFER_SIZE : @opts.buffer_size,
+        event_timeout: @opts.event_timeout <= Time::Span.zero ? DEFAULT_EVENT_TIMEOUT : @opts.event_timeout,
+        legacy_key_encoding: @opts.legacy_key_encoding,
+        lookup_keys: @opts.lookup_keys,
+        use_terminfo_keys: @opts.use_terminfo_keys,
+      )
       @environ = Environ.new(env)
       @termtype = @environ.getenv("TERM")
       @scr = TerminalRenderer.new(@out, env)
@@ -105,6 +117,10 @@ module Ultraviolet
       {% else %}
         @winch = nil
       {% end %}
+    end
+
+    def opts : Options
+      @opts
     end
 
     def logger=(logger : Logger?) : Nil
@@ -635,7 +651,10 @@ module Ultraviolet
       return if @reader
 
       cancel_reader = CancelReader.new(@in)
-      reader = TerminalReader.new(cancel_reader, @termtype)
+      reader = TerminalReader.new(cancel_reader, @termtype, @opts.legacy_key_encoding, @opts.use_terminfo_keys)
+      reader.esc_timeout = @opts.event_timeout
+      reader.buffer_size = @opts.buffer_size
+      reader.lookup = @opts.lookup_keys
       reader.logger = @logger
       @reader = reader
       @cancel_reader = cancel_reader
