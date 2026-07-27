@@ -178,6 +178,50 @@ module Casso
     end
   end
 
+  class LRU(K, V)
+    def initialize(@size : Int32)
+      raise "lru: negative size given: #{@size}" if @size < 0
+      @items = Hash(K, V).new
+      @order = Array(K).new
+    end
+
+    def get(key : K)
+      v = @items[key]?
+      if v
+        touch(key)
+        {v, true}
+      else
+        {nil, false}
+      end
+    end
+
+    def add(key : K, value : V) : Bool
+      if @items.has_key?(key)
+        @items[key] = value
+        touch(key)
+        return false
+      end
+
+      @items[key] = value
+      @order.unshift(key)
+
+      if @order.size > @size
+        evicted = @order.pop
+        @items.delete(evicted)
+        return true
+      end
+
+      false
+    end
+
+    private def touch(key : K)
+      idx = @order.index(key)
+      return unless idx
+      @order.delete_at(idx)
+      @order.unshift(key)
+    end
+  end
+
   class Solver
     @tabs : Hash(Symbol, Constraint)
     @tags : Hash(Symbol, Tag)
@@ -212,7 +256,6 @@ module Casso
     def add(priority : Priority, cell : Constraint) : Bool
       marker_tag = Tag.new(priority, Symbol.zero, Symbol.zero)
 
-      # Create new expression with the original constant but empty terms
       c = Constraint.new(cell.op, Expr.new(cell.expr.constant))
 
       cell.expr.terms.each do |term|
