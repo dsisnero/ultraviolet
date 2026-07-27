@@ -25,6 +25,12 @@ module Ultraviolet
     end
   end
 
+  enum MouseEncoding
+    Legacy
+    SGR
+    SGRPixel
+  end
+
   struct Mouse
     property x : Int32
     property y : Int32

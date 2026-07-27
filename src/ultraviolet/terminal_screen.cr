@@ -9,6 +9,8 @@ module Ultraviolet
     @keyboard_enhancements : KeyboardEnhancements?
     @bracketed_paste : Bool
     @mouse_mode : MouseMode
+    @mouse_encoding : MouseEncoding
+    @synchronized_updates : Bool
     @cursor : Cursor?
     @background_color : Color?
     @foreground_color : Color?
@@ -28,6 +30,8 @@ module Ultraviolet
       @keyboard_enhancements = nil
       @bracketed_paste = false
       @mouse_mode = MouseMode::None
+      @mouse_encoding = MouseEncoding::Legacy
+      @synchronized_updates = false
       @cursor = nil
       @background_color = nil
       @foreground_color = nil
@@ -74,6 +78,26 @@ module Ultraviolet
 
     def height : Int32
       @screen.height
+    end
+
+    def string_width(str : String) : Int32
+      @screen.width_method.call(str)
+    end
+
+    def set_synchronized_updates(enabled : Bool) : Nil
+      @synchronized_updates = enabled
+    end
+
+    def synchronized_updates? : Bool
+      @synchronized_updates
+    end
+
+    def set_mouse_encoding(encoding : MouseEncoding) : Nil
+      @mouse_encoding = encoding
+    end
+
+    def mouse_encoding : MouseEncoding
+      @mouse_encoding
     end
 
     def resize(width : Int32, height : Int32) : Nil

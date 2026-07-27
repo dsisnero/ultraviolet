@@ -36,4 +36,10 @@ module Ultraviolet
       opts.event_timeout.should eq(0.seconds)
     end
   end
+
+  it "accepts an optional Logger" do
+    logger = Ultraviolet::NullLogger.new
+    opts = Options.new(logger: logger)
+    opts.logger.should be(logger)
+  end
 end

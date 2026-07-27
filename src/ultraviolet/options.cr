@@ -29,12 +29,16 @@ module Ultraviolet
     # build up the keys lookup table.
     property use_terminfo_keys : Bool
 
+    # Logger is an optional logger for tracing I/O.
+    property logger : Logger?
+
     def initialize(
       @buffer_size : Int32 = DEFAULT_BUFFER_SIZE,
       @event_timeout : Time::Span = DEFAULT_EVENT_TIMEOUT,
       @legacy_key_encoding : LegacyKeyEncoding = LegacyKeyEncoding.new,
       @lookup_keys : Bool = true,
       @use_terminfo_keys : Bool = false,
+      @logger : Logger? = nil,
     )
     end
 

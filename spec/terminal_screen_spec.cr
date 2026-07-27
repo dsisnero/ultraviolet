@@ -46,6 +46,35 @@ describe Ultraviolet::TerminalScreen do
     screen.cursor_color.should eq(color)
   end
 
+  it "computes string width" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(10, 3)
+
+    screen.string_width("hello").should eq(5)
+    screen.string_width("").should eq(0)
+  end
+
+  it "manages synchronized updates state" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.synchronized_updates?.should be_false
+    screen.set_synchronized_updates(true)
+    screen.synchronized_updates?.should be_true
+    screen.set_synchronized_updates(false)
+    screen.synchronized_updates?.should be_false
+  end
+
+  it "manages mouse encoding state" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.mouse_encoding.should eq(Ultraviolet::MouseEncoding::Legacy)
+    screen.set_mouse_encoding(Ultraviolet::MouseEncoding::SGR)
+    screen.mouse_encoding.should eq(Ultraviolet::MouseEncoding::SGR)
+  end
+
   it "tracks bracketed paste, mouse mode, title and progress bar" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
