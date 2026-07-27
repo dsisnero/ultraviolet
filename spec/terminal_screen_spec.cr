@@ -66,6 +66,19 @@ describe Ultraviolet::TerminalScreen do
     screen.synchronized_updates?.should be_false
   end
 
+  it "wraps flush in synchronized updates when enabled" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(4, 2)
+
+    screen.set_synchronized_updates(true)
+    screen.flush
+
+    flushed = output.to_s
+    flushed.includes?(Ansi::SetModeSynchronizedOutput).should be_true
+    flushed.includes?(Ansi::ResetModeSynchronizedOutput).should be_true
+  end
+
   it "manages mouse encoding state" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])

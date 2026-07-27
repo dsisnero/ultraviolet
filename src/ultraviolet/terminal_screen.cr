@@ -121,6 +121,10 @@ module Ultraviolet
     end
 
     def flush : Nil
+      if @synchronized_updates
+        @renderer.write_string(Ansi::SetModeSynchronizedOutput)
+      end
+
       if cursor = @cursor
         if !cursor.hidden? && cursor.position.x >= 0 && cursor.position.y >= 0
           @renderer.move_to(cursor.position.x, cursor.position.y)
@@ -129,7 +133,13 @@ module Ultraviolet
         x, y = @renderer.position
         @renderer.move_to(0, y) if x >= width - 1
       end
+
       @renderer.flush
+
+      if @synchronized_updates
+        @renderer.write_string(Ansi::ResetModeSynchronizedOutput)
+        @renderer.flush
+      end
     end
 
     def enter_alt_screen : Nil
@@ -316,6 +326,12 @@ module Ultraviolet
       # Emit mouse mode reset directly; don't change @mouse_mode so Restore works.
       unless @mouse_mode.none?
         seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, MouseMode::None) }
+        @renderer.write_string(seq)
+      end
+
+      # Reset mouse encoding to legacy; preserve @mouse_encoding for Restore.
+      unless @mouse_encoding.legacy?
+        seq = String.build { |io| Ultraviolet.encode_mouse_encoding(io, MouseEncoding::Legacy) }
         @renderer.write_string(seq)
       end
 

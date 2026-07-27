@@ -1,6 +1,7 @@
 module Ultraviolet
   enum MouseMode
     None
+    Press
     Click
     Drag
     Motion
