@@ -94,6 +94,10 @@ module Ultraviolet
       Window.new_window(nil, 0, 0, width, height, DEFAULT_WIDTH_METHOD, false)
     end
 
+    def self.new_window(width : Int32, height : Int32, method : WidthMethod = DEFAULT_WIDTH_METHOD) : Window
+      Window.new_window(nil, 0, 0, width, height, method, false)
+    end
+
     private def self.new_window(
       parent : Window?,
       x : Int32,
@@ -116,5 +120,9 @@ module Ultraviolet
 
   def self.new_screen(width : Int32, height : Int32) : Window
     Window.new_screen(width, height)
+  end
+
+  def self.new_window(width : Int32, height : Int32, method : WidthMethod = DEFAULT_WIDTH_METHOD) : Window
+    Window.new_window(width, height, method)
   end
 end

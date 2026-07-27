@@ -767,5 +767,17 @@ module Ultraviolet
       renderer.flush
       buf.to_s.should eq("\e[2;2H\e[?1049h\e[H\e[2J\e[?1049l")
     end
+
+    it "sets grapheme width mode" do
+      renderer = TerminalRenderer.new(IO::Memory.new, [] of String)
+      renderer.set_grapheme_width(true)
+      renderer.set_grapheme_width(false)
+    end
+
+    it "sets width method" do
+      renderer = TerminalRenderer.new(IO::Memory.new, [] of String)
+      renderer.set_width_method(Ansi::GraphemeWidth)
+      renderer.set_width_method(Ansi::WcWidth)
+    end
   end
 end

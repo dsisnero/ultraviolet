@@ -2,10 +2,16 @@ module Ultraviolet
   struct KeyboardEnhancements
     property? disambiguate_escape_codes : Bool
     property? report_event_types : Bool
+    property? report_alternate_keys : Bool
+    property? report_all_keys_as_escape_codes : Bool
+    property? report_associated_text : Bool
 
     def initialize(
       @disambiguate_escape_codes : Bool = false,
       @report_event_types : Bool = false,
+      @report_alternate_keys : Bool = false,
+      @report_all_keys_as_escape_codes : Bool = false,
+      @report_associated_text : Bool = false,
     )
     end
 
@@ -13,6 +19,9 @@ module Ultraviolet
       flags = 0
       flags |= Ansi::KittyDisambiguateEscapeCodes if @disambiguate_escape_codes
       flags |= Ansi::KittyReportEventTypes if @report_event_types
+      flags |= Ansi::KittyReportAlternateKeys if @report_alternate_keys
+      flags |= Ansi::KittyReportAllKeysAsEscapeCodes if @report_all_keys_as_escape_codes
+      flags |= Ansi::KittyReportAssociatedKeys if @report_associated_text
       flags
     end
   end
@@ -22,6 +31,9 @@ module Ultraviolet
     KeyboardEnhancements.new(
       disambiguate_escape_codes: (flags & Ansi::KittyDisambiguateEscapeCodes) != 0,
       report_event_types: (flags & Ansi::KittyReportEventTypes) != 0,
+      report_alternate_keys: (flags & Ansi::KittyReportAlternateKeys) != 0,
+      report_all_keys_as_escape_codes: (flags & Ansi::KittyReportAllKeysAsEscapeCodes) != 0,
+      report_associated_text: (flags & Ansi::KittyReportAssociatedKeys) != 0,
     )
   end
 
@@ -51,21 +63,18 @@ module Ultraviolet
   def self.encode_mouse_mode(io : IO, mode : MouseMode) : Nil
     case mode
     when MouseMode::None
+      io << Ansi::ResetModeMouseX10
       io << Ansi::ResetModeMouseNormal
       io << Ansi::ResetModeMouseButtonEvent
       io << Ansi::ResetModeMouseAnyEvent
-      io << Ansi::ResetModeMouseExtSgr
+    when MouseMode::Press
+      io << Ansi::SetModeMouseX10
     when MouseMode::Click
       io << Ansi::SetModeMouseNormal
-      io << Ansi::SetModeMouseExtSgr
     when MouseMode::Drag
       io << Ansi::SetModeMouseButtonEvent
-      io << Ansi::SetModeMouseExtSgr
     when MouseMode::Motion
       io << Ansi::SetModeMouseAnyEvent
-      io << Ansi::SetModeMouseExtSgr
-    else
-      raise ArgumentError.new("invalid mouse mode: #{mode}")
     end
   end
 
@@ -97,5 +106,18 @@ module Ultraviolet
 
   def self.encode_window_title(io : IO, title : String) : Nil
     io << Ansi.set_window_title(title)
+  end
+
+  def self.encode_mouse_encoding(io : IO, enc : MouseEncoding) : Nil
+    case enc
+    when MouseEncoding::Legacy
+      io << Ansi::ResetModeMouseExtSgr
+      io << Ansi::ResetModeMouseExtUrxvt
+      io << Ansi::ResetModeMouseExtSgrPixel
+    when MouseEncoding::SGR
+      io << Ansi::SetModeMouseExtSgr
+    when MouseEncoding::SGRPixel
+      io << Ansi::SetModeMouseExtSgrPixel
+    end
   end
 end

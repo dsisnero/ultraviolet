@@ -213,6 +213,7 @@ module Ultraviolet
         x = bounds.min.x
         y += 1
         i += 1
+        break if y >= bounds.max.y
         next
       end
 

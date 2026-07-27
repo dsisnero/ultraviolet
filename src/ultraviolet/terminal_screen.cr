@@ -9,6 +9,8 @@ module Ultraviolet
     @keyboard_enhancements : KeyboardEnhancements?
     @bracketed_paste : Bool
     @mouse_mode : MouseMode
+    @mouse_encoding : MouseEncoding
+    @synchronized_updates : Bool
     @cursor : Cursor?
     @background_color : Color?
     @foreground_color : Color?
@@ -28,6 +30,8 @@ module Ultraviolet
       @keyboard_enhancements = nil
       @bracketed_paste = false
       @mouse_mode = MouseMode::None
+      @mouse_encoding = MouseEncoding::Legacy
+      @synchronized_updates = false
       @cursor = nil
       @background_color = nil
       @foreground_color = nil
@@ -76,6 +80,36 @@ module Ultraviolet
       @screen.height
     end
 
+    def string_width(str : String) : Int32
+      @screen.width_method.call(str)
+    end
+
+    def set_synchronized_updates(enabled : Bool) : Nil
+      @synchronized_updates = enabled
+    end
+
+    def synchronized_updates? : Bool
+      @synchronized_updates
+    end
+
+    def set_mouse_encoding(encoding : MouseEncoding) : Nil
+      @mouse_encoding = encoding
+    end
+
+    def request_grapheme_width : Nil
+      @renderer.write_string(Ansi::RequestModeUnicodeCore)
+    end
+
+    def enable_grapheme_width : Nil
+      @renderer.write_string(Ansi::SetModeUnicodeCore)
+      @renderer.set_width_method(Ansi::GraphemeWidth)
+      @renderer.set_grapheme_width(true)
+    end
+
+    def mouse_encoding : MouseEncoding
+      @mouse_encoding
+    end
+
     def resize(width : Int32, height : Int32) : Nil
       @screen.resize(width, height)
       @renderer.resize(width, height)
@@ -97,6 +131,10 @@ module Ultraviolet
     end
 
     def flush : Nil
+      if @synchronized_updates
+        @renderer.write_string(Ansi::SetModeSynchronizedOutput)
+      end
+
       if cursor = @cursor
         if !cursor.hidden? && cursor.position.x >= 0 && cursor.position.y >= 0
           @renderer.move_to(cursor.position.x, cursor.position.y)
@@ -105,7 +143,13 @@ module Ultraviolet
         x, y = @renderer.position
         @renderer.move_to(0, y) if x >= width - 1
       end
+
       @renderer.flush
+
+      if @synchronized_updates
+        @renderer.write_string(Ansi::ResetModeSynchronizedOutput)
+        @renderer.flush
+      end
     end
 
     def enter_alt_screen : Nil
@@ -292,6 +336,12 @@ module Ultraviolet
       # Emit mouse mode reset directly; don't change @mouse_mode so Restore works.
       unless @mouse_mode.none?
         seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, MouseMode::None) }
+        @renderer.write_string(seq)
+      end
+
+      # Reset mouse encoding to legacy; preserve @mouse_encoding for Restore.
+      unless @mouse_encoding.legacy?
+        seq = String.build { |io| Ultraviolet.encode_mouse_encoding(io, MouseEncoding::Legacy) }
         @renderer.write_string(seq)
       end
 

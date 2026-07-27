@@ -268,6 +268,14 @@ module Ultraviolet
       @size
     end
 
+    def get_size : {Int32, Int32}
+      {@size.width, @size.height}
+    end
+
+    def get_winsize : Winsize
+      Winsize.new(@size.height.to_u16, @size.width.to_u16, @pixel_size.width.to_u16, @pixel_size.height.to_u16)
+    end
+
     def resize(width : Int32, height : Int32) : Nil
       @buf.resize(width, height)
       @buf.touched = Array(LineData?).new(height) { LineData.new(-1, -1) }
@@ -655,6 +663,7 @@ module Ultraviolet
       reader.esc_timeout = @opts.event_timeout
       reader.buffer_size = @opts.buffer_size
       reader.lookup = @opts.lookup_keys
+      reader.logger = @opts.logger if @opts.logger
       reader.logger = @logger
       @reader = reader
       @cancel_reader = cancel_reader

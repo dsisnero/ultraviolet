@@ -45,6 +45,7 @@ module Ultraviolet
     Fullscreen
     MapNewline
     ScrollOptim
+    GraphemeWidth
 
     # Resets (clears) the given flags from this value.
     # Returns a new TerminalFlags value with the bits cleared.
@@ -86,8 +87,9 @@ module Ultraviolet
     @writer : IO
     @buf : IO::Memory
     @curbuf : RenderBuffer?
-    @tabs : TabStops?
+    @caps : Capabilities
     @flags : TerminalFlags
+    @method : Ansi::Method
     @term : String
     @scroll_height : Int32
     @clear : Bool
@@ -112,6 +114,7 @@ module Ultraviolet
       @term = Environ.new(env).getenv("TERM")
       @caps = xterm_caps(@term)
       @flags = TerminalFlags::None
+      @method = Ansi::WcWidth
       @cur = CursorState.new
       @saved = @cur
       @scroll_height = 0
@@ -129,6 +132,20 @@ module Ultraviolet
 
     def color_profile=(profile : ColorProfile) : Nil
       @profile = profile
+    end
+
+    def set_width_method(method : Ansi::Method) : Nil
+      @method = method
+    end
+
+    def set_grapheme_width(enabled : Bool) : Nil
+      if enabled
+        @flags |= TerminalFlags::GraphemeWidth
+        @method = Ansi::GraphemeWidth
+      else
+        @flags &= ~TerminalFlags::GraphemeWidth
+        @method = Ansi::WcWidth
+      end
     end
 
     def scroll_optim=(enabled : Bool) : Nil

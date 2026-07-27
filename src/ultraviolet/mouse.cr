@@ -1,6 +1,7 @@
 module Ultraviolet
   enum MouseMode
     None
+    Press
     Click
     Drag
     Motion
@@ -23,6 +24,12 @@ module Ultraviolet
     def string : String
       BUTTON_NAMES[self]? || ""
     end
+  end
+
+  enum MouseEncoding
+    Legacy
+    SGR
+    SGRPixel
   end
 
   struct Mouse

@@ -12,16 +12,47 @@ describe "UvApi helpers" do
 
   it "encodes mouse mode sequences" do
     io = IO::Memory.new
+    Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::None)
+    io.to_s.should eq(Ansi::ResetModeMouseX10 + Ansi::ResetModeMouseNormal + Ansi::ResetModeMouseButtonEvent + Ansi::ResetModeMouseAnyEvent)
+
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Press)
+    io.to_s.should eq(Ansi::SetModeMouseX10)
+
+    io = IO::Memory.new
     Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Click)
-    out = io.to_s
-    out.includes?(Ansi::SetModeMouseNormal).should be_true
-    out.includes?(Ansi::SetModeMouseExtSgr).should be_true
+    io.to_s.should eq(Ansi::SetModeMouseNormal)
+
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Drag)
+    io.to_s.should eq(Ansi::SetModeMouseButtonEvent)
+
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Motion)
+    io.to_s.should eq(Ansi::SetModeMouseAnyEvent)
   end
 
   it "encodes progress bar reset for nil value" do
     io = IO::Memory.new
     Ultraviolet.encode_progress_bar(io, nil)
     io.to_s.should eq(Ansi::ResetProgressBar)
+  end
+
+  it "encodes mouse encoding" do
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_encoding(io, Ultraviolet::MouseEncoding::SGR)
+    io.to_s.should eq(Ansi::SetModeMouseExtSgr)
+
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_encoding(io, Ultraviolet::MouseEncoding::SGRPixel)
+    io.to_s.should eq(Ansi::SetModeMouseExtSgrPixel)
+
+    io = IO::Memory.new
+    Ultraviolet.encode_mouse_encoding(io, Ultraviolet::MouseEncoding::Legacy)
+    out = io.to_s
+    out.includes?(Ansi::ResetModeMouseExtSgr).should be_true
+    out.includes?(Ansi::ResetModeMouseExtUrxvt).should be_true
+    out.includes?(Ansi::ResetModeMouseExtSgrPixel).should be_true
   end
 
   it "encodes window title" do

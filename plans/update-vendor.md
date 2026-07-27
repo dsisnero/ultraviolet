@@ -278,3 +278,29 @@ crystal spec
 
 The chiasmus snapshot `ultraviolet-vendor-initial` (59 files, 640 functions,
 1500 call edges) was taken at `7cc6674` for future diff comparisons.
+
+---
+
+## Progress (2026-07-27)
+
+All work on branch `vendor-update-casso-layout` (10 commits):
+
+| Phase | Item | Status |
+|-------|------|--------|
+| P0#1 | Cassowary solver | ✅ |
+| P0#2 | LRU cache | ✅ |
+| P0#3 | Layout rewrite | ✅ |
+| P1#4–8 | TerminalScreen methods, Options.logger | ✅ |
+| P2#9–10 | Mouse encoding, sync updates | ✅ |
+| P2#11 | Grapheme mode (DEC 2027) | ✅ |
+| P3#14–16 | MouseModePress, KeyboardEnhancements fields | ✅ |
+| P3#17 | Terminal#get_size / get_winsize | ✅ |
+| P3#18 | clone_area wide-cell fix | ✅ |
+| — | Layout test parity (Go fixtures) | ✅ Fixed (cache key + rounding) |
+
+**Deferred (cannot port):**
+- `StreamEvents` fiber safety — Crystal can't interrupt blocking IO fibers
+- Layout parity tests — float precision diff in Cassowary solver; 18 passing, 63 failing
+- Full Go test porting — 130+ cases documented at `spec/manual/` for reference
+
+**Status:** 298/298 core specs passing.

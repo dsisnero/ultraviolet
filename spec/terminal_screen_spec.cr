@@ -46,6 +46,57 @@ describe Ultraviolet::TerminalScreen do
     screen.cursor_color.should eq(color)
   end
 
+  it "computes string width" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(10, 3)
+
+    screen.string_width("hello").should eq(5)
+    screen.string_width("").should eq(0)
+  end
+
+  it "manages synchronized updates state" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.synchronized_updates?.should be_false
+    screen.set_synchronized_updates(true)
+    screen.synchronized_updates?.should be_true
+    screen.set_synchronized_updates(false)
+    screen.synchronized_updates?.should be_false
+  end
+
+  it "requests grapheme width mode" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(4, 2)
+    screen.request_grapheme_width
+    screen.flush
+    output.to_s.includes?(Ansi::RequestModeUnicodeCore).should be_true
+  end
+
+  it "wraps flush in synchronized updates when enabled" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(4, 2)
+
+    screen.set_synchronized_updates(true)
+    screen.flush
+
+    flushed = output.to_s
+    flushed.includes?(Ansi::SetModeSynchronizedOutput).should be_true
+    flushed.includes?(Ansi::ResetModeSynchronizedOutput).should be_true
+  end
+
+  it "manages mouse encoding state" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.mouse_encoding.should eq(Ultraviolet::MouseEncoding::Legacy)
+    screen.set_mouse_encoding(Ultraviolet::MouseEncoding::SGR)
+    screen.mouse_encoding.should eq(Ultraviolet::MouseEncoding::SGR)
+  end
+
   it "tracks bracketed paste, mouse mode, title and progress bar" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
