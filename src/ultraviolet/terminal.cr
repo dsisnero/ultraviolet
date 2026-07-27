@@ -663,6 +663,7 @@ module Ultraviolet
       reader.esc_timeout = @opts.event_timeout
       reader.buffer_size = @opts.buffer_size
       reader.lookup = @opts.lookup_keys
+      reader.logger = @opts.logger if @opts.logger
       reader.logger = @logger
       @reader = reader
       @cancel_reader = cancel_reader
