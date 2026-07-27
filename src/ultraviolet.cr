@@ -1,5 +1,6 @@
 # Ultraviolet: terminal primitives and rendering structures.
 
+require "./ultraviolet/casso"
 require "./ultraviolet/geometry"
 require "./ultraviolet/utils"
 require "./ultraviolet/environ"
