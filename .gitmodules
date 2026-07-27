@@ -1,6 +1,3 @@
-[submodule "ultraviolet_go"]
-	path = ultraviolet_go
-	url = https://github.com/charmbracelet/ultraviolet
 [submodule "lib/ansi/x"]
 	path = lib/ansi/x
 	url = https://github.com/charmbracelet/x.git

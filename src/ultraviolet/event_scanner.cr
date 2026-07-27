@@ -127,7 +127,7 @@ module Ultraviolet
     # ameba:enable Metrics/CyclomaticComplexity
 
     protected def logf(format : String, *args) : Nil
-      return unless (l = @logger)
+      return unless l = @logger
       l.printf(format, *args)
     end
 

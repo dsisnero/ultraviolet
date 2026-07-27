@@ -1,8 +1,8 @@
 # Ultraviolet Parity Plan
 
-Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go submodule is at `ultraviolet_go/` (commit `524a660`).
+Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go source is vendored at `vendor/ultraviolet/` (commit `7cc6674`).
 
-> **Synced to:** `524a660` (HEAD of upstream main)
+> **Synced to:** `7cc6674` (HEAD of upstream main)
 
 ## Status Overview
 

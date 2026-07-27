@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This is a port of golang ultraviolet available as a submodule in `./ultraviolet_go`.  The golang code is the source of truth for functionality both for tests and src.  If you have any implementation questions, look to golang code.
+This is a port of golang ultraviolet available at `./vendor/ultraviolet`. The golang code is the source of truth for functionality both for tests and src. If you have any implementation questions, look to golang code.
 
 ## Documentation
 
