@@ -66,6 +66,15 @@ describe Ultraviolet::TerminalScreen do
     screen.synchronized_updates?.should be_false
   end
 
+  it "requests grapheme width mode" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    screen.resize(4, 2)
+    screen.request_grapheme_width
+    screen.flush
+    output.to_s.includes?(Ansi::RequestModeUnicodeCore).should be_true
+  end
+
   it "wraps flush in synchronized updates when enabled" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])

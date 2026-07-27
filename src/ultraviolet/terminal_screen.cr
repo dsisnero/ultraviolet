@@ -96,6 +96,16 @@ module Ultraviolet
       @mouse_encoding = encoding
     end
 
+    def request_grapheme_width : Nil
+      @renderer.write_string(Ansi::RequestModeUnicodeCore)
+    end
+
+    def enable_grapheme_width : Nil
+      @renderer.write_string(Ansi::SetModeUnicodeCore)
+      @renderer.set_width_method(Ansi::GraphemeWidth)
+      @renderer.set_grapheme_width(true)
+    end
+
     def mouse_encoding : MouseEncoding
       @mouse_encoding
     end

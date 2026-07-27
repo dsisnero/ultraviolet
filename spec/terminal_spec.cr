@@ -34,4 +34,17 @@ describe "Terminal helpers" do
       # Environments without a controlling tty are expected in CI/non-interactive runs.
     end
   end
+
+  it "provides size through get_size" do
+    term = Ultraviolet::Terminal.default_terminal
+    width, height = term.get_size
+    width.should be_a(Int32)
+    height.should be_a(Int32)
+  end
+
+  it "provides winsize through get_winsize" do
+    term = Ultraviolet::Terminal.default_terminal
+    ws = term.get_winsize
+    ws.should be_a(Ultraviolet::Winsize)
+  end
 end
