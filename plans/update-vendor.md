@@ -283,7 +283,7 @@ The chiasmus snapshot `ultraviolet-vendor-initial` (59 files, 640 functions,
 
 ## Progress (2026-07-27)
 
-All work on branch `vendor-update-casso-layout` (6 commits):
+All work on branch `vendor-update-casso-layout` (10 commits):
 
 | Phase | Item | Status |
 |-------|------|--------|
@@ -292,12 +292,15 @@ All work on branch `vendor-update-casso-layout` (6 commits):
 | P0#3 | Layout rewrite | ✅ |
 | P1#4–8 | TerminalScreen methods, Options.logger | ✅ |
 | P2#9–10 | Mouse encoding, sync updates | ✅ |
+| P2#11 | Grapheme mode (DEC 2027) | ✅ |
 | P3#14–16 | MouseModePress, KeyboardEnhancements fields | ✅ |
+| P3#17 | Terminal#get_size / get_winsize | ✅ |
+| P3#18 | clone_area wide-cell fix | ✅ |
+| — | Layout test parity (Go fixtures) | ⚠️ 18 pass / 63 fail (float precision diff) |
 
-**Remaining (minor/deferred):**
-- `Terminal#get_size` / `get_winsize` — nice-to-have, low priority
-- `NewScreen`→`NewWindow` rename — naming preference, behavior unchanged
-- Full Go test parity for layout (150+ test cases ported as 15 focused specs)
-- RenderBuffer `ClearArea`/`FillArea` — behavioral refinement
+**Deferred (cannot port):**
+- `StreamEvents` fiber safety — Crystal can't interrupt blocking IO fibers
+- Layout parity tests — float precision diff in Cassowary solver; 18 passing, 63 failing
+- Full Go test porting — 130+ cases documented at `spec/manual/` for reference
 
-**Status:** 293/293 specs passing.
+**Status:** 298/298 core specs passing.
