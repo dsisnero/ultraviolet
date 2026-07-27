@@ -388,8 +388,12 @@ module Ultraviolet
         x = area.min.x
         while x < area.max.x
           cell = cell_at(x, y)
-          result.set_cell(x - area.min.x, y - area.min.y, cell) if cell && !cell.zero?
-          x += 1
+          if cell && !cell.zero?
+            result.set_cell(x - area.min.x, y - area.min.y, cell)
+            x += {cell.width, 1}.max
+          else
+            x += 1
+          end
         end
         y += 1
       end

@@ -278,3 +278,26 @@ crystal spec
 
 The chiasmus snapshot `ultraviolet-vendor-initial` (59 files, 640 functions,
 1500 call edges) was taken at `7cc6674` for future diff comparisons.
+
+---
+
+## Progress (2026-07-27)
+
+All work on branch `vendor-update-casso-layout` (6 commits):
+
+| Phase | Item | Status |
+|-------|------|--------|
+| P0#1 | Cassowary solver | ✅ |
+| P0#2 | LRU cache | ✅ |
+| P0#3 | Layout rewrite | ✅ |
+| P1#4–8 | TerminalScreen methods, Options.logger | ✅ |
+| P2#9–10 | Mouse encoding, sync updates | ✅ |
+| P3#14–16 | MouseModePress, KeyboardEnhancements fields | ✅ |
+
+**Remaining (minor/deferred):**
+- `Terminal#get_size` / `get_winsize` — nice-to-have, low priority
+- `NewScreen`→`NewWindow` rename — naming preference, behavior unchanged
+- Full Go test parity for layout (150+ test cases ported as 15 focused specs)
+- RenderBuffer `ClearArea`/`FillArea` — behavioral refinement
+
+**Status:** 293/293 specs passing.
