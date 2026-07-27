@@ -1,6 +1,11 @@
 require "./spec_helper"
 
 describe "Terminal helpers" do
+  it "provides access to logger" do
+    term = Ultraviolet::Terminal.default_terminal
+    term.logger.should be_nil
+  end
+
   it "supports backspace check" do
     Ultraviolet.supports_backspace(0_u64)
   end
