@@ -296,7 +296,7 @@ All work on branch `vendor-update-casso-layout` (10 commits):
 | P3#14–16 | MouseModePress, KeyboardEnhancements fields | ✅ |
 | P3#17 | Terminal#get_size / get_winsize | ✅ |
 | P3#18 | clone_area wide-cell fix | ✅ |
-| — | Layout test parity (Go fixtures) | ⚠️ 18 pass / 63 fail (float precision diff) |
+| — | Layout test parity (Go fixtures) | ✅ Fixed (cache key + rounding) |
 
 **Deferred (cannot port):**
 - `StreamEvents` fiber safety — Crystal can't interrupt blocking IO fibers
