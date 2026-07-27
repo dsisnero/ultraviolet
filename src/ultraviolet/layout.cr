@@ -362,8 +362,8 @@ module Ultraviolet
         start_val = changes[e.start]? || 0.0
         end_val = changes[e.end]? || 0.0
 
-        start_rounded = (start_val.round / FLOAT_PRECISION_MULTIPLIER).round.to_i
-        end_rounded = (end_val.round / FLOAT_PRECISION_MULTIPLIER).round.to_i
+        start_rounded = (start_val.round_away / FLOAT_PRECISION_MULTIPLIER).round_away.to_i
+        end_rounded = (end_val.round_away / FLOAT_PRECISION_MULTIPLIER).round_away.to_i
 
         size = Math.max(0, end_rounded - start_rounded)
 
@@ -438,7 +438,17 @@ module Ultraviolet
       end
 
       private def cache_key(area : Rectangle) : CacheKey
-        types = @constraints.map(&.class.name).join(",")
+        types = @constraints.map { |c|
+          case c
+          when Min   then "min:#{c.value}"
+          when Max   then "max:#{c.value}"
+          when Len   then "len:#{c.value}"
+          when Percent then "pct:#{c.value}"
+          when Ratio   then "rat:#{c.num}:#{c.den}"
+          when Fill   then "fill:#{c.value}"
+          else             c.class.name
+          end
+        }.join(",")
         CacheKey.new(area, @direction, types, @padding, @spacing, @flex)
       end
 
