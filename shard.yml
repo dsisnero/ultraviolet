@@ -20,6 +20,7 @@ dependencies:
   ansi:
     github: dsisnero/ansi
   terminfo:
-    github: docelic/terminfo
+    github: dsisnero/terminfo
+    version: 0.8.2
   uniwidth:
     github: naqvis/uni_char_width
