@@ -60,6 +60,28 @@ describe Ultraviolet::Console do
   end
 
   {% unless flag?(:win32) %}
+    it "reads the window size from a pseudo tty" do
+      master_fd = uninitialized Int32
+      slave_fd = uninitialized Int32
+      requested = LibC::Winsize.new
+      requested.ws_row = 43_u16
+      requested.ws_col = 117_u16
+      LibUtil.openpty(pointerof(master_fd), pointerof(slave_fd), Pointer(UInt8).null, Pointer(LibC::Termios).null, pointerof(requested).as(Void*)).should eq(0)
+
+      master = IO::FileDescriptor.new(master_fd)
+      slave = IO::FileDescriptor.new(slave_fd)
+      con = Ultraviolet::Console.new_console(slave, slave, [] of String)
+
+      begin
+        winsize = con.get_winsize
+        winsize.row.should eq(43_u16)
+        winsize.col.should eq(117_u16)
+      ensure
+        master.close
+        slave.close
+      end
+    end
+
     it "restores raw mode on a pseudo tty" do
       master_fd = uninitialized Int32
       slave_fd = uninitialized Int32
