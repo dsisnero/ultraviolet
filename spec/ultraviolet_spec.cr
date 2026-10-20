@@ -20,7 +20,7 @@ describe Ultraviolet do
     line.set(1, Ultraviolet::Cell.new("i", 1))
 
     line.string.should eq("Hi")
-    line.render.should eq("Hi")
+    line.render.should eq("Hi ")
   end
 
   it "clones areas of a buffer" do

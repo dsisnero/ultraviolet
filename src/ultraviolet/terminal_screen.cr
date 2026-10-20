@@ -116,7 +116,6 @@ module Ultraviolet
       @screen.resize(width, height)
       @renderer.resize(width, height)
       @renderer.erase
-      @screen.touched = Array(LineData?).new(height, nil)
     end
 
     def display(drawable : Drawable?) : Nil

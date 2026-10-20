@@ -30,6 +30,7 @@ module Ultraviolet
       Ultraviolet.print_string(buf, buf.width_method, area.min.x, area.min.y, area, str, !@wrap, @tail)
     end
 
+    # ameba:disable Metrics/CyclomaticComplexity
     def lines(method : WidthMethod = DEFAULT_WIDTH_METHOD) : Array(Line)
       rows = [] of Array(Cell)
       rows << [] of Cell
@@ -38,13 +39,17 @@ module Ultraviolet
       y = 0
       style = Style.new
       link = Link.new
+      pending = ""
+      last_x = -1
+      last_y = -1
       str = @text.gsub("\r\n", "\n")
 
       i = 0
       while i < str.bytesize
         byte = str.byte_at(i)
         if byte == 0x1b
-          next_index, style, link = Ultraviolet.handle_escape(str, i, style, link)
+          next_index, style, link, pass = Ultraviolet.handle_escape_with_passthrough(str, i, style, link)
+          pending += pass unless pass.empty?
           i = next_index
           next
         end
@@ -68,10 +73,26 @@ module Ultraviolet
           grapheme = cluster.str
           width = method.call(grapheme)
           width = UnicodeCharWidth.width(grapheme) if width < 0
-          place_line_cell(rows[y], x, Cell.new(grapheme, width, style, link))
+
+          if width <= 0
+            fold_line_cell(rows, last_x, last_y, grapheme) if last_x >= 0
+            next
+          end
+
+          content = grapheme
+          unless pending.empty?
+            content = pending + content
+            pending = ""
+          end
+
+          place_line_cell(rows[y], x, Cell.new(content, width, style, link))
+          last_x = x
+          last_y = y
           x += width
         end
       end
+
+      fold_line_cell(rows, last_x, last_y, pending) unless pending.empty? || last_x < 0
 
       rows.map do |row|
         line = Line.new(row.size)
@@ -82,6 +103,19 @@ module Ultraviolet
         end
         line
       end
+    end
+
+    # ameba:enable Metrics/CyclomaticComplexity
+
+    private def fold_line_cell(rows : Array(Array(Cell)), x : Int32, y : Int32, text : String) : Nil
+      return if x < 0 || y < 0 || y >= rows.size
+
+      row = rows[y]
+      return if x >= row.size
+
+      cell = row[x].clone
+      cell.content += text
+      row[x] = cell
     end
 
     def height : Int32
@@ -168,16 +202,10 @@ module Ultraviolet
       return value.bytesize
     end
 
-    if next_char == ']'.ord
-      i = index + 2
-      while i < value.bytesize
-        byte = value.byte_at(i)
-        return i + 1 if byte == 0x07
-        if byte == 0x1b && i + 1 < value.bytesize && value.byte_at(i + 1) == '\\'.ord
-          return i + 2
-        end
-        i += 1
-      end
+    if next_char == ']'.ord || next_char == '_'.ord || next_char == 'P'.ord || next_char == 'X'.ord || next_char == '^'.ord
+      allow_bel = next_char == ']'.ord
+      next_index, _ = string_sequence_end(value, index, allow_bel)
+      return next_index
     end
 
     index + 1
@@ -197,6 +225,9 @@ module Ultraviolet
     y = start_y
     style = Style.new
     link = Link.new
+    pending = ""
+    last_x = -1
+    last_y = -1
 
     tail_cell, tail_width = build_tail_cell(method, truncate, tail, style, link)
 
@@ -204,7 +235,8 @@ module Ultraviolet
     while i < value.bytesize
       byte = value.byte_at(i)
       if byte == 0x1b
-        next_index, style, link = handle_escape(value, i, style, link)
+        next_index, style, link, pass = handle_escape_with_passthrough(value, i, style, link)
+        pending += pass unless pass.empty?
         i = next_index
         next
       end
@@ -224,9 +256,13 @@ module Ultraviolet
       end
 
       segment, i = read_print_segment(value, i)
-      x, y, done = render_segment(screen, method, bounds, segment, x, y, style, link, truncate, tail_cell, tail_width)
-      return if done
+      x, y, done, pending, last_x, last_y = render_segment(
+        screen, method, bounds, segment, x, y, style, link, truncate, tail_cell, tail_width, pending, last_x, last_y
+      )
+      break if done
     end
+
+    fold_screen_cell(screen, last_x, last_y, pending) unless pending.empty? || last_x < 0
   end
 
   private def self.build_tail_cell(method : WidthMethod, truncate : Bool, tail : String, style : Style, link : Link) : {Cell, Int32}
@@ -263,12 +299,26 @@ module Ultraviolet
     truncate : Bool,
     tail_cell : Cell,
     tail_width : Int32,
-  ) : {Int32, Int32, Bool}
+    pending : String,
+    last_x : Int32,
+    last_y : Int32,
+  ) : {Int32, Int32, Bool, String, Int32, Int32}
     done = false
 
     TextSegment.each_grapheme(segment) do |cluster|
       grapheme = cluster.str
       width = method.call(grapheme)
+
+      if width <= 0
+        fold_screen_cell(screen, last_x, last_y, grapheme) if last_x >= 0
+        next
+      end
+
+      content = grapheme
+      unless pending.empty?
+        content = pending + content
+        pending = ""
+      end
 
       if !truncate && x + width > bounds.max.x && y + 1 < bounds.max.y
         x = bounds.min.x
@@ -282,17 +332,32 @@ module Ultraviolet
           cell.style = style
           cell.link = link
           screen.set_cell(x, y, cell)
+          last_x = x
+          last_y = y
           done = true
           break
         end
 
-        cell = Cell.new(grapheme, width, style, link)
+        cell = Cell.new(content, width, style, link)
         screen.set_cell(x, y, cell)
+        last_x = x
+        last_y = y
         x += width
       end
     end
 
-    {x, y, done}
+    {x, y, done, pending, last_x, last_y}
+  end
+
+  private def self.fold_screen_cell(screen : Screen, x : Int32, y : Int32, text : String) : Nil
+    return if x < 0 || y < 0
+
+    cell = screen.cell_at(x, y)
+    return unless cell
+
+    folded = cell.clone
+    folded.content += text
+    screen.set_cell(x, y, folded)
   end
 
   def self.handle_escape(
@@ -301,18 +366,53 @@ module Ultraviolet
     style : Style,
     link : Link,
   ) : {Int32, Style, Link}
-    return {index + 1, style, link} if index + 1 >= value.bytesize
+    next_index, new_style, new_link, _ = handle_escape_with_passthrough(value, index, style, link)
+    {next_index, new_style, new_link}
+  end
+
+  def self.handle_escape_with_passthrough(
+    value : String,
+    index : Int32,
+    style : Style,
+    link : Link,
+  ) : {Int32, Style, Link, String}
+    return {index + 1, style, link, ""} if index + 1 >= value.bytesize
 
     next_char = value.byte_at(index + 1)
     if next_char == '['.ord
       next_index, new_style = parse_csi(value, index + 2, style)
-      return {next_index, new_style, link}
+      return {next_index, new_style, link, ""}
     end
     if next_char == ']'.ord
       next_index, new_link = parse_osc(value, index + 2, link)
-      return {next_index, style, new_link}
+      return {next_index, style, new_link, ""}
     end
-    {index + 1, style, link}
+    if next_char == '_'.ord || next_char == 'P'.ord || next_char == 'X'.ord || next_char == '^'.ord
+      next_index, terminated = string_sequence_end(value, index, false)
+      if terminated
+        sequence = value.byte_slice(index, next_index - index) || ""
+        return {next_index, style, link, sequence}
+      end
+      return {next_index, style, link, ""}
+    end
+    {index + 1, style, link, ""}
+  end
+
+  # Returns the index just past a string-type sequence and whether it ended with
+  # the two-byte ST. The one-byte C1 ST is deliberately not accepted: 0x9c is
+  # also a UTF-8 continuation byte, so an unterminated sequence that ran out
+  # mid-character can end in the same byte.
+  private def self.string_sequence_end(value : String, index : Int32, allow_bel : Bool) : {Int32, Bool}
+    i = index + 2
+    while i < value.bytesize
+      byte = value.byte_at(i)
+      return {i + 1, true} if allow_bel && byte == 0x07
+      if byte == 0x1b && i + 1 < value.bytesize && value.byte_at(i + 1) == '\\'.ord
+        return {i + 2, true}
+      end
+      i += 1
+    end
+    {value.bytesize, false}
   end
 
   private def self.parse_csi(value : String, start_index : Int32, style : Style) : {Int32, Style}
@@ -628,7 +728,9 @@ module Ultraviolet
   end
 
   private def self.read_link_string(data : String, link : Link) : Link
-    parts = data.split(';', remove_empty: false)
+    # OSC 8 is `8;params;URI`. Only the first two semicolons delimit; any
+    # semicolon after them belongs to the URI.
+    parts = data.split(';', 3, remove_empty: false)
     return link unless parts.size == 3
 
     params = parts[1]

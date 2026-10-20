@@ -103,6 +103,8 @@ module Ultraviolet
         buf << cell.string
       end
 
+      pending, pending_count = flush_pending(buf, pending, pending_count)
+
       if !link.empty?
         buf << link.end_sequence
       end
@@ -577,17 +579,35 @@ module Ultraviolet
     property touched : Array(LineData?)
 
     def initialize(width : Int32, height : Int32)
-      super(width, height)
       @touched = Array(LineData?).new(height, nil)
+      super
+    end
+
+    def resize(width : Int32, height : Int32) : Nil
+      current_width = self.width
+      current_height = self.height
+      super
+
+      if width > current_width
+        y = 0
+        limit = {current_height, height}.min
+        while y < limit
+          touch_line(current_width, y, width - current_width)
+          y += 1
+        end
+      end
+
+      y = current_height
+      while y < height
+        touch_line(0, y, width)
+        y += 1
+      end
     end
 
     def touch_line(x : Int32, y : Int32, n : Int32) : Nil
       return if y < 0 || y >= @lines.size
 
-      if y >= @touched.size
-        @touched += Array(LineData?).new(y - @touched.size + 1, nil)
-      end
-      return if y >= @touched.size
+      grow_touched
 
       current = @touched[y]
       if current.nil?
@@ -597,6 +617,19 @@ module Ultraviolet
         current.last_cell = {current.last_cell, x + n}.max
         @touched[y] = current
       end
+    end
+
+    # Restores the one-entry-per-row invariant after an application shortens or
+    # drops the touched list. Only ever grows: truncating would make a frame
+    # that collapsed look untouched and skip the erase of rows it gave up.
+    private def grow_touched : Nil
+      return if @touched.size >= @lines.size
+
+      touched = Array(LineData?).new(@lines.size, nil)
+      @touched.each_with_index do |line, index|
+        touched[index] = line
+      end
+      @touched = touched
     end
 
     def touch(x : Int32, y : Int32) : Nil

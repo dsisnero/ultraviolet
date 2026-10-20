@@ -59,7 +59,7 @@ buffer.go::method::Buffer.SetCell	method	ported	src/ultraviolet/buffer.cr		auto-
 buffer.go::method::Buffer.String	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::Buffer.Width	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::Line.At	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Line.Render	method	ported	src/ultraviolet/buffer.cr		auto-generated
+buffer.go::method::Line.Render	method	ported	src/ultraviolet/buffer.cr	preserves trailing empty cells as spaces; upstream 6b8d4ba
 buffer.go::method::Line.Set	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::Line.String	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::Lines.Height	method	ported	src/ultraviolet/buffer.cr		auto-generated
@@ -74,6 +74,7 @@ buffer.go::method::RenderBuffer.InsertCell	method	ported	src/ultraviolet/buffer.
 buffer.go::method::RenderBuffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::RenderBuffer.InsertLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::RenderBuffer.InsertLineArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
+buffer.go::method::RenderBuffer.Resize	method	ported	src/ultraviolet/buffer.cr	touches columns and rows created by resize; upstream 6b8d4ba
 buffer.go::method::RenderBuffer.SetCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::RenderBuffer.Touch	method	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::method::RenderBuffer.TouchedLines	method	ported	src/ultraviolet/buffer.cr		auto-generated
@@ -601,12 +602,12 @@ screen/screen.go::func::FillArea	func	ported	src/ultraviolet/screen.cr		auto-gen
 styled_test.go::test::TestStyledString	test	ported	spec/styled_spec.cr		auto-generated
 styled_test.go::test::TestStyledStringEmptyLines	test	ported	spec/styled_spec.cr		auto-generated
 styled.go::func::NewStyledString	func	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::func::ReadLink	func	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::func::ReadLink	func	ported	src/ultraviolet/styled.cr	preserves semicolons in the URI; upstream 6b8d4ba
 styled.go::func::ReadStyle	func	ported	src/ultraviolet/styled.cr		auto-generated
 styled.go::method::StyledString.Bounds	method	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::method::StyledString.Draw	method	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::method::StyledString.Draw	method	ported	src/ultraviolet/styled.cr	pass-through sequences, combining marks, wide clusters; upstream 6b8d4ba
 styled.go::method::StyledString.Height	method	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::method::StyledString.Lines	method	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::method::StyledString.Lines	method	ported	src/ultraviolet/styled.cr	unbounded content and pass-through handling; upstream 6b8d4ba
 styled.go::method::StyledString.String	method	ported	src/ultraviolet/styled.cr		auto-generated
 styled.go::method::StyledString.UnicodeWidth	method	ported	src/ultraviolet/styled.cr		auto-generated
 styled.go::method::StyledString.WcWidth	method	ported	src/ultraviolet/styled.cr		auto-generated

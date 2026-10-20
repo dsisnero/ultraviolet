@@ -383,3 +383,62 @@ describe Ultraviolet::Line do
     output.should contain("Link")
   end
 end
+
+describe Ultraviolet::Line do
+  it "preserves trailing empty cells as spaces" do
+    line = Ultraviolet::Line.new(10)
+    line.cells[0] = Ultraviolet::Cell.new("H", 1)
+    line.cells[1] = Ultraviolet::Cell.new("i", 1)
+
+    visible = Ansi.strip(line.render)
+    visible.size.should eq(10)
+  end
+
+  it "preserves styled trailing spaces" do
+    line = Ultraviolet::Line.new(5)
+    line.cells[0] = Ultraviolet::Cell.new("A", 1)
+    red = Ultraviolet::Style.new(bg: Ultraviolet::AnsiColor.basic(1))
+    1.upto(4) do |x|
+      line.cells[x] = Ultraviolet::Cell.new(" ", 1, red)
+    end
+
+    output = line.render
+    Ansi.strip(output).size.should eq(5)
+    output.should contain(red.diff(Ultraviolet::Style.new))
+  end
+
+  it "keeps buffered spaces before a wide cell tail" do
+    line = Ultraviolet::Line.new(6)
+    line.cells[0] = Ultraviolet::Cell.new("A", 1)
+    line.cells[4] = Ultraviolet::Cell.new("你", 2)
+    line.cells[5] = Ultraviolet::Cell.new
+
+    visible = Ansi.strip(line.render)
+    visible.should eq("A   你")
+    UnicodeCharWidth.width(visible).should eq(6)
+  end
+end
+
+describe Ultraviolet::RenderBuffer do
+  it "touches columns and rows created by resize" do
+    buffer = Ultraviolet::RenderBuffer.new(2, 2)
+    buffer.resize(4, 3)
+
+    buffer.touched_lines.should eq(3)
+    buffer.touched[0].try(&.first_cell).should eq(2)
+    buffer.touched[0].try(&.last_cell).should eq(4)
+    buffer.touched[2].try(&.first_cell).should eq(0)
+    buffer.touched[2].try(&.last_cell).should eq(4)
+  end
+
+  it "restores the touched invariant when the list was shortened" do
+    buffer = Ultraviolet::RenderBuffer.new(3, 3)
+    buffer.touched = [] of Ultraviolet::LineData?
+
+    buffer.touch_line(1, 2, 2)
+
+    buffer.touched.size.should eq(3)
+    buffer.touched[2].try(&.first_cell).should eq(1)
+    buffer.touched[2].try(&.last_cell).should eq(3)
+  end
+end

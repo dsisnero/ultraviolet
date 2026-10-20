@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the program status follow-ups from `6b8d4ba`
+**Crystal implementation tracks:** `7cc6674` plus the program status and styled/buffer follow-ups from `6b8d4ba`
 
 The vendored Go snapshot has been refreshed. Porting has started: the program
-status reset/restore follow-ups are complete. The remaining delta is still
-outstanding.
+status reset/restore and styled-string/buffer follow-ups are complete. The
+remaining delta is still outstanding.
 
 ```text
 67 commits
@@ -19,10 +19,11 @@ outstanding.
 
 - `vendor/ultraviolet/` is now at `6b8d4ba`.
 - The Crystal implementation and specs match the previous `7cc6674` behavior
-  plus the completed program status reset/restore follow-ups.
+  plus the completed program status and styled/buffer follow-ups.
 - Program Status Protocol (OSC 7501) support is fully ported, including
   reset/restore behavior.
-- Next step: section 2, styled strings and buffers.
+- Styled strings and buffers now include the `6b8d4ba` fixes.
+- Next step: section 3, the renderer damage and resize model.
 
 ## Porting checklist
 
@@ -49,16 +50,21 @@ Upstream files: `styled.go`, `styled_test.go`, `buffer.go`, `buffer_test.go`.
 Commits: `ae99b73`, `043ea8a`, `a5fed5c`, `7db69eb`, `6966a4f`, `d9e819d`,
 `d38ea0f`.
 
-- [ ] Carry terminated APC/DCS/SOS/PM sequences through cell content
+- [x] Carry terminated APC/DCS/SOS/PM sequences through cell content
   (`passThrough` / `terminated`)
-- [ ] Fold trailing combining marks into the last written cell
-- [ ] Re-decode ASCII followed by a combining sequence as one grapheme cluster
-- [ ] Render grapheme clusters wider than 4 columns
-- [ ] Allow `Lines` to parse unbounded content
-- [ ] Preserve semicolons in hyperlink URLs (`SplitN(..., 3)`)
-- [ ] Flush pending trailing content in `renderLine`
-- [ ] Add buffer tests for the new `RenderBuffer#resize`, `growTouched`, and
+- [x] Fold trailing combining marks into the last written cell
+- [x] Re-decode ASCII followed by a combining sequence as one grapheme cluster
+- [x] Render grapheme clusters wider than 4 columns
+- [x] Allow `Lines` to parse unbounded content
+- [x] Preserve semicolons in hyperlink URLs (`SplitN(..., 3)`)
+- [x] Flush pending trailing content in `renderLine`
+- [x] Add buffer tests for the new `RenderBuffer#resize`, `growTouched`, and
   touched-line invariants
+
+**Completed 2026-10-19.** The Crystal implementation now carries terminated
+string sequences, folds combining marks, keeps pass-through content out of cell
+width, preserves trailing spaces in `Line#render`, and restores the
+`RenderBuffer` touched-row invariant across resizes.
 
 ### 3. Renderer damage and resize model
 

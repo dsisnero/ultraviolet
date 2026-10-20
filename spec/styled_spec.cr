@@ -491,3 +491,131 @@ describe "StyledString" do
     end
   end
 end
+
+describe "StyledString vendor parity" do
+  it "carries APC sequences into the next cell" do
+    styled = Ultraviolet::StyledString.new("\e_foo\e\\bar")
+    area = styled.bounds
+    buffer = Ultraviolet::ScreenBuffer.new(area.dx, area.dy)
+    styled.draw(buffer, area)
+
+    area.dx.should eq(3)
+    buffer.cell_at(0, 0).try(&.content).should eq("\e_foo\e\\b")
+    buffer.cell_at(1, 0).try(&.content).should eq("a")
+    buffer.cell_at(2, 0).try(&.content).should eq("r")
+  end
+
+  it "folds a trailing APC sequence into the last cell" do
+    styled = Ultraviolet::StyledString.new("bar\e_foo\e\\")
+    area = styled.bounds
+    buffer = Ultraviolet::ScreenBuffer.new(area.dx, area.dy)
+    styled.draw(buffer, area)
+
+    area.dx.should eq(3)
+    buffer.cell_at(0, 0).try(&.content).should eq("b")
+    buffer.cell_at(1, 0).try(&.content).should eq("a")
+    buffer.cell_at(2, 0).try(&.content).should eq("r\e_foo\e\\")
+  end
+
+  it "does not carry cursor movement sequences" do
+    styled = Ultraviolet::StyledString.new("a\e[5Cb")
+    area = styled.bounds
+    buffer = Ultraviolet::ScreenBuffer.new(area.dx, area.dy)
+    styled.draw(buffer, area)
+
+    buffer.cell_at(0, 0).try(&.content).should eq("a")
+    buffer.cell_at(1, 0).try(&.content).should eq("b")
+  end
+
+  it "parses lines with unbounded content and links" do
+    destination = "https://example.com"
+    input = "\e[31mab\e[0m\n#{Ansi.set_hyperlink(destination)}界#{Ansi.reset_hyperlink}"
+    lines = Ultraviolet::StyledString.new(input).lines
+
+    Ultraviolet::Lines.new(lines).string.should eq("ab\n界")
+    cell = lines[1].cells[0]
+    cell.width.should eq(2)
+    cell.link.url.should eq(destination)
+  end
+
+  it "allows semicolons in hyperlink URLs" do
+    link = Ultraviolet.read_link_from_data("8;id=123;Other;Guide.md".to_slice, Ultraviolet::Link.new)
+
+    link.params.should eq("id=123")
+    link.url.should eq("Other;Guide.md")
+  end
+
+  it "folds combining marks into their base cells" do
+    cases = [
+      {"combining mark folds into its base", "a\u0301b", ["a\u0301", "b"]},
+      {"keycap stays in one cell", "1\ufe0f\u20e3x", ["1\ufe0f\u20e3", "x"]},
+      {"style change between cells", "a\u0301\e[31mR", ["a\u0301", "R"]},
+      {"style change between base and mark", "a\e[31m\u0301b", ["a\u0301", "b"]},
+    ]
+
+    cases.each do |name, input, expected|
+      buffer = Ultraviolet::ScreenBuffer.new(10, 1)
+      Ultraviolet::StyledString.new(input).draw(buffer, buffer.bounds)
+
+      expected.each_with_index do |content, x|
+        buffer.cell_at(x, 0).try(&.content).should eq(content), name
+      end
+    end
+  end
+
+  it "only carries terminated pass-through sequences" do
+    cases = [
+      {"APC ends with ST", "\e_x\e\\a", true},
+      {"DCS ends with ST", "\eP1$r0m\e\\a", true},
+      {"SOS ends with ST", "\eXfoo\e\\a", true},
+      {"PM ends with ST", "\e^bar\e\\a", true},
+      {"APC never terminated", "a\e_x", false},
+      {"OSC never terminated", "a\e]0;t", false},
+      {"DCS never terminated", "a\eP1$r0m", false},
+      {"APC cut off mid-character", "a\e_x\u071c", false},
+      {"OSC cut off mid-character", "a\e]0;\u071c", false},
+      {"APC ends with C1 ST", "\e_x\u009ca", false},
+      {"OSC ends with BEL", "\e]0;t\a", false},
+      {"OSC ends with ST", "\e]0;t\e\\a", false},
+    ]
+
+    cases.each do |name, input, carried|
+      styled = Ultraviolet::StyledString.new(input)
+      area = styled.bounds
+      buffer = Ultraviolet::ScreenBuffer.new(area.dx, area.dy)
+      styled.draw(buffer, area)
+
+      content = String.build do |io|
+        (0...buffer.width).each do |x|
+          if cell = buffer.cell_at(x, 0)
+            io << cell.content
+          end
+        end
+      end
+
+      content.includes?('\e').should eq(carried), name
+    end
+  end
+
+  it "keeps pass-through sequences out of cell width" do
+    styled = Ultraviolet::StyledString.new("\e_x\e\\abc")
+    area = styled.bounds
+    buffer = Ultraviolet::ScreenBuffer.new(area.dx, area.dy)
+    styled.draw(buffer, area)
+
+    buffer.cell_at(0, 0).try(&.width).should eq(1)
+  end
+
+  it "renders clusters wider than four columns" do
+    wc_width = ->(value : String) do
+      value.each_char.sum { |char| UnicodeCharWidth.width(char.to_s) }
+    end
+    buffer = Ultraviolet::ScreenBuffer.new(20, 1, wc_width)
+    Ultraviolet::StyledString.new("👨‍👩‍👧‍👦").draw(buffer, buffer.bounds)
+
+    buffer.cell_at(0, 0).try(&.width).should eq(8)
+    1.upto(7) do |x|
+      buffer.cell_at(x, 0).try(&.zero?).should be_true
+    end
+  end
+end
