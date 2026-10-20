@@ -103,6 +103,20 @@ module Ultraviolet
       end
     end
 
+    # Returns the current cell and pixel size of the terminal window.
+    # ameba:disable Naming/AccessorMethodName
+    def get_window_size : {Size, Size}
+      window_size
+    end
+
+    # Returns the current cell size of the terminal window.
+    # ameba:disable Naming/AccessorMethodName
+    def get_size : {Int32, Int32}
+      size
+    end
+
+    # ameba:enable Naming/AccessorMethodName
+
     private def terminal?(tty : IO::FileDescriptor?) : Bool
       {% if flag?(:win32) %}
         return false unless tty

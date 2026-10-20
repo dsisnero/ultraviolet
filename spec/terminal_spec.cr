@@ -60,3 +60,24 @@ describe "Terminal stop" do
     3.times { term.stop }
   end
 end
+
+private class TestSizeNotifier < Ultraviolet::SizeNotifier
+  def initialize(@cells : Ultraviolet::Size, @pixels : Ultraviolet::Size)
+    super(nil)
+  end
+
+  def window_size : {Ultraviolet::Size, Ultraviolet::Size}
+    {@cells, @pixels}
+  end
+end
+
+describe "SizeNotifier compatibility" do
+  it "exposes GetWindowSize and GetSize" do
+    cells = Ultraviolet::Size.new(80, 24)
+    pixels = Ultraviolet::Size.new(800, 480)
+    notifier = TestSizeNotifier.new(cells, pixels)
+
+    notifier.get_window_size.should eq({cells, pixels})
+    notifier.get_size.should eq({80, 24})
+  end
+end

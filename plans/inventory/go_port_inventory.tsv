@@ -816,8 +816,8 @@ uv.go::type::ProgressBarState	type	ported	src/ultraviolet/uv_api.cr		auto-genera
 uv.go::type::Screen	type	ported	src/ultraviolet/uv_api.cr		auto-generated
 uv.go::type::WidthMethod	type	ported	src/ultraviolet/uv_api.cr		auto-generated
 winch.go::func::NewSizeNotifier	func	ported	src/ultraviolet/winch.cr		auto-generated
-winch.go::method::SizeNotifier.GetSize	method	ported	src/ultraviolet/winch.cr		auto-generated
-winch.go::method::SizeNotifier.GetWindowSize	method	ported	src/ultraviolet/winch.cr		auto-generated
+winch.go::method::SizeNotifier.GetSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for size; upstream 6b8d4ba
+winch.go::method::SizeNotifier.GetWindowSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for cell and pixel size; upstream 6b8d4ba
 winch.go::method::SizeNotifier.Start	method	ported	src/ultraviolet/winch.cr		auto-generated
 winch.go::method::SizeNotifier.Stop	method	ported	src/ultraviolet/winch.cr		auto-generated
 winch.go::struct::SizeNotifier	struct	ported	src/ultraviolet/winch.cr		auto-generated

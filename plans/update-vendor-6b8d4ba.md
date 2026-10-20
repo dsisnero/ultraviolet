@@ -156,7 +156,15 @@ reference when porting section 3.
 `MouseEncoding::SGRPixel` coordinates using the terminal's reported pixel and
 cell dimensions.
 
-### 8. Dependency and platform notes
+### 8. SizeNotifier compatibility
+
+- [x] Expose `get_window_size` and `get_size`
+- [x] Cover the cell and pixel results without requiring a real TTY
+
+**Completed 2026-10-19.** The Go-compatible method names now delegate to the
+existing `window_size` and `size` implementations.
+
+### 9. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.

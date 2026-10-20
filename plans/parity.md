@@ -16,11 +16,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
     renderer damage/resize model, terminal input-loop fixes, width handling,
-    idempotent `Terminal#stop`, and mouse pixel-to-cell conversion.
+    idempotent `Terminal#stop`, mouse pixel-to-cell conversion, and
+    `SizeNotifier` compatibility accessors.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last commit:** `94f85f4` (`port: make terminal stop idempotent`).
-- **Gates:** `make lint` and `make test` pass (`383` examples).
+- **Last commit:** `cc5ca2d` (`port: add mouse pixel-to-cell conversion`).
+- **Gates:** `make lint` and `make test` pass (`384` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and
@@ -42,7 +43,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 383 Crystal specs |
+| **Test coverage** | 122 Go tests | 384 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -56,6 +57,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | SizeNotifier `GetWindowSize` / `GetSize` compatibility |
 | 2026-10-19 | +2 specs | Mouse pixel-to-cell conversion and wide-cell reanchor coverage |
 | 2026-10-19 | +2 specs | Terminal stop: safe before start and idempotent |
 | 2026-10-19 | +3 specs | Width handling: WcWidth/GraphemeWidth cell layout, placeholder columns, ZWJ/flag/skin-tone/family clusters, Cell.new_cell |
@@ -202,6 +204,15 @@ reported cell and pixel dimensions. Also added the wide-cell reanchor regression
 
 **Files changed:** `src/ultraviolet/mouse.cr`
 **Specs:** `spec/mouse_spec.cr`, `spec/terminal_renderer_resize_spec.cr`
+
+### F14. SizeNotifier compatibility accessors ✅
+
+Ported the exported `GetWindowSize` and `GetSize` names as `get_window_size` and
+`get_size`, delegating to the existing cell/pixel size implementation. Covered
+with a stub notifier so the spec does not require a real TTY.
+
+**Files changed:** `src/ultraviolet/winch.cr`
+**Specs:** `spec/terminal_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 
