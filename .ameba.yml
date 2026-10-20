@@ -7,7 +7,6 @@
 
 Version: "1.7.0-dev"
 
-
 Excluded:
   - spec/**/*.cr
   - lib/**/*
@@ -27,16 +26,39 @@ Lint/NotNil:
   Excluded:
     - spec/**/*.cr
 
-# Metrics/CyclomaticComplexity:
-# Excluded:
-# - src/ultraviolet/border.cr
-
+# Public API names are kept compatible with the Go source of truth.
 Naming/AccessorMethodName:
   Excluded:
     - src/ultraviolet/screen_context.cr
     - src/ultraviolet/terminal_screen.cr
+    - src/ultraviolet/terminal.cr
+    - src/ultraviolet/terminal_renderer.cr
+
+Naming/QueryBoolMethods:
+  Excluded:
+    - src/ultraviolet/options.cr
+
+Naming/PredicateName:
+  Excluded:
+    - src/ultraviolet/casso.cr
+
+Naming/BlockParameterName:
+  Excluded:
+    - src/ultraviolet/casso.cr
+    - src/ultraviolet/layout.cr
+
+Style/RedundantBegin:
+  Excluded:
+    - src/ultraviolet/terminal_reader.cr
+
+Lint/UselessAssign:
+  Excluded:
+    - src/ultraviolet/decoder.cr
+    - src/ultraviolet/terminal_renderer.cr
+    - src/ultraviolet/terminal_renderer_hashmap.cr
 
 Metrics/CyclomaticComplexity:
   Excluded:
+    - src/ultraviolet/cancelreader.cr
     - src/ultraviolet/screen_context.cr
     - src/ultraviolet/terminal_screen.cr

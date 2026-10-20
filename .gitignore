@@ -14,6 +14,8 @@
 !/bin/check_go_source_parity.sh
 /.shards/
 .crystal-cache/
+temp/
+log/
 *.dwarf
 
 # Libraries don't need dependency lock

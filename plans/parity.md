@@ -2,7 +2,22 @@
 
 Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go source is vendored at `vendor/ultraviolet/` (commit `7cc6674`).
 
-> **Synced to:** `7cc6674` (HEAD of upstream main)
+## Where we are
+
+- **Current focus:** baseline is green after Program Status Protocol (OSC 7501)
+  support; the next planned work is a deliberate vendor refresh.
+- **Next up:**
+  1. Refresh `vendor/ultraviolet/` from `7cc6674` to upstream `6b8d4ba` and
+     port the remaining upstream changes.
+  2. Regenerate the parity inventories and reconcile any newly missing symbols.
+  3. Continue the upstream-limited renderer TODOs listed below.
+- **Chunk status:** core types, buffer, screen, renderer, reader/decoder, layout,
+  console/TTY, poll, winch, and encode helpers are ported. Remaining gaps are
+  upstream-limited TODOs and vendor-refresh work.
+- **Last commit:** `7661bb4` (`refactor: use ansi shard program status implementation`).
+- **Gates:** `make lint` and `make test` pass (`339` examples).
+
+> **Synced to:** `7cc6674` (vendored snapshot)
 
 ## Status Overview
 
@@ -20,19 +35,21 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 257 Crystal specs |
+| **Test coverage** | 122 Go tests | 339 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
 \* Crystal merges Terminal + Screen into one class; Go keeps them separate.
 
-Crystal also has TerminalReader logic inline rather than extracted into an `eventScanner` struct.
-Both are architectural divergences with no behavioral impact.
+Crystal extracts `EventScanner` from `TerminalReader`, matching Go's
+`eventScanner`. Merging Terminal and Screen is an architectural divergence with
+no behavioral impact.
 
 ## Recent Porting Progress
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +8 specs | Program Status Protocol (OSC 7501): encoding, support event, screen accessors |
 | 2025-05-26 | +42 specs | terminal_screen reset/restore (5), X10 mouse (8), SGR mouse (9), helpers (3), scan_events (3), grapheme buf (2), TerminalReader stream (14) |
 | Manifest | Updated | Source parity (703/704), Port inventory (825/826), Options struct (F1), EventScanner extraction (F2) |
 
@@ -64,6 +81,7 @@ Crystal's `restore` was calling setter methods (`enter_alt_screen`, `set_keyboar
 ### F4. `rgbToHSL` / `isDarkColor` color helpers ✅
 
 Already present in Crystal at `src/ultraviolet/event.cr`:
+
 - `Ultraviolet.rgb_to_hsl(r, g, b)` → matches Go's `rgbToHSL`
 - `Ultraviolet.dark_color?(color)` → matches Go's `isDarkColor`
 - `ForegroundColorEvent#dark?`, `BackgroundColorEvent#dark?`, `CursorColorEvent#dark?` all delegate to `Ultraviolet.dark_color?`
@@ -90,6 +108,20 @@ Go commit `7b43eda` removed the `maxCellWidth` traversal limit for wide cells.
 Crystal's `clear_wide_left` never had a limit — it uses `while x - j >= 0`.
 
 No changes needed.
+
+### F7. Program Status Protocol (OSC 7501) ✅
+
+Added typed program status support: `Ansi::ProgramStatus` encoding from the
+`ansi` shard, `Ultraviolet::ProgramStatusSupportEvent` for `OSC 7501;?` replies,
+and `TerminalScreen#set_program_status` / `#program_status`.
+
+**Files changed:** `src/ultraviolet/program_status.cr`,
+`src/ultraviolet/decoder.cr`, `src/ultraviolet/event.cr`,
+`src/ultraviolet/terminal_screen.cr`
+**Specs:** `spec/program_status_spec.cr` (8 examples)
+**Divergence:** none. Upstream `6b8d4ba` provides the types through
+`charmbracelet/x/ansi`; the Crystal port uses the `ansi` shard for the same
+types.
 
 ## Remaining Work (Upstream-Limited)
 
@@ -135,7 +167,7 @@ State (lookup, logger) is synchronized between TerminalReader and scanner.
 
 ## Test Parity Status
 
-All 18 Go test files covered by Crystal specs (257 total):
+All 18 Go test files covered by Crystal specs (339 total):
 
 | Go Test File (Go tests) | Crystal Spec Status |
 |---|---|

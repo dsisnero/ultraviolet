@@ -440,13 +440,13 @@ module Ultraviolet
       private def cache_key(area : Rectangle) : CacheKey
         types = @constraints.map { |c|
           case c
-          when Min   then "min:#{c.value}"
-          when Max   then "max:#{c.value}"
-          when Len   then "len:#{c.value}"
+          when Min     then "min:#{c.value}"
+          when Max     then "max:#{c.value}"
+          when Len     then "len:#{c.value}"
           when Percent then "pct:#{c.value}"
           when Ratio   then "rat:#{c.num}:#{c.den}"
-          when Fill   then "fill:#{c.value}"
-          else             c.class.name
+          when Fill    then "fill:#{c.value}"
+          else              c.class.name
           end
         }.join(",")
         CacheKey.new(area, @direction, types, @padding, @spacing, @flex)

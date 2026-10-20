@@ -1,67 +1,102 @@
-# Agent Instructions
+# Ultraviolet
 
-This is a port of golang ultraviolet available at `./vendor/ultraviolet`. The golang code is the source of truth for functionality both for tests and src. If you have any implementation questions, look to golang code.
+> **How to resume:** read `plans/parity.md` first and use its **Where we are**
+> block (current focus + ordered "Next up"), then run `make lint` and
+> `make test`. Details: [docs/resuming.md](docs/resuming.md). Do not re-derive
+> state from git.
 
-## Documentation
+Crystal port of Charm's ultraviolet (Go) from
+[charmbracelet/ultraviolet](https://github.com/charmbracelet/ultraviolet),
+vendored at `vendor/ultraviolet/` (commit `7cc6674`).
 
-- [README.md](README.md) — project overview, features, module map
-- [plans/parity.md](plans/parity.md) — feature status, remaining work
-- [docs/TUTORIAL.md](docs/TUTORIAL.md) — building a terminal app
-- [docs/API_REFERENCE.md](docs/API_REFERENCE.md) — Go-to-Crystal type mapping
-- [examples/](examples/) — runnable Crystal examples
-
-## Issue Tracking
-
-This project uses **bd (beads)** for issue tracking.
-Run `bd prime` for workflow context, or install hooks (`bd hooks install`) for auto-injection.
-
-**Quick reference:**
-- `bd ready` - Find unblocked work
-- `bd create "Title" --type task --priority 2` - Create issue
-- `bd close <id>` - Complete work
-- `bd sync` - Sync with git (run at session end)
-
-For full workflow details: `bd prime`
-
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
-
-## Quick Reference
+## Commands
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
+make install   # shards install
+make update    # shards update
+make format    # crystal tool format src spec
+make lint      # ameba src spec
+make test      # crystal spec
+make clean     # remove temp/, .crystal-cache/, examples, and build artifacts
 ```
 
-## Landing the Plane (Session Completion)
+Run gates on project code only: never format or lint `lib/`, `vendor/`, or
+generated example binaries.
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+## Docs
 
-**MANDATORY WORKFLOW:**
+- [Resuming work](docs/resuming.md)
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
+- [Coding Guidelines](docs/coding-guidelines.md)
+- [Testing](docs/testing.md)
+- [PR Workflow](docs/pr-workflow.md)
+- [Porting map](PORTING.md)
+- [Parity plan](plans/parity.md)
+- [Tutorial](docs/TUTORIAL.md)
+- [API reference](docs/API_REFERENCE.md)
+- [Examples](examples/)
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-   - Safe commands on our code only (no git submodules, no `lib/`):
-     - `crystal tool format src spec bin`
-     - `ameba --fix src spec bin`
-     - `ameba src spec bin` (gating)
-     - `rumdl fmt src spec bin`
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+## Principles
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+1. Upstream behavior is the source of truth; `vendor/ultraviolet/` wins over
+   local preference.
+2. Port behavior, not style.
+3. Port upstream tests early and never weaken assertions.
+4. Track parity in `plans/parity.md` and `plans/inventory/`.
+5. Commit one completed feature at a time.
+
+## Session continuity (read this first)
+
+`plans/parity.md` is the single source of truth for where we are. At the start
+of every session:
+
+1. Read `plans/parity.md` and use its **Where we are** block to find the current
+   focus, the ordered "Next up" list, and per-area chunk status. Do not
+   re-derive state from git history.
+2. Skim `git log --oneline -10` and `git status` to confirm the working tree.
+3. Run `make lint` and `make test` before changes to confirm a clean baseline.
+
+See [docs/resuming.md](docs/resuming.md) for the full resume checklist.
+
+### Keeping `plans/parity.md` resumable
+
+- `plans/parity.md` starts with a **Where we are** block (`Current focus`,
+  `Next up`, chunk status by area). Keep it accurate after every feature.
+- Work items are feature-sized (roughly one branch/commit). Per-symbol state
+  lives in `plans/inventory/go_port_inventory.tsv`, not in the plan.
+- If `plans/parity.md` grows too large, split it into `plans/<area>.md` files,
+  link each from `plans/parity.md`, and mark each split file
+  complete/in-progress plus the file being worked on next.
+
+### Definition of done for every feature (required)
+
+A feature is complete only when all of the following are true, and all of it
+must be committed as **one** atomic commit before starting the next feature:
+
+1. the API surface is implemented;
+2. upstream tests (or equivalent characterization specs) exist and pass;
+3. gates pass: `make lint` and `make test`;
+4. parity inventory rows for the feature are updated
+   (`plans/inventory/go_port_inventory.tsv`);
+5. `plans/parity.md` status is updated and the **Where we are** block refreshed
+   (current focus + next up);
+6. any intentional divergence is documented (in `plans/parity.md` and/or the
+   commit message).
+
+### Commit message
+
+Start with `port:` and a one-line feature name, then bullets for what changed,
+then the upstream revision (`charmbracelet/ultraviolet 7cc6674`). Include
+new/changed files, divergences, and the gate results so a new session can
+resume from the commit alone.
+
+### Session completion
+
+Work is not complete until the commit is pushed:
+
+```bash
+git pull --rebase
+git push
+git status  # must report up to date with origin
+```

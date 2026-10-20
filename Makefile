@@ -1,4 +1,4 @@
-.PHONY: build install spec spec-all spec-provider spec-provider-record spec-interactive clean format docs build-examples check-go-test-parity check-go-source-parity
+.PHONY: build install update spec test test-file lint format format-check docs build-examples check-go-test-parity check-go-source-parity clean benchmark run-example help
 
 # Crystal cache for faster builds
 export CRYSTAL_CACHE_DIR := $(PWD)/.crystal-cache
@@ -12,14 +12,22 @@ build:
 	shards build
 
 install:
-	BEADS_DIR=$$(pwd)/.beads shards install
+	shards install
 
 update:
-	BEADS_DIR=$$(pwd)/.beads shards update
+	shards update
 
 # Run all tests (excluding interactive)
-spec:
+spec test:
 	crystal spec
+
+# Run one spec file: make test-file FILE=spec/decoder_spec.cr
+test-file:
+	crystal spec $(FILE)
+
+# Lint project Crystal sources
+lint:
+	ameba src spec
 
 check-go-test-parity:
 	./bin/check_go_test_parity.sh
@@ -28,9 +36,13 @@ check-go-source-parity:
 	./bin/check_go_source_parity.sh
 
 
-# Format all Crystal files
+# Format project Crystal files
 format:
-	crystal tool format
+	crystal tool format src spec
+
+# Check formatting without changing files
+format-check:
+	crystal tool format --check src spec
 
 # Generate documentation
 docs:
@@ -45,6 +57,7 @@ examples/%: examples/%.cr
 
 # Clean temporary files, logs, and build artifacts
 clean:
+	mkdir -p temp
 	rm -rf temp/*
 	rm -rf log/*
 	rm -rf .crystal-cache
@@ -68,15 +81,17 @@ run-example:
 
 # Help
 help:
-	@echo "Term2 - Crystal Terminal Library"
+	@echo "Ultraviolet - Crystal terminal UI library"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  build              - Build the library"
 	@echo "  build-examples     - Build all examples (output in examples/)"
 	@echo "  install            - Install dependencies"
-	@echo "  spec               - Run tests (excluding interactive)"
-	@echo "  spec-interactive   - Run interactive tests"
-	@echo "  format             - Format Crystal files"
+	@echo "  test/spec          - Run tests (excluding interactive)"
+	@echo "  test-file          - Run one spec file (FILE=spec/foo_spec.cr)"
+	@echo "  lint               - Run Ameba on src and spec"
+	@echo "  format             - Format project Crystal files"
+	@echo "  format-check       - Check formatting without changing files"
 	@echo "  docs               - Generate documentation"
 	@echo "  clean              - Clean temp/, log/, cache, and built examples"
 	@echo "  benchmark          - Run performance benchmarks"
