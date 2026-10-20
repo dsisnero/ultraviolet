@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and width follow-ups from `6b8d4ba`
+**Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba` follow-ups
 
-The vendored Go snapshot has been refreshed. The program status reset/restore,
-styled-string/buffer, renderer damage/resize, terminal input-loop, and width
-follow-ups are complete. Only the optional conformance harness remains.
+The vendored Go snapshot has been refreshed. All runtime and API follow-ups
+through sections 1-9 are complete. Remaining work is inventory regeneration and
+the optional conformance-harness assessment.
 
 ```text
 67 commits
@@ -19,16 +19,17 @@ follow-ups are complete. Only the optional conformance harness remains.
 
 - `vendor/ultraviolet/` is now at `6b8d4ba`.
 - The Crystal implementation and specs match the previous `7cc6674` behavior
-  plus the completed program status, styled/buffer, renderer, and input-loop
-  follow-ups.
+  plus every completed `6b8d4ba` follow-up.
 - Program Status Protocol (OSC 7501) support is fully ported, including
   reset/restore behavior.
-- Styled strings and buffers now include the `6b8d4ba` fixes.
-- The renderer now uses the damage/resize model from `6b8d4ba`.
-- The reader now copies each read before handing it to the event loop.
-- Width handling now covers clusters wider than four columns.
-- Next step: regenerate the parity inventories and assess the optional
-  conformance harness.
+- Styled strings and buffers include the `6b8d4ba` fixes.
+- The renderer uses the damage/resize model from `6b8d4ba`.
+- The reader copies each read before handing it to the event loop.
+- Width handling covers clusters wider than four columns.
+- Terminal stop, mouse pixel conversion, `SizeNotifier` accessors, and winch
+  signal helpers are ported.
+- **Next up:** regenerate the parity inventories and test manifests, then assess
+  the optional conformance harness.
 
 ## Porting checklist
 
@@ -185,9 +186,10 @@ uses a stop channel instead.
 
 ## Already-covered delta
 
-The OSC 7501 types, encoder, decoder event, and screen accessors from
-`6b8d4ba` are already implemented in Crystal. Do not re-port them; only the
-reset/restore follow-ups remain.
+The OSC 7501 types, encoder, decoder event, screen accessors, reset/restore
+behavior, styled/buffer fixes, renderer damage model, input-loop fixes, width
+handling, and the audited API follow-ups from `6b8d4ba` are implemented in
+Crystal. Do not re-port them.
 
 ## Verification after each chunk
 
@@ -198,5 +200,5 @@ make test
 ```
 
 Update this file and the **Where we are** block in `plans/parity.md` as each
-chunk lands. Regenerate the inventory manifests after the API-affecting
-chunks (2, 3, and 4).
+chunk lands. The next milestone is regenerating the inventory manifests and
+recording the conformance-harness decision.

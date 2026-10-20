@@ -6,11 +6,13 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
   — use its checklist as the working order.
-- **Current focus:** the `7cc6674` → `6b8d4ba` vendor delta is ported. Next is
-  inventory cleanup and the optional conformance harness.
+- **Current focus:** the `7cc6674` → `6b8d4ba` vendor delta and its audited
+  follow-ups are ported. Next is inventory cleanup and the optional conformance
+  assessment.
 - **Next up:**
-  1. Regenerate the parity inventories against the refreshed vendor tree.
-  2. Assess and port the optional conformance harness where it adds coverage.
+  1. Regenerate the parity inventories and test manifests against `6b8d4ba`.
+  2. Assess the optional Go conformance harness; port it only if it adds
+     coverage the Crystal renderer specs cannot express.
   3. Resume upstream tracking when the next vendor snapshot is available.
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
@@ -20,12 +22,11 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     `SizeNotifier` compatibility accessors, and winch signal helpers.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last commit:** `c8b0dc2` (`port: add NotifyWinch signal forwarding`).
+- **Last feature commit:** `21e8aa8` (`port: add NotifyWinchContext analogue`).
 - **Gates:** `make lint` and `make test` pass (`386` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and
-> width follow-ups)
+> `7cc6674` plus the completed `6b8d4ba` follow-ups)
 
 ## Status Overview
 
