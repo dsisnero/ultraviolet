@@ -16,12 +16,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
     renderer damage/resize model, terminal input-loop fixes, width handling,
-    idempotent `Terminal#stop`, mouse pixel-to-cell conversion, and
-    `SizeNotifier` compatibility accessors.
+    idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
+    `SizeNotifier` compatibility accessors, and `NotifyWinch`.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last commit:** `cc5ca2d` (`port: add mouse pixel-to-cell conversion`).
-- **Gates:** `make lint` and `make test` pass (`384` examples).
+- **Last commit:** `ffd2c8a` (`docs: mark OSC 7501 tracking issue complete`).
+- **Gates:** `make lint` and `make test` pass (`385` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and
@@ -43,7 +43,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 384 Crystal specs |
+| **Test coverage** | 122 Go tests | 385 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -57,6 +57,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | NotifyWinch SIGWINCH forwarding |
 | 2026-10-19 | +1 spec | SizeNotifier `GetWindowSize` / `GetSize` compatibility |
 | 2026-10-19 | +2 specs | Mouse pixel-to-cell conversion and wide-cell reanchor coverage |
 | 2026-10-19 | +2 specs | Terminal stop: safe before start and idempotent |
@@ -214,6 +215,18 @@ with a stub notifier so the spec does not require a real TTY.
 
 **Files changed:** `src/ultraviolet/winch.cr`
 **Specs:** `spec/terminal_spec.cr`
+
+### F15. NotifyWinch signal forwarding ✅
+
+Ported the exported `NotifyWinch` helper as
+`Ultraviolet.notify_winch(channel : Channel(Nil))`, using `Signal::WINCH.trap`
+to forward resize signals to a buffered channel.
+
+Go's `NotifyWinchContext` is represented by `notify_winch` plus a stop channel;
+Crystal has no `context.Context` equivalent.
+
+**Files changed:** `src/ultraviolet/tty.cr`
+**Specs:** `spec/tty_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

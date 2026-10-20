@@ -33,3 +33,27 @@ module Ultraviolet
     end
   {% end %}
 end
+
+module Ultraviolet
+  {% if flag?(:win32) %}
+    # Notifies the channel when the terminal window size changes.
+    #
+    # SIGWINCH is not available on Windows; this raises
+    # [ErrPlatformNotSupported].
+    def self.notify_winch(channel : Channel(Nil)) : Nil
+      raise ErrPlatformNotSupported
+    end
+  {% else %}
+    # Notifies the channel when the terminal receives SIGWINCH.
+    #
+    # Use a buffered channel, as the signal handler must not block.
+    def self.notify_winch(channel : Channel(Nil)) : Nil
+      Signal::WINCH.trap do
+        begin
+          channel.send(nil)
+        rescue Channel::ClosedError
+        end
+      end
+    end
+  {% end %}
+end
