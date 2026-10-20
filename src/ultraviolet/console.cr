@@ -52,6 +52,16 @@ module Ultraviolet
       new_console(in_tty, out_tty, ENV.map { |k, v| "#{k}=#{v}" })
     end
 
+    # Go-compatible name for [default].
+    def self.default_console : Console
+      default
+    end
+
+    # Go-compatible name for [controlling].
+    def self.controlling_console : Console
+      controlling
+    end
+
     def self.new_console(input : IO? = nil, output : IO? = nil, environ : Array(String)? = nil) : Console
       in_io = input || STDIN
       out_io = output || STDOUT

@@ -185,7 +185,15 @@ uses a stop channel instead.
 rechecks the cancel flag, so a blocking read is interrupted without blocking the
 scheduler. The select fd-set helpers also use the platform word size.
 
-### 11. Dependency and platform notes
+### 11. Console compatibility aliases
+
+- [x] Expose `default_console` and `controlling_console`
+- [x] Cover the default alias with a spec
+
+**Completed 2026-10-19.** The Go-compatible names delegate to the existing
+`Console.default` and `Console.controlling` constructors.
+
+### 12. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.

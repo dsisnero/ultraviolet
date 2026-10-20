@@ -19,12 +19,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
     renderer damage/resize model, terminal input-loop fixes, width handling,
     idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
-    `SizeNotifier` compatibility accessors, winch signal helpers, and
-    cancelable select reads.
+    `SizeNotifier` compatibility accessors, winch signal helpers, cancelable
+    select reads, and Console compatibility aliases.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last feature commit:** `21e8aa8` (`port: add NotifyWinchContext analogue`).
-- **Gates:** `make lint` and `make test` pass (`386` examples).
+- **Last feature commit:** `b357f5d` (`port: make select reader reads cancelable`).
+- **Gates:** `make lint` and `make test` pass (`387` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the completed `6b8d4ba` follow-ups)
@@ -45,7 +45,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 386 Crystal specs |
+| **Test coverage** | 122 Go tests | 387 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -59,6 +59,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | Console `DefaultConsole` / `ControllingConsole` aliases |
 | 2026-10-19 | No net new | Poll cancellation spec strengthened to block before cancel |
 | 2026-10-19 | +1 spec | NotifyWinchContext stop-channel analogue |
 | 2026-10-19 | +1 spec | NotifyWinch SIGWINCH forwarding |
@@ -240,6 +241,15 @@ platform word size.
 
 **Files changed:** `src/ultraviolet/poll.cr`
 **Specs:** `spec/poll_spec.cr`
+
+### F17. Console compatibility aliases ✅
+
+Added Go-compatible `Console.default_console` and `Console.controlling_console`
+names, delegating to the existing constructors. Covered the default alias with
+a spec.
+
+**Files changed:** `src/ultraviolet/console.cr`
+**Specs:** `spec/console_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

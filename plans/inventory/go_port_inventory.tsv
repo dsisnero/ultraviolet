@@ -141,8 +141,8 @@ cell.go::struct::Link	struct	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::struct::Style	struct	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::type::Underline	type	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::type::UnderlineStyle	type	ported	src/ultraviolet/cell.cr		auto-generated
-console.go::func::ControllingConsole	func	ported	src/ultraviolet/console.cr		auto-generated
-console.go::func::DefaultConsole	func	ported	src/ultraviolet/console.cr		auto-generated
+console.go::func::ControllingConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.controlling; upstream 6b8d4ba
+console.go::func::DefaultConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.default; upstream 6b8d4ba
 console.go::func::NewConsole	func	ported	src/ultraviolet/console.cr		auto-generated
 console.go::method::console.Close	method	ported	src/ultraviolet/console.cr		auto-generated
 console.go::method::console.Environ	method	ported	src/ultraviolet/console.cr		auto-generated

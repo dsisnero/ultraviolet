@@ -79,3 +79,9 @@ describe Ultraviolet::Console do
     end
   {% end %}
 end
+
+describe "Console compatibility" do
+  it "exposes DefaultConsole" do
+    Ultraviolet::Console.default_console.should be_a(Ultraviolet::Console)
+  end
+end
