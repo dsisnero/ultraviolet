@@ -155,6 +155,7 @@ Platform-optimized poll readers in [`poll.cr`](src/ultraviolet/poll.cr):
 - [PR Workflow](docs/pr-workflow.md) — branch, gates, and review checklist
 - [Parity Plan](plans/parity.md) — feature status, resume point, and remaining work
 - [Vendor Update 6b8d4ba](plans/update-vendor-6b8d4ba.md) — porting checklist for the latest upstream delta
+- [Conformance Assessment](plans/conformance-assessment.md) — decision on the optional Go conformance harness
 - [Tutorial](docs/TUTORIAL.md) — building a terminal application with Ultraviolet
 - [API Reference](docs/API_REFERENCE.md) — Go-to-Crystal type mapping
 - [Porting Map](PORTING.md) — source-to-source checklist

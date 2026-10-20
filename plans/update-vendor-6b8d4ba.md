@@ -6,8 +6,8 @@
 **Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba`
 follow-ups
 
-The vendored Go snapshot has been refreshed. Phases 1–8 are complete. Phase 9
-evaluates the optional Go conformance harness.
+The vendored Go snapshot has been refreshed. Phases 1–9 are complete. Phase 10
+is the next vendor refresh, deferred until upstream advances past `6b8d4ba`.
 
 ```text
 67 commits
@@ -94,12 +94,15 @@ into one-off work items here.
 - **Evidence:** `check_source_parity` (819 items), `check_test_parity`
   (196 tests), and `check_port_inventory` (1015 items) pass.
 
-### Phase 9 — Conformance harness assessment (next)
+### Phase 9 — Conformance harness assessment ✅
 
-Decide whether the Go `internal/conformance` harness adds coverage the Crystal
-renderer specs cannot express. Port only the portable corpus/operation layer if
-it does; record a divergence for the Go-only emulator oracle. The inventory
-already classifies the current conformance rows as intentional divergences.
+Assessed and intentionally not ported. The harness's value comes from
+differential comparison against a Go/cgo terminal-emulator oracle; porting only
+the decoder/operation layer would add maintenance without screen-level
+assertions. Crystal already covers the portable cases with 394 specs and the
+inventory has zero missing runtime rows.
+
+**Decision record:** [`plans/conformance-assessment.md`](conformance-assessment.md)
 
 ### Phase 10 — Next vendor refresh (deferred)
 

@@ -7,14 +7,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 ## Where we are
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md).
-- **Current focus:** Phase 9, assessing the optional Go conformance harness. The
-  vendor delta, feature follow-ups, and inventory triage are complete.
+- **Current focus:** no active porting feature. The `6b8d4ba` delta, feature
+  follow-ups, inventory triage, and conformance assessment are complete.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 9 — Conformance harness assessment:** decide whether the Go
-     conformance harness adds coverage Crystal specs cannot express.
-  2. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
+  1. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
      upstream moves past `6b8d4ba`.
-- **Chunk status:** phases 1–8 complete; phase 9 next; phase 10 deferred.
+- **Chunk status:** phases 1–9 complete; phase 10 deferred until upstream
+  advances. The conformance harness is intentionally not ported; see
+  [the assessment](conformance-assessment.md).
 - **Last code feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
 - **Gates:** `make lint` and `make test` pass (`394` examples).
 
@@ -36,8 +36,8 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 6 | API surface compatibility: mouse, sizes, winch, aliases | ✅ | `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`, `8659366`, `2a85b32` |
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
 | 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
-| 9 | Conformance harness assessment | **Next** | — |
-| 10 | Next vendor refresh | Deferred | — |
+| 9 | Conformance harness assessment | ✅ | [Decision: not ported](conformance-assessment.md) |
+| 10 | Next vendor refresh | Deferred | Awaiting upstream > `6b8d4ba` |
 
 ## Status overview
 
