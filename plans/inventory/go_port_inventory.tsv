@@ -783,7 +783,7 @@ terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr		a
 terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::struct::Terminal	struct	ported	src/ultraviolet/terminal.cr		auto-generated
 tty.go::func::NotifyWinch	func	ported	src/ultraviolet/tty.cr	forwards SIGWINCH to a buffered channel; upstream 6b8d4ba
-tty.go::func::NotifyWinchContext	func	ported	src/ultraviolet/tty.cr	Crystal divergence: use notify_winch plus a stop channel (no context.Context); upstream 6b8d4ba
+tty.go::func::NotifyWinchContext	func	ported	src/ultraviolet/tty.cr	Crystal analogue: stop channel instead of context.Context; upstream 6b8d4ba
 tty.go::func::OpenTTY	func	ported	src/ultraviolet/tty.cr		auto-generated
 tty.go::func::Suspend	func	ported	src/ultraviolet/tty.cr		auto-generated
 uv.go::const::ProgressBarDefault	const	ported	src/ultraviolet/uv_api.cr		auto-generated

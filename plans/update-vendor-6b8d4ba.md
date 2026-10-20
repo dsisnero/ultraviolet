@@ -164,15 +164,16 @@ cell dimensions.
 **Completed 2026-10-19.** The Go-compatible method names now delegate to the
 existing `window_size` and `size` implementations.
 
-### 9. NotifyWinch signal helper
+### 9. Winch signal helpers
 
 - [x] Port `NotifyWinch` using `Signal::WINCH.trap`
 - [x] Add a SIGWINCH forwarding spec
+- [x] Add the Crystal `notify_winch_context` analogue
 
 **Completed 2026-10-19.** `Ultraviolet.notify_winch(channel)` forwards SIGWINCH
-to a buffered channel. Go's `NotifyWinchContext` has no direct Crystal
-equivalent because Crystal has no `context.Context`; use `notify_winch` with a
-stop channel.
+to a buffered channel. `notify_winch_context(channel, stop)` stops forwarding
+when the stop channel receives or closes. Go uses `context.Context`; Crystal
+uses a stop channel instead.
 
 ### 10. Dependency and platform notes
 

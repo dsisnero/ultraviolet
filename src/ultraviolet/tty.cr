@@ -43,6 +43,10 @@ module Ultraviolet
     def self.notify_winch(channel : Channel(Nil)) : Nil
       raise ErrPlatformNotSupported
     end
+
+    def self.notify_winch_context(channel : Channel(Nil), stop : Channel(Nil)) : Nil
+      raise ErrPlatformNotSupported
+    end
   {% else %}
     # Notifies the channel when the terminal receives SIGWINCH.
     #
@@ -53,6 +57,19 @@ module Ultraviolet
           channel.send(nil)
         rescue Channel::ClosedError
         end
+      end
+    end
+
+    # Notifies the channel on SIGWINCH until the stop channel receives or is
+    # closed.
+    #
+    # Go's `NotifyWinchContext` uses `context.Context`; Crystal has no direct
+    # equivalent, so callers pass a stop channel instead.
+    def self.notify_winch_context(channel : Channel(Nil), stop : Channel(Nil)) : Nil
+      notify_winch(channel)
+      spawn do
+        stop.receive?
+        Signal::WINCH.reset
       end
     end
   {% end %}
