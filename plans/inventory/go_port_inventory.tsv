@@ -758,6 +758,8 @@ terminal_screen.go::method::TerminalScreen.Write	method	ported	src/ultraviolet/t
 terminal_screen.go::method::TerminalScreen.WriteString	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::struct::TerminalScreen	struct	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_test.go::test::TestOpenTTY	test	ported	spec/terminal_spec.cr		auto-generated
+terminal_test.go::test::TestStopBeforeStart	test	ported	spec/terminal_spec.cr		upstream 6b8d4ba
+terminal_test.go::test::TestStopIdempotent	test	ported	spec/terminal_spec.cr		upstream 6b8d4ba
 terminal_test.go::test::TestSupportsBackspace	test	ported	spec/terminal_spec.cr		auto-generated
 terminal_test.go::test::TestSupportsHardTabs	test	ported	spec/terminal_spec.cr		auto-generated
 terminal.go::const::DefaultBufferSize	const	ported	src/ultraviolet/terminal.cr		auto-generated
@@ -772,7 +774,7 @@ terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr		
 terminal.go::method::Terminal.SendEvent	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.SetLogger	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.Start	method	ported	src/ultraviolet/terminal.cr	input loop holds a stable local reader reference; upstream 6b8d4ba
-terminal.go::method::Terminal.Stop	method	ported	src/ultraviolet/terminal.cr	cancel + stop channel; no nil-reader dereference; upstream 6b8d4ba
+terminal.go::method::Terminal.Stop	method	ported	src/ultraviolet/terminal.cr	idempotent and safe before Start; cancel + stop channel; upstream 6b8d4ba
 terminal.go::method::Terminal.Wait	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr		auto-generated

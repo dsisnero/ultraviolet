@@ -109,6 +109,7 @@ Commits: `666ce5e`, `d4534d5`.
 
 - [x] Keep a stable poll-reader reference for the input loop lifetime
 - [x] Copy each read before sending it to the event loop
+- [x] Make `Stop` idempotent and safe before `Start`
 - [x] Cover stop/restart and input-copy behavior
 
 **Completed 2026-10-19.** `Terminal#input_loop` already held a local reader
@@ -116,7 +117,9 @@ reference, so the Go nil-dereference bug has no Crystal equivalent; a comment no
 records that invariant. `TerminalReader#send_bytes` reuses its read buffer and
 copies each chunk before sending it, with a regression spec that sends 500 pairs
 of back-to-back mode-report and Kitty replies. Stop/restart continues to use the
-existing `CancelReader` + stop-channel path.
+existing `CancelReader` + stop-channel path. `Terminal#stop` now returns quietly
+when the terminal is not running, so calling it before `Start` or more than once
+is safe.
 
 ### 5. Width handling
 

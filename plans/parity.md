@@ -15,11 +15,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
-    renderer damage/resize model, terminal input-loop fixes, and width handling.
+    renderer damage/resize model, terminal input-loop fixes, width handling, and
+    idempotent `Terminal#stop`.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last commit:** `2a512a2` (`port: copy terminal reader input buffers`).
-- **Gates:** `make lint` and `make test` pass (`379` examples).
+- **Last commit:** `f68c0af` (`port: vendor width handling for wide clusters`).
+- **Gates:** `make lint` and `make test` pass (`381` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and
@@ -41,7 +42,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 379 Crystal specs |
+| **Test coverage** | 122 Go tests | 381 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -55,6 +56,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +2 specs | Terminal stop: safe before start and idempotent |
 | 2026-10-19 | +3 specs | Width handling: WcWidth/GraphemeWidth cell layout, placeholder columns, ZWJ/flag/skin-tone/family clusters, Cell.new_cell |
 | 2026-10-19 | +1 spec | Terminal input loop: reusable read buffer copied before dispatch |
 | 2026-10-19 | +21 specs | Renderer damage/resize: inline/fullscreen resize, repaint latching, drift/autowrap, corner clusters, scroll repaint, short touch lists |
@@ -182,6 +184,15 @@ wider than four columns, placeholder columns, and `Cell.new_cell`.
 **Dependency:** `ansi` shard `7beb3d4` (`shard.lock` is gitignored)
 **Specs:** `spec/width_spec.cr`
 
+### F12. Terminal stop lifecycle (vendor `6b8d4ba`) ✅
+
+Ported `TestStopBeforeStart` and `TestStopIdempotent`. `Terminal#stop` now returns
+quietly when the terminal is not running instead of raising `ErrNotRunning`, so
+shutdown paths can call it safely before `Start` or more than once.
+
+**Files changed:** `src/ultraviolet/terminal.cr`
+**Specs:** `spec/terminal_spec.cr`
+
 ## Remaining Work (Upstream-Limited)
 
 All 8 remaining Crystal TODOs match Go's TODOs verbatim. These are open
@@ -226,7 +237,7 @@ State (lookup, logger) is synchronized between TerminalReader and scanner.
 
 ## Test Parity Status
 
-All 18 Go test files covered by Crystal specs (339 total):
+All 18 Go test files covered by Crystal specs (381 total):
 
 | Go Test File (Go tests) | Crystal Spec Status |
 |---|---|
@@ -243,7 +254,7 @@ All 18 Go test files covered by Crystal specs (339 total):
 | `poll_test.go` (1) | `poll_spec.cr` |
 | `terminal_renderer_output_test.go` (1) | `terminal_renderer_output_spec.cr` |
 | `terminal_renderer_test.go` (41) | `terminal_renderer_spec.cr` |
-| `terminal_test.go` (3) | `terminal_spec.cr` |
+| `terminal_test.go` (5) | `terminal_spec.cr` |
 | `layout/layout_test.go` (5) | `layout_spec.cr` |
 | `styled_test.go` (2) | `styled_spec.cr` |
 | `tabstop_test.go` (5) | `tabstop_spec.cr` |

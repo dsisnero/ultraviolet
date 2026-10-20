@@ -345,7 +345,10 @@ module Ultraviolet
     end
 
     def stop : Nil
-      raise ErrNotRunning unless @running
+      # Stop is idempotent and safe before Start: there is nothing to restore
+      # when the terminal was never running.
+      return unless @running
+
       restore
       @running = false
     end

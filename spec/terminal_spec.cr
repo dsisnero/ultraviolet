@@ -48,3 +48,15 @@ describe "Terminal helpers" do
     ws.should be_a(Ultraviolet::Winsize)
   end
 end
+
+describe "Terminal stop" do
+  it "is safe before start" do
+    term = Ultraviolet::Terminal.default_terminal
+    term.stop
+  end
+
+  it "is idempotent" do
+    term = Ultraviolet::Terminal.default_terminal
+    3.times { term.stop }
+  end
+end
