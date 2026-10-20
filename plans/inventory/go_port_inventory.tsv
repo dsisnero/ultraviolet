@@ -520,7 +520,7 @@ poll_bsd.go::method::kqueueReader.Cancel	method	ported	src/ultraviolet/poll_bsd.
 poll_bsd.go::method::kqueueReader.Close	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
 poll_bsd.go::method::kqueueReader.Poll	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
 poll_bsd.go::method::kqueueReader.Read	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
-poll_default_test.go::test::TestReader	test	ported	spec/poll_spec.cr	covered in poll_spec "cancels a blocking read"
+poll_default_test.go::test::TestReader	test	ported	spec/poll_spec.cr	cancels a read that is already blocked; upstream 6b8d4ba
 poll_fallback_test.go::test::TestFallbackReader	test	ported	spec/poll_fallback_spec.cr		auto-generated
 poll_fallback_test.go::test::TestFallbackReaderConcurrentCancel	test	ported	spec/poll_fallback_spec.cr		auto-generated
 poll_fallback.go::method::fallbackReader.Cancel	method	ported	src/ultraviolet/poll.cr		auto-generated
@@ -534,7 +534,7 @@ poll_linux.go::method::epollReader.Read	method	ported	src/ultraviolet/poll_linux
 poll_select.go::method::selectReader.Cancel	method	ported	src/ultraviolet/poll.cr		auto-generated
 poll_select.go::method::selectReader.Close	method	ported	src/ultraviolet/poll.cr		auto-generated
 poll_select.go::method::selectReader.Poll	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_select.go::method::selectReader.Read	method	ported	src/ultraviolet/poll.cr		auto-generated
+poll_select.go::method::selectReader.Read	method	ported	src/ultraviolet/poll.cr	timeout-sliced reads recheck cancel; upstream 6b8d4ba
 poll_test.go::test::TestReaderNonFile	test	ported	spec/poll_spec.cr		auto-generated
 poll_windows.go::method::conReader.Cancel	method	ported	src/ultraviolet/poll_windows.cr		auto-generated
 poll_windows.go::method::conReader.Close	method	ported	src/ultraviolet/poll_windows.cr		auto-generated

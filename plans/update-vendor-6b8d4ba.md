@@ -176,7 +176,16 @@ to a buffered channel. `notify_winch_context(channel, stop)` stops forwarding
 when the stop channel receives or closes. Go uses `context.Context`; Crystal
 uses a stop channel instead.
 
-### 10. Dependency and platform notes
+### 10. Cancelable select reads
+
+- [x] Make `SelectReader#read` interruptible by `cancel`
+- [x] Strengthen the poll spec so cancellation happens while the read blocks
+
+**Completed 2026-10-19.** `SelectReader#read` now reads with a short timeout and
+rechecks the cancel flag, so a blocking read is interrupted without blocking the
+scheduler. The select fd-set helpers also use the platform word size.
+
+### 11. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.

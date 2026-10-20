@@ -86,12 +86,22 @@ module Ultraviolet
 
     def read(slice : Bytes) : Int32
       raise PollCanceledError.new("poll canceled") if canceled?
-      begin
-        @reader.read(slice)
+
+      # A blocking read cannot be interrupted. Read in short slices so the
+      # canceling fiber gets a chance to run and the timeout path can check the
+      # cancel flag between attempts.
+      previous_timeout = @file.read_timeout
+      @file.read_timeout = 10.milliseconds
+      loop do
+        return @reader.read(slice)
+      rescue ex : IO::TimeoutError
+        raise PollCanceledError.new("poll canceled") if canceled?
       rescue ex
         raise PollCanceledError.new("poll canceled") if canceled?
         raise ex
       end
+    ensure
+      @file.read_timeout = previous_timeout if previous_timeout
     end
 
     def poll(timeout : Time::Span) : Bool
@@ -181,21 +191,21 @@ module Ultraviolet
     end
 
     private def fd_zero(set : LibC::FdSet*) : Nil
-      set.value.fds_bits = StaticArray(Int, 32).new(0)
+      set.value.fds_bits.fill(0)
     end
 
     private def fd_set(fd : Int32, set : LibC::FdSet*) : Nil
-      bits_per_word = 8 * sizeof(Int)
+      bits_per_word = 8 * sizeof(typeof(set.value.fds_bits[0]))
       idx = fd // bits_per_word
       bit = fd % bits_per_word
-      set.value.fds_bits[idx] |= (1_i64 << bit)
+      set.value.fds_bits[idx] |= (typeof(set.value.fds_bits[0]).new(1) << bit)
     end
 
     private def fd_isset(fd : Int32, set : LibC::FdSet*) : Bool
-      bits_per_word = 8 * sizeof(Int)
+      bits_per_word = 8 * sizeof(typeof(set.value.fds_bits[0]))
       idx = fd // bits_per_word
       bit = fd % bits_per_word
-      (set.value.fds_bits[idx] & (1_i64 << bit)) != 0
+      (set.value.fds_bits[idx] & (typeof(set.value.fds_bits[0]).new(1) << bit)) != 0
     end
   end
 

@@ -19,7 +19,8 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
     renderer damage/resize model, terminal input-loop fixes, width handling,
     idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
-    `SizeNotifier` compatibility accessors, and winch signal helpers.
+    `SizeNotifier` compatibility accessors, winch signal helpers, and
+    cancelable select reads.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
 - **Last feature commit:** `21e8aa8` (`port: add NotifyWinchContext analogue`).
@@ -58,6 +59,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | No net new | Poll cancellation spec strengthened to block before cancel |
 | 2026-10-19 | +1 spec | NotifyWinchContext stop-channel analogue |
 | 2026-10-19 | +1 spec | NotifyWinch SIGWINCH forwarding |
 | 2026-10-19 | +1 spec | SizeNotifier `GetWindowSize` / `GetSize` compatibility |
@@ -227,6 +229,17 @@ using a stop channel, since Crystal has no `context.Context`.
 
 **Files changed:** `src/ultraviolet/tty.cr`
 **Specs:** `spec/tty_spec.cr`
+
+### F16. Cancelable select reads ✅
+
+`SelectReader#read` now reads in short timeout slices and rechecks the cancel
+flag, so `cancel` interrupts a blocked read and the scheduler keeps running.
+Strengthened the poll spec to cancel before any data is written, matching the
+updated upstream test. Also corrected the select fd-set helpers to use the
+platform word size.
+
+**Files changed:** `src/ultraviolet/poll.cr`
+**Specs:** `spec/poll_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

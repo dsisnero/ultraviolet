@@ -14,9 +14,6 @@ module Ultraviolet
         read_end, write_end = IO.pipe
         poll_reader = Ultraviolet.new_poll_reader(read_end)
 
-        msg = "hello"
-        write_end.write(msg.to_slice)
-
         result = Channel(Tuple(Int32, Exception?)).new(1)
         spawn do
           begin
@@ -28,15 +25,20 @@ module Ultraviolet
           end
         end
 
+        # Let the spawned read reach the underlying blocking read.
+        sleep 50.milliseconds
         poll_reader.cancel.should be_true
 
         select
         when res = result.receive
           res[0].should eq(0)
           res[1].should be_a(PollCanceledError)
-        when timeout(100.milliseconds)
+        when timeout(500.milliseconds)
           fail("expected cancellation to unblock reader")
         end
+
+        msg = "hello"
+        write_end.write(msg.to_slice)
 
         poll_reader = Ultraviolet.new_poll_reader(read_end)
         buf = Bytes.new(5)
