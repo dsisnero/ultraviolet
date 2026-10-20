@@ -22,7 +22,7 @@
 - One completed feature per PR where practical.
 - Link the upstream Go file, test, and behavior being ported.
 - List any intentional divergence and why it cannot be avoided.
-- Include gate results and the upstream commit (`7cc6674`).
+- Include gate results and the upstream commit (`6b8d4ba`).
 
 ## Review checklist
 

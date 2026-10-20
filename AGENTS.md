@@ -7,7 +7,7 @@
 
 Crystal port of Charm's ultraviolet (Go) from
 [charmbracelet/ultraviolet](https://github.com/charmbracelet/ultraviolet),
-vendored at `vendor/ultraviolet/` (commit `7cc6674`).
+vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 
 ## Commands
 
@@ -87,7 +87,7 @@ must be committed as **one** atomic commit before starting the next feature:
 ### Commit message
 
 Start with `port:` and a one-line feature name, then bullets for what changed,
-then the upstream revision (`charmbracelet/ultraviolet 7cc6674`). Include
+then the upstream revision (`charmbracelet/ultraviolet 6b8d4ba`). Include
 new/changed files, divergences, and the gate results so a new session can
 resume from the commit alone.
 

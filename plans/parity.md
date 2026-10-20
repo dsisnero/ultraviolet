@@ -1,23 +1,25 @@
 # Ultraviolet Parity Plan
 
-Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go source is vendored at `vendor/ultraviolet/` (commit `7cc6674`).
+Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 
 ## Where we are
 
-- **Current focus:** baseline is green after Program Status Protocol (OSC 7501)
-  support; the next planned work is a deliberate vendor refresh.
+- **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. The vendor
+  tree is refreshed; the Crystal implementation still tracks `7cc6674`.
 - **Next up:**
-  1. Refresh `vendor/ultraviolet/` from `7cc6674` to upstream `6b8d4ba` and
-     port the remaining upstream changes.
-  2. Regenerate the parity inventories and reconcile any newly missing symbols.
-  3. Continue the upstream-limited renderer TODOs listed below.
-- **Chunk status:** core types, buffer, screen, renderer, reader/decoder, layout,
-  console/TTY, poll, winch, and encode helpers are ported. Remaining gaps are
-  upstream-limited TODOs and vendor-refresh work.
-- **Last commit:** `7661bb4` (`refactor: use ansi shard program status implementation`).
+  1. Finish the program status reset/restore follow-ups.
+  2. Port the styled-string and buffer fixes.
+  3. Port the renderer damage/resize model and its regression tests.
+  4. Port the terminal input-loop and width fixes.
+  5. Regenerate the parity inventories after the API-affecting chunks.
+- **Chunk status:** core types, layout, reader/decoder, and OSC 7501 are ported;
+  the remaining work is the vendor delta in
+  [`plans/update-vendor-6b8d4ba.md`](update-vendor-6b8d4ba.md).
+- **Last commit:** the vendor refresh commit containing this plan.
 - **Gates:** `make lint` and `make test` pass (`339` examples).
 
-> **Synced to:** `7cc6674` (vendored snapshot)
+> **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
+> `7cc6674`)
 
 ## Status Overview
 

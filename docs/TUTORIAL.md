@@ -1,4 +1,4 @@
-# Hello World!
+# Hello World
 
 Building a terminal application with Ultraviolet. Based on the Go
 [TUTORIAL.md](https://github.com/charmbracelet/ultraviolet/blob/main/TUTORIAL.md),
@@ -16,6 +16,7 @@ term = Ultraviolet::Terminal.new(STDIN, STDOUT, ENV.map { |k, v| "#{k}=#{v}" })
 ```
 
 The `Terminal` provides:
+
 - Raw mode (`start` enters raw mode automatically)
 - Event channel for keyboard, mouse, resize events
 - Cell-based screen buffer for rendering content

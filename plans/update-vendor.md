@@ -1,5 +1,8 @@
 # Plan: Update Crystal Port to Match vendored Go Source
 
+> **Historical:** this plan covers `524a660` → `7cc6674`. The current vendor
+> refresh is documented in `plans/update-vendor-6b8d4ba.md`.
+
 **Date:** 2026-07-27
 **Go source:** `vendor/ultraviolet` at `7cc6674`
 **Old pinned:** `ultraviolet_go` submodule at `524a660`

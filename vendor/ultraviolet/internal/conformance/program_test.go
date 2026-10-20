@@ -1,0 +1,231 @@
+package conformance_test
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/charmbracelet/ultraviolet/internal/conformance"
+	"github.com/charmbracelet/x/ansi"
+)
+
+// Tests for the fuzzing machinery itself.
+//
+// A fuzzer is only as good as its input decoder and its seeds, and both can rot
+// silently. A decoder that panics turns every fuzz run into a false positive; a
+// seed corpus that no longer decodes into anything interesting leaves the
+// fuzzer exploring plain ASCII forever while still reporting success. Neither
+// failure is visible from the fuzz targets, so they are pinned down here.
+
+// TestDriftPremise guards the assumption the whole suite rests on. If a future
+// width table lines legacy widths up with grapheme widths for these clusters,
+// the emulators stop reproducing drift and every conformance test quietly
+// starts proving nothing. Fail loudly instead.
+func TestDriftPremise(t *testing.T) {
+	clusters := conformance.DriftClusters()
+	if len(clusters) == 0 {
+		t.Fatal("no drift clusters defined")
+	}
+
+	for _, cluster := range clusters {
+		wc, grapheme := ansi.StringWidthWc(cluster), ansi.StringWidth(cluster)
+		if wc == grapheme {
+			t.Errorf("%q measures %d columns under both width methods, so it no "+
+				"longer exercises column drift and should be replaced", cluster, wc)
+		}
+	}
+}
+
+// TestDecodeProgramTotal checks that decoding never panics and always yields an
+// in-range program.
+//
+// The decoder is the fuzzer's only interface to the renderer. A panic or an
+// out-of-range row here would surface as a fuzz failure that has nothing to do
+// with the renderer, so it is worth ruling out separately.
+func TestDecodeProgramTotal(t *testing.T) {
+	inputs := [][]byte{
+		nil,
+		{},
+		{0},
+		{255},
+		[]byte(strings.Repeat("\xff", 512)),
+		[]byte(strings.Repeat("\x00", 512)),
+	}
+	// A spread of short inputs, since those are the ones most likely to run the
+	// decoder off the end of its buffer partway through an operation.
+	for i := range 256 {
+		inputs = append(inputs, []byte{byte(i), byte(i * 7), byte(i * 13), byte(i * 31)})
+	}
+	inputs = append(inputs, conformance.Seeds()...)
+
+	for _, in := range inputs {
+		p := conformance.DecodeProgram(in)
+
+		if p.Width < 1 || p.Height < 1 {
+			t.Fatalf("DecodeProgram(%x) gave a nonsensical size of %dx%d", in, p.Width, p.Height)
+		}
+
+		// The live dimensions, which an OpResize changes. Draw and move bounds
+		// are checked against these, mirroring how the decoder computes them.
+		curW, curH := p.Width, p.Height
+		for i, op := range p.Ops {
+			switch op.Kind {
+			case conformance.OpDrawLine:
+				if op.Y < 0 || op.Y >= curH {
+					t.Fatalf("DecodeProgram(%x) op %d draws to row %d, outside the current %d-row screen",
+						in, i, op.Y, curH)
+				}
+				if w := ansi.StringWidth(op.Text); w >= curW {
+					t.Fatalf("DecodeProgram(%x) op %d draws %d columns into the current %d-column screen, "+
+						"which would wrap and make failures ambiguous", in, i, w, curW)
+				}
+			case conformance.OpMoveTo:
+				if op.N < 0 || op.N >= curW {
+					t.Fatalf("DecodeProgram(%x) op %d moves to column %d, outside the current %d-column screen",
+						in, i, op.N, curW)
+				}
+			case conformance.OpResize:
+				if op.W < conformance.MinResizeW || op.W > conformance.MaxResizeW {
+					t.Fatalf("DecodeProgram(%x) op %d resizes to width %d, outside [%d,%d]",
+						in, i, op.W, conformance.MinResizeW, conformance.MaxResizeW)
+				}
+				// An inline frame may collapse to nothing; a fullscreen one
+				// may not, since the renderer owns every row of the screen.
+				minH := conformance.MinResizeH
+				if p.Inline {
+					minH = 0
+				}
+				if op.H < minH || op.H > conformance.MaxResizeH {
+					t.Fatalf("DecodeProgram(%x) op %d resizes to height %d, outside [%d,%d]",
+						in, i, op.H, minH, conformance.MaxResizeH)
+				}
+				if p.Inline && op.W < curW {
+					t.Fatalf("DecodeProgram(%x) op %d narrows an inline screen from %d to %d columns, "+
+						"which rewraps rows the renderer then has no way to find",
+						in, i, curW, op.W)
+				}
+				curW, curH = op.W, op.H
+			}
+		}
+	}
+}
+
+// TestDecodeProgramIsDeterministic checks that one input always decodes to one
+// program. Go's fuzzer reruns a failing input to reproduce it, which only works
+// if decoding is a pure function of the bytes.
+func TestDecodeProgramIsDeterministic(t *testing.T) {
+	for _, seed := range conformance.Seeds() {
+		a, b := conformance.DecodeProgram(seed), conformance.DecodeProgram(seed)
+		if a.String() != b.String() {
+			t.Fatalf("DecodeProgram(%x) is not deterministic:\n%s\nvs\n%s", seed, a, b)
+		}
+	}
+}
+
+// TestSeedCorpusIsInteresting guards the seeds against quietly going stale.
+//
+// The seeds are hand-encoded bytes that address clusters by index, so a change
+// to the alphabet or the decoder could turn them into noise with nothing
+// failing. A seed that never renders, or that draws no text, costs the fuzzer
+// nothing but also teaches it nothing.
+func TestSeedCorpusIsInteresting(t *testing.T) {
+	seeds := conformance.Seeds()
+	if len(seeds) == 0 {
+		t.Fatal("seed corpus is empty")
+	}
+
+	drift := conformance.DriftClusters()
+	seenDrift := map[string]bool{}
+	var withText int
+	seenMode := map[bool]bool{}
+
+	for i, seed := range seeds {
+		p := conformance.DecodeProgram(seed)
+		seenMode[p.Inline] = true
+
+		var renders, draws int
+		for _, op := range p.Ops {
+			switch op.Kind {
+			case conformance.OpRender, conformance.OpRedraw:
+				renders++
+			case conformance.OpDrawLine:
+				if op.Text == "" {
+					continue
+				}
+				draws++
+				for _, c := range drift {
+					if strings.Contains(op.Text, c) {
+						seenDrift[c] = true
+					}
+				}
+			}
+		}
+
+		// One render paints; the bugs this suite exists for need a second frame
+		// to diff against the first.
+		if renders < 2 {
+			t.Errorf("seed %d renders %d times, too few to exercise the incremental path:\n%s",
+				i, renders, p)
+		}
+		if draws > 0 {
+			withText++
+		}
+	}
+
+	if withText == 0 {
+		t.Error("no seed draws any text, so the corpus has gone stale")
+	}
+	for _, c := range drift {
+		if !seenDrift[c] {
+			t.Errorf("no seed draws %q, so the fuzzer does not start anywhere near it", c)
+		}
+	}
+	for _, inline := range []bool{false, true} {
+		if !seenMode[inline] {
+			t.Errorf("no seed runs with inline=%v, so half the renderer starts unreached", inline)
+		}
+	}
+}
+
+// An inline frame has to leave the terminal a row to spare. A frame that
+// reaches the last row scrolls the screen on the next newline, and content that
+// has scrolled sits at a different absolute row in every run, so the
+// differential targets would report the scroll as a disagreement.
+//
+// The decoder cannot produce a frame that tall today. This is here so that
+// widening the resize bounds fails loudly rather than turning the inline
+// targets into a source of false failures.
+func TestInlineFramesFitTheTerminal(t *testing.T) {
+	tallest := conformance.InlineRowsAbove + max(conformance.MaxResizeH, decodedMaxHeight(t))
+	if tallest >= conformance.InlineTermHeight {
+		t.Errorf("a program can reach %d rows in a terminal of %d, leaving no room below the frame",
+			tallest, conformance.InlineTermHeight)
+	}
+}
+
+// decodedMaxHeight is the tallest starting frame the decoder will produce, found
+// by asking it, since the size mapping lives in the decoder rather than in a
+// constant this test could read.
+func decodedMaxHeight(t *testing.T) int {
+	t.Helper()
+
+	var tallest int
+	for b := range 256 {
+		p := conformance.DecodeProgram([]byte{0, byte(b)})
+		tallest = max(tallest, p.Height)
+	}
+	return tallest
+}
+
+// TestFuzzTargetsRunSeeds runs every fuzz target over its seed corpus, which is
+// what `go test` does for a FuzzXxx function without -fuzz.
+//
+// This is here as documentation as much as verification: it is the reason the
+// fuzz targets are useful in ordinary CI, not just during a dedicated fuzzing
+// run. The seeds alone make a decent regression suite.
+func TestFuzzTargetsRunSeeds(t *testing.T) {
+	if testing.Short() {
+		t.Skip("exercises every seed against both emulators")
+	}
+	t.Log("go test runs each FuzzXxx target over its seeds; " +
+		"use -fuzz to search for new inputs")
+}

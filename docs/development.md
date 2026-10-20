@@ -38,9 +38,11 @@ make format-check
 
 ## Updating the vendored Go source
 
-The current snapshot is commit `7cc6674`. To move to a newer upstream commit,
-follow the process in `plans/update-vendor.md`: replace the `vendor/ultraviolet/`
-tree, re-run the port audit, then regenerate the parity manifests.
+The current snapshot is commit `6b8d4ba`. The Crystal port still tracks the
+previous `7cc6674` behavior; the remaining work is listed in
+`plans/update-vendor-6b8d4ba.md`. To move to a newer upstream commit, replace
+the `vendor/ultraviolet/` tree, re-run the port audit, then regenerate the
+parity manifests.
 
 ## Parity scripts
 
