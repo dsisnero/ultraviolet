@@ -15,6 +15,7 @@ module Ultraviolet
     @background_color : Color?
     @foreground_color : Color?
     @progress_bar : ProgressBar?
+    @program_status : ProgramStatus?
     @window_title : String
 
     def initialize(writer : IO, env : Array(String) = [] of String)
@@ -36,6 +37,7 @@ module Ultraviolet
       @background_color = nil
       @foreground_color = nil
       @progress_bar = nil
+      @program_status = nil
       @window_title = ""
     end
 
@@ -315,6 +317,16 @@ module Ultraviolet
 
     def progress_bar : ProgressBar?
       @progress_bar
+    end
+
+    def set_program_status(status : ProgramStatus?) : Nil
+      seq = String.build { |io| Ultraviolet.encode_program_status(io, status) }
+      @renderer.write_string(seq)
+      @program_status = status
+    end
+
+    def program_status : ProgramStatus?
+      @program_status
     end
 
     def reset : Nil

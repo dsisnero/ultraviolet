@@ -35,6 +35,7 @@ module Ultraviolet
                       WindowOpEvent |
                       CapabilityEvent |
                       ClipboardEvent |
+                      ProgramStatusSupportEvent |
                       String |
                       Array(Int32)
 

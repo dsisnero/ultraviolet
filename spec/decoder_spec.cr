@@ -56,6 +56,8 @@ module DecoderSpecHelper
       "Capability(#{event.content.inspect})"
     when Ultraviolet::ClipboardEvent
       "Clipboard(content=#{event.content.inspect} selection=#{event.selection})"
+    when Ultraviolet::ProgramStatusSupportEvent
+      "ProgramStatusSupport"
     when Ultraviolet::PasteEvent
       "Paste(#{event.content.inspect})"
     when Ultraviolet::PasteStartEvent

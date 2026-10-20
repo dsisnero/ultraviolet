@@ -775,6 +775,8 @@ module Ultraviolet
         end
       when 52
         osc_clipboard_event(data)
+      when 7501
+        ProgramStatusSupportEvent.new if data.starts_with?('?')
       else
         nil
       end
