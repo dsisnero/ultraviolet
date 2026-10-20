@@ -302,6 +302,7 @@ key_test.go::test::TestKeystroke	test	ported	spec/terminal_reader_stream_spec.cr
 key_test.go::test::TestKeystrokeCoverage	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
 key_test.go::test::TestMatchStrings	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
 key_test.go::test::TestMouseEvent_String	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
+key_test.go::test::TestMousePixelToCell	test	ported	spec/mouse_spec.cr		upstream 6b8d4ba
 key_test.go::test::TestParseSequence	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
 key_test.go::test::TestParseSGRMouseEvent	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
 key_test.go::test::TestParseX10MouseDownEvent	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
@@ -510,6 +511,7 @@ mouse.go::const::MouseWheelDown	const	ported	src/ultraviolet/mouse.cr		auto-gene
 mouse.go::const::MouseWheelLeft	const	ported	src/ultraviolet/mouse.cr		auto-generated
 mouse.go::const::MouseWheelRight	const	ported	src/ultraviolet/mouse.cr		auto-generated
 mouse.go::const::MouseWheelUp	const	ported	src/ultraviolet/mouse.cr		auto-generated
+mouse.go::func::MousePixelToCell	func	ported	src/ultraviolet/mouse.cr	pixel-to-cell conversion for SGRPixel input; upstream 6b8d4ba
 mouse.go::method::Mouse.String	method	ported	src/ultraviolet/mouse.cr		auto-generated
 mouse.go::struct::Mouse	struct	ported	src/ultraviolet/mouse.cr		auto-generated
 mouse.go::type::MouseButton	type	ported	src/ultraviolet/mouse.cr		auto-generated
@@ -636,6 +638,7 @@ terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviol
 terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
 terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr		auto-generated
+terminal_renderer_output_test.go::test::TestRendererWideCellReanchor	test	ported	spec/terminal_renderer_resize_spec.cr		upstream 6b8d4ba
 terminal_renderer_test.go::test::TestInlineRendererOutput	test	ported	spec/terminal_renderer_spec.cr		auto-generated
 terminal_renderer_test.go::test::TestRendererBackspace	test	ported	spec/terminal_renderer_spec.cr		auto-generated
 terminal_renderer_test.go::test::TestRendererBackspaceOptimization	test	ported	spec/terminal_renderer_spec.cr		auto-generated

@@ -146,7 +146,17 @@ tooling, not runtime code. Port it only if the equivalent Crystal renderer
 tests cannot cover the same resize/render cases; otherwise use the corpus as a
 reference when porting section 3.
 
-### 7. Dependency and platform notes
+### 7. Mouse pixel-to-cell conversion
+
+- [x] Port `MousePixelToCell`
+- [x] Add conversion specs for standard, boundary, modifier, zero-pixel, and
+  out-of-window cases
+
+**Completed 2026-10-19.** `Ultraviolet.mouse_pixel_to_cell` converts
+`MouseEncoding::SGRPixel` coordinates using the terminal's reported pixel and
+cell dimensions.
+
+### 8. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.

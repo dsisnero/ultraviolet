@@ -466,3 +466,29 @@ describe "TerminalRenderer resize and damage parity" do
     output.to_s.scan(apc).size.should eq(0)
   end
 end
+
+describe "TerminalRenderer wide-cell reanchor parity" do
+  it "reanchors once after a line of wide cells" do
+    render = ->(grapheme : Bool) do
+      output = IO::Memory.new
+      renderer = RendererResizeSpecHelper.renderer(output)
+      renderer.fullscreen = true
+      renderer.set_grapheme_width(grapheme)
+      renderer.save_cursor
+      renderer.erase
+
+      screen = Ultraviolet::ScreenBuffer.new(10, 1)
+      Ultraviolet::StyledString.new("世界").draw(screen, screen.bounds)
+      renderer.render(screen)
+      renderer.flush
+      output.to_s
+    end
+
+    wide = render.call(false)
+    wide.scan("\e[1;5H").size.should eq(1)
+    wide.scan("\e[1;3H").size.should eq(0)
+
+    grapheme = render.call(true)
+    grapheme.scan("\e[1;5H").size.should eq(0)
+  end
+end

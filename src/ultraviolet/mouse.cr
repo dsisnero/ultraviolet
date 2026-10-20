@@ -57,6 +57,26 @@ module Ultraviolet
     end
   end
 
+  # Converts a mouse event with pixel coordinates to cell coordinates.
+  #
+  # This is only meaningful when using `MouseEncoding::SGRPixel`, which reports
+  # mouse coordinates in pixels rather than cell units. The conversion uses the
+  # terminal's reported pixel and cell dimensions. When a pixel dimension is
+  # unavailable, that axis is reported as zero.
+  def self.mouse_pixel_to_cell(mouse : Mouse, winsize : Winsize) : Mouse
+    col = 0
+    row = 0
+
+    if winsize.xpixel > 0
+      col = mouse.x * winsize.col.to_i32 // winsize.xpixel.to_i32
+    end
+    if winsize.ypixel > 0
+      row = mouse.y * winsize.row.to_i32 // winsize.ypixel.to_i32
+    end
+
+    Mouse.new(col, row, mouse.button, mouse.mod)
+  end
+
   BUTTON_NAMES = {
     MouseButton::None       => "none",
     MouseButton::Left       => "left",
