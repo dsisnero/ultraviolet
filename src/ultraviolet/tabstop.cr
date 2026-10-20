@@ -36,6 +36,10 @@ module Ultraviolet
       (@stops[idx] & mask(col)) != 0
     end
 
+    def is_stop(col : Int32) : Bool
+      stop?(col)
+    end
+
     def next(col : Int32) : Int32
       find(col, 1)
     end

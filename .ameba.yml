@@ -32,6 +32,7 @@ Naming/AccessorMethodName:
     - src/ultraviolet/screen_context.cr
     - src/ultraviolet/terminal_screen.cr
     - src/ultraviolet/terminal.cr
+    - src/ultraviolet/terminal_reader.cr
     - src/ultraviolet/terminal_renderer.cr
 
 Naming/QueryBoolMethods:
@@ -41,6 +42,8 @@ Naming/QueryBoolMethods:
 Naming/PredicateName:
   Excluded:
     - src/ultraviolet/casso.cr
+    - src/ultraviolet/event.cr
+    - src/ultraviolet/tabstop.cr
 
 Naming/BlockParameterName:
   Excluded:

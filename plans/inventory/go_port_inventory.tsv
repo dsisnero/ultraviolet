@@ -200,15 +200,15 @@ event_test.go::test::TestSizeBounds	test	ported	spec/event_spec.cr		auto-generat
 event_test.go::test::TestUnknownEventString	test	ported	spec/event_spec.cr		auto-generated
 event.go::const::PrimaryClipboard	const	ported	src/ultraviolet/event.cr		auto-generated
 event.go::const::SystemClipboard	const	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::BackgroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr		auto-generated
+event.go::method::BackgroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
 event.go::method::BackgroundColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::CapabilityEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::CellSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::ClipboardEvent.Clipboard	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::ClipboardEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::CursorColorEvent.IsDark	method	ported	src/ultraviolet/event.cr		auto-generated
+event.go::method::CursorColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
 event.go::method::CursorColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::ForegroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr		auto-generated
+event.go::method::ForegroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
 event.go::method::ForegroundColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::KeyboardEnhancementsEvent.Contains	method	ported	src/ultraviolet/event.cr		auto-generated
 event.go::method::KeyboardEnhancementsEvent.SupportsKeyDisambiguation	method	ported	src/ultraviolet/event.cr		auto-generated
@@ -624,7 +624,7 @@ tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-comp
 tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.new; upstream 6b8d4ba	auto-generated
 tabstop.go::method::TabStops.Clear	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::method::TabStops.Find	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.IsStop	method	ported	src/ultraviolet/tabstop.cr		auto-generated
+tabstop.go::method::TabStops.IsStop	method	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for stop?; upstream 6b8d4ba	auto-generated
 tabstop.go::method::TabStops.Next	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::method::TabStops.Prev	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::method::TabStops.Reset	method	ported	src/ultraviolet/tabstop.cr		auto-generated
@@ -634,7 +634,7 @@ tabstop.go::method::TabStops.Width	method	ported	src/ultraviolet/tabstop.cr		aut
 tabstop.go::struct::TabStops	struct	ported	src/ultraviolet/tabstop.cr		auto-generated
 terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for TerminalReader.new; upstream 6b8d4ba	auto-generated
-terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr		auto-generated
+terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for logger=; upstream 6b8d4ba	auto-generated
 terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
 terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr		auto-generated
@@ -698,15 +698,15 @@ terminal_renderer.go::method::TerminalRenderer.Render	method	ported	src/ultravio
 terminal_renderer.go::method::TerminalRenderer.Resize	method	ported	src/ultraviolet/terminal_renderer.cr	latches real size changes and invalidates the cursor model; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.RestoreCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.SaveCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for backspace=; upstream 6b8d4ba	auto-generated
 terminal_renderer.go::method::TerminalRenderer.SetColorProfile	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetFullscreen	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetLogger	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetMapNewline	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetFullscreen	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for fullscreen=; upstream 6b8d4ba	auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetLogger	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for logger=; upstream 6b8d4ba	auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetMapNewline	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for map_newline=; upstream 6b8d4ba	auto-generated
 terminal_renderer.go::method::TerminalRenderer.SetPosition	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetRelativeCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetScrollOptim	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetTabStops	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetRelativeCursor	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for relative_cursor=; upstream 6b8d4ba	auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetScrollOptim	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for scroll_optim=; upstream 6b8d4ba	auto-generated
+terminal_renderer.go::method::TerminalRenderer.SetTabStops	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for tab_stops=; upstream 6b8d4ba	auto-generated
 terminal_renderer.go::method::TerminalRenderer.Write	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.WriteString	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::tFlag.Contains	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated

@@ -444,6 +444,10 @@ module Ultraviolet
     def dark? : Bool
       Ultraviolet.dark_color?(@color)
     end
+
+    def is_dark : Bool
+      dark?
+    end
   end
 
   struct BackgroundColorEvent
@@ -459,6 +463,10 @@ module Ultraviolet
     def dark? : Bool
       Ultraviolet.dark_color?(@color)
     end
+
+    def is_dark : Bool
+      dark?
+    end
   end
 
   struct CursorColorEvent
@@ -473,6 +481,10 @@ module Ultraviolet
 
     def dark? : Bool
       Ultraviolet.dark_color?(@color)
+    end
+
+    def is_dark : Bool
+      dark?
     end
   end
 

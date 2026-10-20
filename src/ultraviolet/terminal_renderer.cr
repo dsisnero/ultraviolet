@@ -152,6 +152,34 @@ module Ultraviolet
       @method = method
     end
 
+    def set_logger(logger : Logger?) : Nil
+      self.logger = logger
+    end
+
+    def set_scroll_optim(enabled : Bool) : Nil
+      self.scroll_optim = enabled
+    end
+
+    def set_map_newline(enabled : Bool) : Nil
+      self.map_newline = enabled
+    end
+
+    def set_backspace(enabled : Bool) : Nil
+      self.backspace = enabled
+    end
+
+    def set_tab_stops(width : Int32) : Nil
+      self.tab_stops = width
+    end
+
+    def set_fullscreen(enabled : Bool) : Nil
+      self.fullscreen = enabled
+    end
+
+    def set_relative_cursor(enabled : Bool) : Nil
+      self.relative_cursor = enabled
+    end
+
     def set_grapheme_width(enabled : Bool) : Nil
       if enabled
         @flags |= TerminalFlags::GraphemeWidth

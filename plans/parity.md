@@ -21,11 +21,11 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
     `SizeNotifier` compatibility accessors, multi-listener winch signal helpers,
     cancelable select reads, Console compatibility aliases, and Go constructor
-    aliases.
+    and method aliases.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last feature commit:** `4dab9d6` (`port: fan out winch signals to multiple listeners`).
-- **Gates:** `make lint` and `make test` pass (`390` examples).
+- **Last feature commit:** `8659366` (`port: add Go-compatible constructor aliases`).
+- **Gates:** `make lint` and `make test` pass (`392` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the completed `6b8d4ba` follow-ups)
@@ -46,7 +46,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 390 Crystal specs |
+| **Test coverage** | 122 Go tests | 392 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -60,6 +60,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +2 specs | Go-compatible method aliases for color events, tab stops, reader, renderer |
 | 2026-10-19 | +2 specs | Go-compatible constructor and `style_diff` aliases |
 | 2026-10-19 | +1 spec | Multi-listener winch fan-out and independent unsubscribe |
 | 2026-10-19 | +1 spec | Console `DefaultConsole` / `ControllingConsole` aliases |
@@ -264,6 +265,16 @@ Added direct Go-name aliases for `new_styled_string`, `new_line`, `new_buffer`,
 
 **Files changed:** `src/ultraviolet/{styled,buffer,console,tabstop,terminal,terminal_reader,terminal_renderer,terminal_screen,style}.cr`
 **Specs:** `spec/go_compat_aliases_spec.cr`
+
+### F19. Go-compatible method aliases ✅
+
+Added `is_dark` on color events, `TabStops#is_stop`, `set_logger` on the reader
+and renderer, and renderer `set_*` aliases for scroll optimization, newline
+mapping, backspace, tab stops, fullscreen, and relative cursor.
+
+**Files changed:** `src/ultraviolet/event.cr`, `src/ultraviolet/tabstop.cr`,
+`src/ultraviolet/terminal_reader.cr`, `src/ultraviolet/terminal_renderer.cr`
+**Specs:** `spec/go_method_aliases_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

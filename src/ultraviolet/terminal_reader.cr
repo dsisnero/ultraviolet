@@ -60,6 +60,10 @@ module Ultraviolet
       @scanner.logger = logger
     end
 
+    def set_logger(logger : Logger?) : Nil
+      self.logger = logger
+    end
+
     # ameba:disable Metrics/CyclomaticComplexity
     def stream_events(eventc : Channel(Event), stop : Channel(Nil)? = nil) : Nil
       readc = Channel(Bytes).new

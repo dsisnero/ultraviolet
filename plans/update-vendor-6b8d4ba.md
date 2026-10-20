@@ -206,7 +206,17 @@ scheduler. The select fd-set helpers also use the platform word size.
 **Completed 2026-10-19.** The Go constructor and diff names now delegate to the
 existing Crystal constructors.
 
-### 13. Dependency and platform notes
+### 13. Go-compatible method aliases
+
+- [x] Add `is_dark` on color events
+- [x] Add `is_stop` on `TabStops`
+- [x] Add `set_logger` on reader and renderer
+- [x] Add renderer `set_*` aliases for its property setters
+
+**Completed 2026-10-19.** The Go method names now delegate to the existing
+predicate and writer methods.
+
+### 14. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.
