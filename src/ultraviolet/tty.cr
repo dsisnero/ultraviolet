@@ -48,16 +48,48 @@ module Ultraviolet
       raise ErrPlatformNotSupported
     end
   {% else %}
+    # Fans a single SIGWINCH handler out to every active subscriber.
+    private class WinchHub
+      @@listeners = [] of Channel(Nil)
+      @@mutex = Mutex.new
+      @@installed = false
+
+      def self.add(channel : Channel(Nil)) : Nil
+        @@mutex.synchronize do
+          @@listeners << channel unless @@listeners.includes?(channel)
+          unless @@installed
+            Signal::WINCH.trap do
+              listeners = @@mutex.synchronize { @@listeners.dup }
+              listeners.each do |listener|
+                spawn do
+                  begin
+                    listener.send(nil)
+                  rescue Channel::ClosedError
+                  end
+                end
+              end
+            end
+            @@installed = true
+          end
+        end
+      end
+
+      def self.remove(channel : Channel(Nil)) : Nil
+        @@mutex.synchronize do
+          @@listeners.delete(channel)
+          if @@listeners.empty? && @@installed
+            Signal::WINCH.reset
+            @@installed = false
+          end
+        end
+      end
+    end
+
     # Notifies the channel when the terminal receives SIGWINCH.
     #
     # Use a buffered channel, as the signal handler must not block.
     def self.notify_winch(channel : Channel(Nil)) : Nil
-      Signal::WINCH.trap do
-        begin
-          channel.send(nil)
-        rescue Channel::ClosedError
-        end
-      end
+      WinchHub.add(channel)
     end
 
     # Notifies the channel on SIGWINCH until the stop channel receives or is
@@ -66,10 +98,10 @@ module Ultraviolet
     # Go's `NotifyWinchContext` uses `context.Context`; Crystal has no direct
     # equivalent, so callers pass a stop channel instead.
     def self.notify_winch_context(channel : Channel(Nil), stop : Channel(Nil)) : Nil
-      notify_winch(channel)
+      WinchHub.add(channel)
       spawn do
         stop.receive?
-        Signal::WINCH.reset
+        WinchHub.remove(channel)
       end
     end
   {% end %}

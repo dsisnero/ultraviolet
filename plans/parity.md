@@ -19,12 +19,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
     renderer damage/resize model, terminal input-loop fixes, width handling,
     idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
-    `SizeNotifier` compatibility accessors, winch signal helpers, cancelable
-    select reads, and Console compatibility aliases.
+    `SizeNotifier` compatibility accessors, multi-listener winch signal helpers,
+    cancelable select reads, and Console compatibility aliases.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last feature commit:** `b357f5d` (`port: make select reader reads cancelable`).
-- **Gates:** `make lint` and `make test` pass (`387` examples).
+- **Last feature commit:** `08b76f2` (`port: add Console compatibility aliases`).
+- **Gates:** `make lint` and `make test` pass (`388` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the completed `6b8d4ba` follow-ups)
@@ -45,7 +45,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 387 Crystal specs |
+| **Test coverage** | 122 Go tests | 388 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -59,6 +59,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | Multi-listener winch fan-out and independent unsubscribe |
 | 2026-10-19 | +1 spec | Console `DefaultConsole` / `ControllingConsole` aliases |
 | 2026-10-19 | No net new | Poll cancellation spec strengthened to block before cancel |
 | 2026-10-19 | +1 spec | NotifyWinchContext stop-channel analogue |
@@ -223,10 +224,11 @@ with a stub notifier so the spec does not require a real TTY.
 
 ### F15. Winch signal forwarding ✅
 
-Ported `NotifyWinch` as `Ultraviolet.notify_winch(channel : Channel(Nil))`,
-using `Signal::WINCH.trap` to forward resize signals to a buffered channel.
-`notify_winch_context(channel, stop)` adds the Go context-style cancellation
-using a stop channel, since Crystal has no `context.Context`.
+Ported `NotifyWinch` as `Ultraviolet.notify_winch(channel : Channel(Nil))`.
+A single SIGWINCH handler fans out to every active listener, and
+`notify_winch_context(channel, stop)` removes only its own listener when the stop
+channel receives or closes. Crystal uses a stop channel instead of
+`context.Context`.
 
 **Files changed:** `src/ultraviolet/tty.cr`
 **Specs:** `spec/tty_spec.cr`

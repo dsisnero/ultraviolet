@@ -170,11 +170,13 @@ existing `window_size` and `size` implementations.
 - [x] Port `NotifyWinch` using `Signal::WINCH.trap`
 - [x] Add a SIGWINCH forwarding spec
 - [x] Add the Crystal `notify_winch_context` analogue
+- [x] Fan out to multiple listeners and remove one without stopping the others
 
 **Completed 2026-10-19.** `Ultraviolet.notify_winch(channel)` forwards SIGWINCH
 to a buffered channel. `notify_winch_context(channel, stop)` stops forwarding
-when the stop channel receives or closes. Go uses `context.Context`; Crystal
-uses a stop channel instead.
+when the stop channel receives or closes. A shared hub installs one signal
+handler and fans it out to every active listener. Go uses `context.Context`;
+Crystal uses a stop channel instead.
 
 ### 10. Cancelable select reads
 
