@@ -6,25 +6,24 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
   — use its checklist as the working order.
-- **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. Program
-  status, styled/buffer, renderer, and terminal input-loop fixes are complete;
-  width handling is next.
+- **Current focus:** the `7cc6674` → `6b8d4ba` vendor delta is ported. Next is
+  inventory cleanup and the optional conformance harness.
 - **Next up:**
-  1. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
-  2. Regenerate the parity inventories after the remaining API-affecting chunks.
-  3. Port the optional conformance harness if the remaining width cases need it.
+  1. Regenerate the parity inventories against the refreshed vendor tree.
+  2. Assess and port the optional conformance harness where it adds coverage.
+  3. Resume upstream tracking when the next vendor snapshot is available.
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
     OSC 7501, program status reset/restore, styled-string/buffer fixes, the
-    renderer damage/resize model, and the terminal input-loop fixes.
-  - **In progress:** the `6b8d4ba` vendor delta (width handling).
-  - **Remaining:** the three next-up items above.
-- **Last commit:** `d6dd62a` (`port: vendor renderer damage and resize model`).
-- **Gates:** `make lint` and `make test` pass (`376` examples).
+    renderer damage/resize model, terminal input-loop fixes, and width handling.
+  - **In progress:** inventory regeneration.
+  - **Remaining:** the optional conformance harness.
+- **Last commit:** `2a512a2` (`port: copy terminal reader input buffers`).
+- **Gates:** `make lint` and `make test` pass (`379` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the program status, styled/buffer, renderer, and input-loop
-> follow-ups)
+> `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and
+> width follow-ups)
 
 ## Status Overview
 
@@ -42,7 +41,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 376 Crystal specs |
+| **Test coverage** | 122 Go tests | 379 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -56,6 +55,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +3 specs | Width handling: WcWidth/GraphemeWidth cell layout, placeholder columns, ZWJ/flag/skin-tone/family clusters, Cell.new_cell |
 | 2026-10-19 | +1 spec | Terminal input loop: reusable read buffer copied before dispatch |
 | 2026-10-19 | +21 specs | Renderer damage/resize: inline/fullscreen resize, repaint latching, drift/autowrap, corner clusters, scroll repaint, short touch lists |
 | 2026-10-19 | +14 specs | Styled strings and buffers: pass-through sequences, combining marks, hyperlink URLs, trailing spaces, wide clusters, RenderBuffer resize/touched |
@@ -172,6 +172,15 @@ dereference has no Crystal equivalent; a comment records the invariant.
 **Files changed:** `src/ultraviolet/terminal_reader.cr`,
 `src/ultraviolet/terminal.cr`
 **Specs:** `spec/terminal_reader_spec.cr`
+
+### F11. Width handling (vendor `6b8d4ba`) ✅
+
+Refreshed the `ansi` shard to `7beb3d4` for `WcWidth`/`GraphemeWidth` parity
+with upstream `ansi v0.11.9`, and added width regression specs for clusters
+wider than four columns, placeholder columns, and `Cell.new_cell`.
+
+**Dependency:** `ansi` shard `7beb3d4` (`shard.lock` is gitignored)
+**Specs:** `spec/width_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

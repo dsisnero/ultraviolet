@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, renderer, and input-loop follow-ups from `6b8d4ba`
+**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, renderer, input-loop, and width follow-ups from `6b8d4ba`
 
-The vendored Go snapshot has been refreshed. Porting has started: the program
-status reset/restore, styled-string/buffer, renderer damage/resize, and terminal
-input-loop follow-ups are complete. The remaining delta is still outstanding.
+The vendored Go snapshot has been refreshed. The program status reset/restore,
+styled-string/buffer, renderer damage/resize, terminal input-loop, and width
+follow-ups are complete. Only the optional conformance harness remains.
 
 ```text
 67 commits
@@ -26,7 +26,9 @@ input-loop follow-ups are complete. The remaining delta is still outstanding.
 - Styled strings and buffers now include the `6b8d4ba` fixes.
 - The renderer now uses the damage/resize model from `6b8d4ba`.
 - The reader now copies each read before handing it to the event loop.
-- Next step: section 5, width handling.
+- Width handling now covers clusters wider than four columns.
+- Next step: regenerate the parity inventories and assess the optional
+  conformance harness.
 
 ## Porting checklist
 
@@ -122,8 +124,15 @@ Upstream files: `width_test.go`, renderer/styled changes.
 
 Commit: `006e29f`.
 
-- [ ] Support grapheme clusters wider than 4 columns
-- [ ] Add width regression specs for ZWJ sequences and wide clusters
+- [x] Support grapheme clusters wider than 4 columns
+- [x] Add width regression specs for ZWJ sequences and wide clusters
+
+**Completed 2026-10-19.** The `ansi` shard was refreshed to `7beb3d4`, which
+brings its `WcWidth`/`GraphemeWidth` behavior in line with upstream
+`ansi v0.11.9`. `spec/width_spec.cr` covers WcWidth cell layout, placeholder
+columns, ZWJ/flag/skin-tone/family clusters, grapheme widths, and
+`Cell.new_cell` widths. The renderer and styled-string paths no longer cap
+cluster widths.
 
 ### 6. Conformance harness (optional but useful)
 

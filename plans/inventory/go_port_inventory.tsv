@@ -120,7 +120,7 @@ cell.go::const::UnderlineStyleNone	const	ported	src/ultraviolet/cell.cr		auto-ge
 cell.go::const::UnderlineStyleSingle	const	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::func::ConvertLink	func	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::func::ConvertStyle	func	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::func::NewCell	func	ported	src/ultraviolet/cell.cr		auto-generated
+cell.go::func::NewCell	func	ported	src/ultraviolet/cell.cr	agrees with WcWidth/GraphemeWidth models, including clusters wider than four columns; upstream 6b8d4ba
 cell.go::func::NewLink	func	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::func::StyleDiff	func	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::method::Cell.Clone	method	ported	src/ultraviolet/cell.cr		auto-generated
