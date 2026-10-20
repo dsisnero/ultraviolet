@@ -3,11 +3,12 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba` follow-ups
+**Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba`
+follow-ups
 
-The vendored Go snapshot has been refreshed. All runtime and API follow-ups
-through sections 1-9 are complete. Remaining work is inventory regeneration and
-the optional conformance-harness assessment.
+The vendored Go snapshot has been refreshed. Phases 1–6 are complete. Phase 7
+(refresh the parity inventories) is next; Phase 8 evaluates the optional Go
+conformance harness.
 
 ```text
 67 commits
@@ -15,223 +16,95 @@ the optional conformance-harness assessment.
 +4959 / -210
 ```
 
-## Where we are
+## Phase plan
 
-- `vendor/ultraviolet/` is now at `6b8d4ba`.
-- The Crystal implementation and specs match the previous `7cc6674` behavior
-  plus every completed `6b8d4ba` follow-up.
-- Program Status Protocol (OSC 7501) support is fully ported, including
-  reset/restore behavior.
-- Styled strings and buffers include the `6b8d4ba` fixes.
-- The renderer uses the damage/resize model from `6b8d4ba`.
-- The reader copies each read before handing it to the event loop.
-- Width handling covers clusters wider than four columns.
-- Terminal stop, mouse pixel conversion, `SizeNotifier` accessors, and winch
-  signal helpers are ported.
-- **Next up:** regenerate the parity inventories and test manifests, then assess
-  the optional conformance harness.
+Each phase is feature-sized and should land as one atomic commit. Details from
+completed phases live in the commit history and specs rather than being expanded
+into one-off work items here.
 
-## Porting checklist
+### Phase 1 — Vendor refresh + Program Status Protocol ✅
 
-### 1. Program status follow-ups
+- Refresh `vendor/ultraviolet/` to `6b8d4ba`.
+- Port OSC 7501 types, encoder, support event, decoder mapping, screen
+  accessors, and reset/restore behavior.
+- **Evidence:** `b2f6a0b`, `7661bb4`, `28371aa`;
+  [`plans/ultraviolet.1.md`](ultraviolet.1.md); `spec/program_status_spec.cr`.
 
-Upstream files: `event.go`, `decoder.go`, `terminal_screen.go`, `uv.go`,
-`programstatus_test.go`.
+### Phase 2 — Styled strings + buffers ✅
 
-- [x] Program status types and encoding (`ansi` shard)
-- [x] `ProgramStatusSupportEvent` and OSC 7501 decoding
-- [x] `TerminalScreen#set_program_status` / `#program_status`
-- [x] `reset` deliberately leaves the program status record in place
-- [x] `restore` re-emits the stored program status
-- [x] Add parity coverage for the reset/restore behavior
+- Carry terminated APC/DCS/SOS/PM sequences through cells.
+- Fold combining marks; preserve hyperlink semicolons.
+- Support clusters wider than four columns.
+- Preserve trailing spaces in `Line#render`.
+- Restore `RenderBuffer` resize/touched invariants.
+- **Evidence:** `bcdf389`; `spec/styled_spec.cr`, `spec/buffer_spec.cr`,
+  `spec/ultraviolet_spec.cr`.
 
-**Completed 2026-10-19.** `restore` now re-encodes `@program_status`, and
-`spec/program_status_spec.cr` covers the upstream
-`TestTerminalScreenProgramStatus` behavior.
+### Phase 3 — Renderer damage + resize model ✅
 
-### 2. Styled strings and buffers
+- Add the screen-sized damage record and resize reconciliation.
+- Repaint inline/fullscreen frames after resize without erasing untouched rows.
+- Handle drift-prone rows with autowrap off and re-anchor the cursor.
+- Keep corner clusters from leaving a pending wrap.
+- Mark rows moved by hardware scrolls as damaged.
+- **Evidence:** `d6dd62a`; `spec/terminal_renderer_resize_spec.cr`,
+  `spec/terminal_renderer_spec.cr`, `spec/terminal_renderer_output_spec.cr`.
 
-Upstream files: `styled.go`, `styled_test.go`, `buffer.go`, `buffer_test.go`.
+### Phase 4 — Terminal I/O robustness ✅
 
-Commits: `ae99b73`, `043ea8a`, `a5fed5c`, `7db69eb`, `6966a4f`, `d9e819d`,
-`d38ea0f`.
+- Copy each reusable read buffer before dispatch.
+- Keep the input loop's reader reference stable.
+- Make `Terminal#stop` idempotent and safe before `Start`.
+- Make `SelectReader` reads cancelable without wedging the scheduler.
+- **Evidence:** `2a512a2`, `94f85f4`, `b357f5d`;
+  `spec/terminal_reader_spec.cr`, `spec/terminal_spec.cr`, `spec/poll_spec.cr`.
 
-- [x] Carry terminated APC/DCS/SOS/PM sequences through cell content
-  (`passThrough` / `terminated`)
-- [x] Fold trailing combining marks into the last written cell
-- [x] Re-decode ASCII followed by a combining sequence as one grapheme cluster
-- [x] Render grapheme clusters wider than 4 columns
-- [x] Allow `Lines` to parse unbounded content
-- [x] Preserve semicolons in hyperlink URLs (`SplitN(..., 3)`)
-- [x] Flush pending trailing content in `renderLine`
-- [x] Add buffer tests for the new `RenderBuffer#resize`, `growTouched`, and
-  touched-line invariants
+### Phase 5 — Width + Unicode layout ✅
 
-**Completed 2026-10-19.** The Crystal implementation now carries terminated
-string sequences, folds combining marks, keeps pass-through content out of cell
-width, preserves trailing spaces in `Line#render`, and restores the
-`RenderBuffer` touched-row invariant across resizes.
+- Refresh the `ansi` shard to `7beb3d4` for WcWidth/GraphemeWidth parity.
+- Cover wide, ZWJ, flag, skin-tone, and family clusters.
+- Cover placeholder columns and `Cell.new_cell` widths.
+- **Evidence:** `f68c0af`; `spec/width_spec.cr`.
 
-### 3. Renderer damage and resize model
+### Phase 6 — API surface compatibility ✅
 
-Upstream files: `terminal_renderer.go`,
-`terminal_renderer_hardscroll.go`, `terminal_renderer_hashmap.go`, and the
-large `terminal_renderer_test.go` additions.
+- Mouse pixel-to-cell conversion.
+- `SizeNotifier` cell/pixel accessors.
+- Multi-listener `NotifyWinch` and stop-channel `NotifyWinchContext` analogue.
+- Console, constructor, and method aliases used by Go call sites.
+- **Evidence:** `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`,
+  `8659366`, `2a85b32`; mouse, TTY, console, and alias specs.
 
-This is the largest part of the delta. It replaces the ad-hoc touch handling
-with a screen-sized damage record and fixes inline/fullscreen resize behavior,
-autowrap, hardware scroll repaint, and erase-after-shrink cases.
+### Phase 7 — Parity inventory refresh (next)
 
-Key commits: `7c6028e`, `2e490d9`, `13b333e`, `815bedb`, `4117f7c`, `6d7982b`,
-`8786532`, `419da2b`, plus the inline-frame resize fixes (`08f27a0`, `e90e227`,
-`0de425e`, `c0d8ed2`, `af6533f`, `48eaef2`, `3c072e9`, `8b38db3`, `243ea4b`,
-`2c536ce`).
+Feature-sized scope:
 
-- [x] Port the damage/touch record used by the renderer
-- [x] Port resize repaint and erase behavior
-- [x] Match autowrap and cursor-row handling
-- [x] Port the new renderer regression tests
-- [x] Run the upstream conformance corpus where it applies
+- Regenerate the source and test manifests from `6b8d4ba`.
+- Reconcile the curated `go_port_inventory.tsv` with the new manifests.
+- Resolve stale `missing` rows that are actually ported, and stale references.
+- Re-run the parity checks and record the remaining true gaps.
 
-**Completed 2026-10-19.** The renderer now sizes its damage record to the
-screen, latches real resizes, repaints after terminal/screen resizes, keeps
-inline shrinks from erasing their own rows, handles drift-prone rows with
-autowrap off, re-anchors the cursor after a corner cluster, and marks rows moved
-by hardware scrolls. The resize/damage regression suite lives in
-`spec/terminal_renderer_resize_spec.cr`; the Go conformance harness remains
-optional tooling rather than a runtime port.
+**Done when:** `check_source_parity`, `check_test_parity`, and
+`check_port_inventory` are current and their remaining findings are documented.
 
-### 4. Terminal input loop
+### Phase 8 — Conformance harness assessment (deferred)
 
-Upstream files: `terminal.go`, `terminal_input_test.go`,
-`terminal_stop_test.go`.
+Decide whether the Go `internal/conformance` harness adds coverage the Crystal
+renderer specs cannot express. Port only the portable corpus/operation layer if
+it does; record a divergence for the Go-only emulator oracle.
 
-Commits: `666ce5e`, `d4534d5`.
+### Phase 9 — Next vendor refresh (deferred)
 
-- [x] Keep a stable poll-reader reference for the input loop lifetime
-- [x] Copy each read before sending it to the event loop
-- [x] Make `Stop` idempotent and safe before `Start`
-- [x] Cover stop/restart and input-copy behavior
+Repeat this workflow when upstream moves past `6b8d4ba`.
 
-**Completed 2026-10-19.** `Terminal#input_loop` already held a local reader
-reference, so the Go nil-dereference bug has no Crystal equivalent; a comment now
-records that invariant. `TerminalReader#send_bytes` reuses its read buffer and
-copies each chunk before sending it, with a regression spec that sends 500 pairs
-of back-to-back mode-report and Kitty replies. Stop/restart continues to use the
-existing `CancelReader` + stop-channel path. `Terminal#stop` now returns quietly
-when the terminal is not running, so calling it before `Start` or more than once
-is safe.
+## Dependency and platform notes
 
-### 5. Width handling
-
-Upstream files: `width_test.go`, renderer/styled changes.
-
-Commit: `006e29f`.
-
-- [x] Support grapheme clusters wider than 4 columns
-- [x] Add width regression specs for ZWJ sequences and wide clusters
-
-**Completed 2026-10-19.** The `ansi` shard was refreshed to `7beb3d4`, which
-brings its `WcWidth`/`GraphemeWidth` behavior in line with upstream
-`ansi v0.11.9`. `spec/width_spec.cr` covers WcWidth cell layout, placeholder
-columns, ZWJ/flag/skin-tone/family clusters, grapheme widths, and
-`Cell.new_cell` widths. The renderer and styled-string paths no longer cap
-cluster widths.
-
-### 6. Conformance harness (optional but useful)
-
-Upstream files: `internal/conformance/*`.
-
-The new harness fuzzes renderer output against a terminal emulator. It is Go
-tooling, not runtime code. Port it only if the equivalent Crystal renderer
-tests cannot cover the same resize/render cases; otherwise use the corpus as a
-reference when porting section 3.
-
-### 7. Mouse pixel-to-cell conversion
-
-- [x] Port `MousePixelToCell`
-- [x] Add conversion specs for standard, boundary, modifier, zero-pixel, and
-  out-of-window cases
-
-**Completed 2026-10-19.** `Ultraviolet.mouse_pixel_to_cell` converts
-`MouseEncoding::SGRPixel` coordinates using the terminal's reported pixel and
-cell dimensions.
-
-### 8. SizeNotifier compatibility
-
-- [x] Expose `get_window_size` and `get_size`
-- [x] Cover the cell and pixel results without requiring a real TTY
-
-**Completed 2026-10-19.** The Go-compatible method names now delegate to the
-existing `window_size` and `size` implementations.
-
-### 9. Winch signal helpers
-
-- [x] Port `NotifyWinch` using `Signal::WINCH.trap`
-- [x] Add a SIGWINCH forwarding spec
-- [x] Add the Crystal `notify_winch_context` analogue
-- [x] Fan out to multiple listeners and remove one without stopping the others
-
-**Completed 2026-10-19.** `Ultraviolet.notify_winch(channel)` forwards SIGWINCH
-to a buffered channel. `notify_winch_context(channel, stop)` stops forwarding
-when the stop channel receives or closes. A shared hub installs one signal
-handler and fans it out to every active listener. Go uses `context.Context`;
-Crystal uses a stop channel instead.
-
-### 10. Cancelable select reads
-
-- [x] Make `SelectReader#read` interruptible by `cancel`
-- [x] Strengthen the poll spec so cancellation happens while the read blocks
-
-**Completed 2026-10-19.** `SelectReader#read` now reads with a short timeout and
-rechecks the cancel flag, so a blocking read is interrupted without blocking the
-scheduler. The select fd-set helpers also use the platform word size.
-
-### 11. Console compatibility aliases
-
-- [x] Expose `default_console` and `controlling_console`
-- [x] Cover the default alias with a spec
-
-**Completed 2026-10-19.** The Go-compatible names delegate to the existing
-`Console.default` and `Console.controlling` constructors.
-
-### 12. Go-compatible constructor aliases
-
-- [x] Add `new_styled_string`, `new_line`, `new_buffer`, `new_console`
-- [x] Add `new_tab_stops`, `default_tab_stops`
-- [x] Add `new_terminal`, `new_terminal_reader`, `new_terminal_renderer`,
-  `new_terminal_screen`
-- [x] Add `style_diff`
-
-**Completed 2026-10-19.** The Go constructor and diff names now delegate to the
-existing Crystal constructors.
-
-### 13. Go-compatible method aliases
-
-- [x] Add `is_dark` on color events
-- [x] Add `is_stop` on `TabStops`
-- [x] Add `set_logger` on reader and renderer
-- [x] Add renderer `set_*` aliases for its property setters
-
-**Completed 2026-10-19.** The Go method names now delegate to the existing
-predicate and writer methods.
-
-### 14. Dependency and platform notes
-
-- Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
-  for OSC 7501.
+- Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is at `7beb3d4`.
 - Upstream moved to `terminfo v1.0.0`; compare against the current
-  `dsisnero/terminfo` dependency when touching terminal capability lookup.
+  `dsisnero/terminfo` dependency when touching capability lookup.
 - Upstream now requires Go 1.26; this has no direct Crystal equivalent.
 
-## Already-covered delta
-
-The OSC 7501 types, encoder, decoder event, screen accessors, reset/restore
-behavior, styled/buffer fixes, renderer damage model, input-loop fixes, width
-handling, and the audited API follow-ups from `6b8d4ba` are implemented in
-Crystal. Do not re-port them.
-
-## Verification after each chunk
+## Verification after each phase
 
 ```bash
 make format-check
@@ -239,6 +112,5 @@ make lint
 make test
 ```
 
-Update this file and the **Where we are** block in `plans/parity.md` as each
-chunk lands. The next milestone is regenerating the inventory manifests and
-recording the conformance-harness decision.
+Update `plans/parity.md`'s **Where we are** block and this phase plan as each
+phase lands.

@@ -1,36 +1,47 @@
 # Ultraviolet Parity Plan
 
-Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
+Ultraviolet is a Crystal port of the Go
+[ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library.
+The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 
 ## Where we are
 
-- **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
-  — use its checklist as the working order.
-- **Current focus:** the `7cc6674` → `6b8d4ba` vendor delta and its audited
-  follow-ups are ported. Next is inventory cleanup and the optional conformance
-  assessment.
-- **Next up:**
-  1. Regenerate the parity inventories and test manifests against `6b8d4ba`.
-  2. Assess the optional Go conformance harness; port it only if it adds
-     coverage the Crystal renderer specs cannot express.
-  3. Resume upstream tracking when the next vendor snapshot is available.
-- **Chunk status:**
-  - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
-    OSC 7501, program status reset/restore, styled-string/buffer fixes, the
-    renderer damage/resize model, terminal input-loop fixes, width handling,
-    idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
-    `SizeNotifier` compatibility accessors, multi-listener winch signal helpers,
-    cancelable select reads, Console compatibility aliases, and Go constructor
-    and method aliases.
-  - **In progress:** inventory regeneration.
-  - **Remaining:** the optional conformance harness.
-- **Last feature commit:** `8659366` (`port: add Go-compatible constructor aliases`).
+- **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md).
+- **Current focus:** Phase 7, refreshing the parity inventories. The vendor
+  delta and its feature follow-ups are implemented.
+- **Next up (feature-sized phases, one branch/commit each):**
+  1. **Phase 7 — Parity inventory refresh:** regenerate the source/test
+     manifests, reconcile curated inventory rows, and remove drift.
+  2. **Phase 8 — Conformance harness assessment:** decide whether the Go
+     conformance harness adds coverage Crystal specs cannot express, and port
+     only that portion if it does.
+  3. **Phase 9 — Next vendor refresh:** repeat the vendor-update workflow when
+     upstream moves past `6b8d4ba`.
+- **Chunk status:** phases 1–6 complete; phase 7 next; phases 8–9 deferred.
+- **Last feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
 - **Gates:** `make lint` and `make test` pass (`392` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the completed `6b8d4ba` follow-ups)
+> `7cc6674` plus the completed `6b8d4ba` follow-ups).
 
-## Status Overview
+## Feature phases
+
+Each phase is sized for one branch or commit and is tracked in detail in
+[the vendor-update plan](update-vendor-6b8d4ba.md).
+
+| Phase | Feature-sized scope | Status | Evidence |
+|-------|---------------------|--------|----------|
+| 1 | Vendor snapshot + Program Status Protocol (OSC 7501) | ✅ | `b2f6a0b`, `7661bb4`, `28371aa` |
+| 2 | Styled strings + buffer parity | ✅ | `bcdf389` |
+| 3 | Renderer damage + resize model | ✅ | `d6dd62a` |
+| 4 | Terminal I/O robustness: input copy, stop lifecycle, cancelable reads | ✅ | `2a512a2`, `94f85f4`, `b357f5d` |
+| 5 | Width + Unicode layout | ✅ | `f68c0af` |
+| 6 | API surface compatibility: mouse, sizes, winch, aliases | ✅ | `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`, `8659366`, `2a85b32` |
+| 7 | Parity inventory refresh | **Next** | — |
+| 8 | Conformance harness assessment | Deferred | — |
+| 9 | Next vendor refresh | Deferred | — |
+
+## Status overview
 
 | Area | Go Items | Crystal Status |
 |------|----------|----------------|
@@ -50,235 +61,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
-\* Crystal merges Terminal + Screen into one class; Go keeps them separate.
+\* Crystal merges `Terminal` and `Screen`; Go keeps them separate. Crystal also
+extracts `EventScanner` from `TerminalReader`, matching Go's `eventScanner`.
 
-Crystal extracts `EventScanner` from `TerminalReader`, matching Go's
-`eventScanner`. Merging Terminal and Screen is an architectural divergence with
-no behavioral impact.
+## Remaining work (upstream-limited)
 
-## Recent Porting Progress
-
-| Session | Tests Added | Areas |
-|---------|------------|-------|
-| 2026-10-19 | +2 specs | Go-compatible method aliases for color events, tab stops, reader, renderer |
-| 2026-10-19 | +2 specs | Go-compatible constructor and `style_diff` aliases |
-| 2026-10-19 | +1 spec | Multi-listener winch fan-out and independent unsubscribe |
-| 2026-10-19 | +1 spec | Console `DefaultConsole` / `ControllingConsole` aliases |
-| 2026-10-19 | No net new | Poll cancellation spec strengthened to block before cancel |
-| 2026-10-19 | +1 spec | NotifyWinchContext stop-channel analogue |
-| 2026-10-19 | +1 spec | NotifyWinch SIGWINCH forwarding |
-| 2026-10-19 | +1 spec | SizeNotifier `GetWindowSize` / `GetSize` compatibility |
-| 2026-10-19 | +2 specs | Mouse pixel-to-cell conversion and wide-cell reanchor coverage |
-| 2026-10-19 | +2 specs | Terminal stop: safe before start and idempotent |
-| 2026-10-19 | +3 specs | Width handling: WcWidth/GraphemeWidth cell layout, placeholder columns, ZWJ/flag/skin-tone/family clusters, Cell.new_cell |
-| 2026-10-19 | +1 spec | Terminal input loop: reusable read buffer copied before dispatch |
-| 2026-10-19 | +21 specs | Renderer damage/resize: inline/fullscreen resize, repaint latching, drift/autowrap, corner clusters, scroll repaint, short touch lists |
-| 2026-10-19 | +14 specs | Styled strings and buffers: pass-through sequences, combining marks, hyperlink URLs, trailing spaces, wide clusters, RenderBuffer resize/touched |
-| 2026-10-19 | +1 spec | Program status reset/restore parity (`TestTerminalScreenProgramStatus`) |
-| 2026-10-19 | Vendor refreshed | `vendor/ultraviolet` `7cc6674` → `6b8d4ba`; Crystal port unchanged, work tracked in the active plan |
-| 2026-10-19 | +8 specs | Program Status Protocol (OSC 7501): encoding, support event, screen accessors |
-| 2025-05-26 | +42 specs | terminal_screen reset/restore (5), X10 mouse (8), SGR mouse (9), helpers (3), scan_events (3), grapheme buf (2), TerminalReader stream (14) |
-| Manifest | Updated | Source parity (703/704), Port inventory (825/826), Options struct (F1), EventScanner extraction (F2) |
-
-## Completed Items
-
-### F3. TerminalScreen `Reset` completeness ✅
-
-Go emits `KittyKeyboard(0,1)` before exiting alt screen to prevent mis-rendered
-characters. Crystal's `reset` method was missing this emission.
-
-**Fix:** Added `Ansi.kitty_keyboard(0, 1)` emission before
-`ResetModeAltScreenSaveCursor` when alt screen is active and keyboard
-enhancements are configured. Also tightened cursor visibility, cursor color
-reset, background/foreground reset, and progress bar state checks to match Go's
-pattern of writing reset sequences directly rather than going through setters.
-
-**Files changed:** `src/ultraviolet/terminal_screen.cr` (reset method, lines 276-338)
-**Specs:** `spec/terminal_screen_spec.cr` (KittyKeyboard order + restore cycle, lines 69-143)
-
-### F3b. TerminalScreen `Restore` parity ✅
-
-Crystal's `restore` was calling setter methods (`enter_alt_screen`, `set_keyboard_enhancements`, etc.) that mutate internal state. After `reset` cleared state fields, `restore` had nothing to restore.
-
-**Fix:** Rewrote `restore` to emit raw ANSI sequences directly (matching Go's pattern of `sb.WriteString(ansi.SetModeAltScreenSaveCursor)` etc.), never modifying internal state. Also rewrote `reset` to use raw ANSI writes for mouse mode, cursor style, bracketed paste, window title, progress bar, and keyboard enhancements — preserving state for the restore cycle.
-
-**Files changed:** `src/ultraviolet/terminal_screen.cr` (reset lines 276-338, restore lines 340-374)
-**Specs:** `spec/terminal_screen_spec.cr` (2 new: keyboard/cursor restore after reset, lines 91-143)
-
-### F4. `rgbToHSL` / `isDarkColor` color helpers ✅
-
-Already present in Crystal at `src/ultraviolet/event.cr`:
-
-- `Ultraviolet.rgb_to_hsl(r, g, b)` → matches Go's `rgbToHSL`
-- `Ultraviolet.dark_color?(color)` → matches Go's `isDarkColor`
-- `ForegroundColorEvent#dark?`, `BackgroundColorEvent#dark?`, `CursorColorEvent#dark?` all delegate to `Ultraviolet.dark_color?`
-
-No changes needed.
-
-### F5. `StyledString#Lines` parity ✅
-
-Go's `Lines` delegates to `printString(nil, ...)`. Crystal's `lines` uses inline
-logic with the same helper functions (`handle_escape`, `read_print_segment`,
-`TextSegment.each_grapheme`). Behavior is equivalent for ANSI SGR/OSC parsing,
-grapheme segmentation, and line decomposition.
-
-No changes needed.
-
-### F6. Buffer concurrent resize safety ✅
-
-Go commit `29fb728` added a bounds re-check in `TouchLine` to guard against
-concurrent resize clearing the `Touched` slice. Crystal's `touch_line` method
-already has this guard (`return if y >= @touched.size` on line 586 of
-`buffer.cr`).
-
-Go commit `7b43eda` removed the `maxCellWidth` traversal limit for wide cells.
-Crystal's `clear_wide_left` never had a limit — it uses `while x - j >= 0`.
-
-No changes needed.
-
-### F7. Program Status Protocol (OSC 7501) ✅
-
-Added typed program status support: `Ansi::ProgramStatus` encoding from the
-`ansi` shard, `Ultraviolet::ProgramStatusSupportEvent` for `OSC 7501;?` replies,
-and `TerminalScreen#set_program_status` / `#program_status`.
-
-**Files changed:** `src/ultraviolet/program_status.cr`,
-`src/ultraviolet/decoder.cr`, `src/ultraviolet/event.cr`,
-`src/ultraviolet/terminal_screen.cr`
-**Specs:** `spec/program_status_spec.cr` (9 examples)
-**Tracking:** [`plans/ultraviolet.1.md`](ultraviolet.1.md)
-**Divergence:** none. Upstream `6b8d4ba` provides the types through
-`charmbracelet/x/ansi`; the Crystal port uses the `ansi` shard for the same
-types. `reset` leaves the program status record in place and `restore` re-emits
-it, matching upstream.
-
-### F8. Styled strings and buffers (vendor `6b8d4ba`) ✅
-
-Ported the `6b8d4ba` styled-string and buffer behavior: terminated APC/DCS/SOS/PM
-pass-through sequences, combining-mark folding, unbounded `Lines`, semicolons in
-hyperlink URLs, clusters wider than four columns, trailing-space preservation in
-`Line#render`, and the `RenderBuffer` resize/touched-row invariant.
-
-**Files changed:** `src/ultraviolet/styled.cr`,
-`src/ultraviolet/buffer.cr`, `src/ultraviolet/terminal_screen.cr`
-**Specs:** `spec/styled_spec.cr`, `spec/buffer_spec.cr`,
-`spec/ultraviolet_spec.cr`
-
-### F9. Renderer damage and resize model (vendor `6b8d4ba`) ✅
-
-Ported the renderer's damage record and resize reconciliation: latching real
-terminal size changes, repainting after fullscreen/inline resizes, erasing only
-the rows an inline frame gives up, keeping drift-prone rows from wrapping, and
-marking rows moved by hardware scrolls.
-
-**Files changed:** `src/ultraviolet/terminal_renderer.cr`,
-`src/ultraviolet/terminal_renderer_hardscroll.cr`,
-`src/ultraviolet/terminal_renderer_hashmap.cr`,
-`src/ultraviolet/buffer.cr`
-**Specs:** `spec/terminal_renderer_resize_spec.cr`,
-`spec/terminal_renderer_spec.cr`, `spec/terminal_renderer_output_spec.cr`
-
-### F10. Terminal input loop (vendor `6b8d4ba`) ✅
-
-The Crystal reader now reuses a single read buffer and copies each chunk before
-sending it to the event loop, matching upstream's input-loop fix. The input loop
-already captured a stable local reader reference, so the Go stop-time nil
-dereference has no Crystal equivalent; a comment records the invariant.
-
-**Files changed:** `src/ultraviolet/terminal_reader.cr`,
-`src/ultraviolet/terminal.cr`
-**Specs:** `spec/terminal_reader_spec.cr`
-
-### F11. Width handling (vendor `6b8d4ba`) ✅
-
-Refreshed the `ansi` shard to `7beb3d4` for `WcWidth`/`GraphemeWidth` parity
-with upstream `ansi v0.11.9`, and added width regression specs for clusters
-wider than four columns, placeholder columns, and `Cell.new_cell`.
-
-**Dependency:** `ansi` shard `7beb3d4` (`shard.lock` is gitignored)
-**Specs:** `spec/width_spec.cr`
-
-### F12. Terminal stop lifecycle (vendor `6b8d4ba`) ✅
-
-Ported `TestStopBeforeStart` and `TestStopIdempotent`. `Terminal#stop` now returns
-quietly when the terminal is not running instead of raising `ErrNotRunning`, so
-shutdown paths can call it safely before `Start` or more than once.
-
-**Files changed:** `src/ultraviolet/terminal.cr`
-**Specs:** `spec/terminal_spec.cr`
-
-### F13. Mouse pixel-to-cell conversion ✅
-
-Ported `MousePixelToCell` for `MouseEncoding::SGRPixel` input, preserving button
-and modifier state while converting pixel coordinates through the terminal's
-reported cell and pixel dimensions. Also added the wide-cell reanchor regression.
-
-**Files changed:** `src/ultraviolet/mouse.cr`
-**Specs:** `spec/mouse_spec.cr`, `spec/terminal_renderer_resize_spec.cr`
-
-### F14. SizeNotifier compatibility accessors ✅
-
-Ported the exported `GetWindowSize` and `GetSize` names as `get_window_size` and
-`get_size`, delegating to the existing cell/pixel size implementation. Covered
-with a stub notifier so the spec does not require a real TTY.
-
-**Files changed:** `src/ultraviolet/winch.cr`
-**Specs:** `spec/terminal_spec.cr`
-
-### F15. Winch signal forwarding ✅
-
-Ported `NotifyWinch` as `Ultraviolet.notify_winch(channel : Channel(Nil))`.
-A single SIGWINCH handler fans out to every active listener, and
-`notify_winch_context(channel, stop)` removes only its own listener when the stop
-channel receives or closes. Crystal uses a stop channel instead of
-`context.Context`.
-
-**Files changed:** `src/ultraviolet/tty.cr`
-**Specs:** `spec/tty_spec.cr`
-
-### F16. Cancelable select reads ✅
-
-`SelectReader#read` now reads in short timeout slices and rechecks the cancel
-flag, so `cancel` interrupts a blocked read and the scheduler keeps running.
-Strengthened the poll spec to cancel before any data is written, matching the
-updated upstream test. Also corrected the select fd-set helpers to use the
-platform word size.
-
-**Files changed:** `src/ultraviolet/poll.cr`
-**Specs:** `spec/poll_spec.cr`
-
-### F17. Console compatibility aliases ✅
-
-Added Go-compatible `Console.default_console` and `Console.controlling_console`
-names, delegating to the existing constructors. Covered the default alias with
-a spec.
-
-**Files changed:** `src/ultraviolet/console.cr`
-**Specs:** `spec/console_spec.cr`
-
-### F18. Go-compatible constructor aliases ✅
-
-Added direct Go-name aliases for `new_styled_string`, `new_line`, `new_buffer`,
-`new_console`, `new_tab_stops`, `default_tab_stops`, `new_terminal`,
-`new_terminal_reader`, `new_terminal_renderer`, `new_terminal_screen`, and
-`style_diff`.
-
-**Files changed:** `src/ultraviolet/{styled,buffer,console,tabstop,terminal,terminal_reader,terminal_renderer,terminal_screen,style}.cr`
-**Specs:** `spec/go_compat_aliases_spec.cr`
-
-### F19. Go-compatible method aliases ✅
-
-Added `is_dark` on color events, `TabStops#is_stop`, `set_logger` on the reader
-and renderer, and renderer `set_*` aliases for scroll optimization, newline
-mapping, backspace, tab stops, fullscreen, and relative cursor.
-
-**Files changed:** `src/ultraviolet/event.cr`, `src/ultraviolet/tabstop.cr`,
-`src/ultraviolet/terminal_reader.cr`, `src/ultraviolet/terminal_renderer.cr`
-**Specs:** `spec/go_method_aliases_spec.cr`
-
-## Remaining Work (Upstream-Limited)
-
-All 8 remaining Crystal TODOs match Go's TODOs verbatim. These are open
+All 8 remaining Crystal TODOs match Go's TODOs verbatim. They are open
 investigations in both codebases, not porting gaps:
 
 | Crystal Line | Go Line | Description |
@@ -292,60 +80,35 @@ investigations in both codebases, not porting gaps:
 | `terminal_renderer.cr:1079` | `terminal_renderer.go:1349` | Unintentional scrolling guard |
 | `terminal_renderer.cr:1109` | `terminal_renderer.go:1383` | Linux console terminal edge case |
 
-Next update cycle when upstream addresses these TODOs and/or commits new features.
+Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
 
-### Architectural Divergences (Deferred)
+## Architectural divergences
 
-### F1. Terminal `Options` struct
+- Crystal merges Go's `Terminal` and `Screen` responsibilities into
+  `TerminalScreen`.
+- `NotifyWinchContext` uses a stop channel because Crystal has no
+  `context.Context`.
+- ANSI parsing, width tables, and terminfo come from Crystal shards rather than
+  direct ports.
+- The Go conformance harness is tooling, not runtime code; Phase 8 decides
+  whether any of it should be ported.
 
-Go has `Options` struct with `BufferSize`, `EventTimeout`, `LegacyKeyEncoding`,
-`LookupKeys`, `UseTerminfoKeys`. Crystal hardcodes defaults directly in
-`Terminal` and `TerminalReader`. Adding an `Options` struct would be a public API
-change.
+## Test coverage
 
-### F2. eventScanner extraction ✅
-
-Go refactored event scanning into a separate `eventScanner` struct. Crystal's
-`TerminalReader` kept scanning logic inline.
-
-**Fix:** Extracted `EventScanner` class from `TerminalReader`, matching Go's
-`eventScanner` struct. EventScanner extends `EventDecoder` and contains:
-scan_events (public), deserialize_win32_input, parse_win32_sequence,
-encode_grapheme_bufs, store_grapheme_rune, control_char?, logf.
-TerminalReader now holds an `@scanner` field and delegates event scanning.
-State (lookup, logger) is synchronized between TerminalReader and scanner.
-
-**Files changed:** `src/ultraviolet/event_scanner.cr` (new), `src/ultraviolet/terminal_reader.cr` (refactored to delegate)
-**Specs:** Updated `TestTerminalReader` to delegate through `@scanner`
-
-## Test Parity Status
-
-All 18 Go test files covered by Crystal specs (381 total):
-
-| Go Test File (Go tests) | Crystal Spec Status |
-|---|---|
-| `border_test.go` (5) | `border_spec.cr` |
-| `buffer_test.go` (8) | `buffer_spec.cr` |
-| `cancelreader_test.go` (1) | `cancelreader_spec.cr` |
-| `cell_test.go` (3) | `style_spec.cr` |
-| `cursor_test.go` (1) | `cursor_spec.cr` |
-| `decoder_test.go` (7) | `decoder_spec.cr` + `decoder_function_spec.cr` |
-| `event_test.go` (10) | `event_spec.cr` |
-| `key_test.go` (17) | `key_spec.cr` + `decoder_*_spec.cr` + `terminal_reader_*_spec.cr` |
-| `poll_default_test.go` (1) | `poll_spec.cr` |
-| `poll_fallback_test.go` (2) | `poll_fallback_spec.cr` |
-| `poll_test.go` (1) | `poll_spec.cr` |
-| `terminal_renderer_output_test.go` (1) | `terminal_renderer_output_spec.cr` |
-| `terminal_renderer_test.go` (41) | `terminal_renderer_spec.cr` |
-| `terminal_test.go` (5) | `terminal_spec.cr` |
-| `layout/layout_test.go` (5) | `layout_spec.cr` |
-| `styled_test.go` (2) | `styled_spec.cr` |
-| `tabstop_test.go` (5) | `tabstop_spec.cr` |
-| `screen/screen_test.go` (9) | `screen_spec.cr` |
+| Area | Primary specs |
+|------|---------------|
+| Core types and buffers | `border_spec.cr`, `buffer_spec.cr`, `style_spec.cr`, `event_spec.cr`, `key_spec.cr` |
+| Terminal screen and lifecycle | `terminal_screen_spec.cr`, `terminal_spec.cr`, `terminal_reader_spec.cr` |
+| Renderer | `terminal_renderer_spec.cr`, `terminal_renderer_output_spec.cr`, `terminal_renderer_resize_spec.cr` |
+| Styled strings and width | `styled_spec.cr`, `width_spec.cr`, `program_status_spec.cr` |
+| I/O and platform | `poll_spec.cr`, `poll_fallback_spec.cr`, `cancelreader_spec.cr`, `tty_spec.cr`, `console_spec.cr`, `mouse_spec.cr` |
+| Compatibility aliases | `go_compat_aliases_spec.cr`, `go_method_aliases_spec.cr` |
 
 ## Guardrails
 
 - Do not weaken upstream tests or fixtures to make Crystal look green.
 - Preserve behaviorally important internal data structures.
-- Run `crystal spec` after each feature change.
+- Run `make format-check`, `make lint`, and `make test` after each phase.
 - Update `go_port_inventory.tsv` rows as features close.
+- Keep phase scopes feature-sized; do not promote aliases or one-off fixes to
+  their own phase.
