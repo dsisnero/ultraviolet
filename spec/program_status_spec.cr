@@ -3,12 +3,12 @@ require "./spec_helper"
 describe "Program Status Protocol (OSC 7501)" do
   it "encodes program statuses" do
     tests = [
-      {"minimal", Ansi::ProgramStatus.new(state: Ansi::ProgramStateWorking), "\e]7501;state=working\a"},
+      {"minimal", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Working), "\e]7501;state=working\a"},
       {
         "spec example",
         Ansi::ProgramStatus.new(
-          state: Ansi::ProgramStateBlocked,
-          kind: Ansi::ProgramStatusKindPermission,
+          state: Ansi::ProgramState::Blocked,
+          kind: Ansi::ProgramStatusKind::Permission,
           app: "terraform",
           message: "Apply 3 to add, 1 to change, 0 to destroy?",
         ),
@@ -17,7 +17,7 @@ describe "Program Status Protocol (OSC 7501)" do
       {
         "all keys",
         Ansi::ProgramStatus.new(
-          state: Ansi::ProgramStateWorking,
+          state: Ansi::ProgramState::Working,
           id: "us-east",
           title: "US East",
           progress: 40,
@@ -26,21 +26,21 @@ describe "Program Status Protocol (OSC 7501)" do
         ),
         "\e]7501;state=working:id=us-east:progress=40:title=VVMgRWFzdA==:msg=UHVzaGluZyBpbWFnZQ==\a",
       },
-      {"progress clamped", Ansi::ProgramStatus.new(state: Ansi::ProgramStateBlocked, progress: 300, has_progress: true), "\e]7501;state=blocked:progress=100\a"},
-      {"zero progress", Ansi::ProgramStatus.new(state: Ansi::ProgramStateWorking, has_progress: true), "\e]7501;state=working:progress=0\a"},
-      {"progress ignored for done", Ansi::ProgramStatus.new(state: Ansi::ProgramStateDone, progress: 50, has_progress: true), "\e]7501;state=done\a"},
-      {"kind ignored for working", Ansi::ProgramStatus.new(state: Ansi::ProgramStateWorking, kind: Ansi::ProgramStatusKindAuth), "\e]7501;state=working\a"},
-      {"unknown kind omitted", Ansi::ProgramStatus.new(state: Ansi::ProgramStateBlocked, kind: "nope"), "\e]7501;state=blocked\a"},
-      {"invalid app omitted", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, app: "my app"), "\e]7501;state=idle\a"},
-      {"control chars stripped", Ansi::ProgramStatus.new(state: Ansi::ProgramStateError, message: "  a\n\tb\e]2;x\a \u009bc  "), "\e]7501;state=error:msg=#{Base64.strict_encode("a b ]2;x   c")}\a"},
-      {"only control chars", Ansi::ProgramStatus.new(state: Ansi::ProgramStateError, message: "\n\n"), "\e]7501;state=error\a"},
-      {"clear ignores fields", Ansi::ProgramStatus.new(state: Ansi::ProgramStateClear, app: "x", message: "y"), Ansi::ClearProgramStatus},
-      {"unknown state", Ansi::ProgramStatus.new(state: "busy"), ""},
-      {"invalid id char", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, id: "a b"), ""},
-      {"invalid id empty segment", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, id: "a//b"), ""},
-      {"invalid id depth", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, id: "a/b/c/d/e/f/g/h/i"), ""},
-      {"invalid id segment length", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, id: "a" * 33), ""},
-      {"nested id", Ansi::ProgramStatus.new(state: Ansi::ProgramStateIdle, id: "build/test"), "\e]7501;state=idle:id=build/test\a"},
+      {"progress clamped", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Blocked, progress: 300, has_progress: true), "\e]7501;state=blocked:progress=100\a"},
+      {"zero progress", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Working, has_progress: true), "\e]7501;state=working:progress=0\a"},
+      {"progress ignored for done", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Done, progress: 50, has_progress: true), "\e]7501;state=done\a"},
+      {"kind ignored for working", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Working, kind: Ansi::ProgramStatusKind::Auth), "\e]7501;state=working\a"},
+      {"unknown kind omitted", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Blocked, kind: Ansi::ProgramStatusKind.new("nope")), "\e]7501;state=blocked\a"},
+      {"invalid app omitted", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, app: "my app"), "\e]7501;state=idle\a"},
+      {"control chars stripped", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Error, message: "  a\n\tb\e]2;x\a \u009bc  "), "\e]7501;state=error:msg=#{Base64.strict_encode("a b ]2;x   c")}\a"},
+      {"only control chars", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Error, message: "\n\n"), "\e]7501;state=error\a"},
+      {"clear ignores fields", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Clear, app: "x", message: "y"), Ansi::ClearProgramStatus},
+      {"unknown state", Ansi::ProgramStatus.new(state: Ansi::ProgramState.new("busy")), ""},
+      {"invalid id char", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, id: "a b"), ""},
+      {"invalid id empty segment", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, id: "a//b"), ""},
+      {"invalid id depth", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, id: "a/b/c/d/e/f/g/h/i"), ""},
+      {"invalid id segment length", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, id: "a" * 33), ""},
+      {"nested id", Ansi::ProgramStatus.new(state: Ansi::ProgramState::Idle, id: "build/test"), "\e]7501;state=idle:id=build/test\a"},
     ]
 
     tests.each do |name, status, expected|
@@ -50,7 +50,7 @@ describe "Program Status Protocol (OSC 7501)" do
 
   it "truncates program status text without splitting a rune" do
     message = "x" + ("é" * 1100)
-    seq = Ansi.set_program_status(Ansi::ProgramStatus.new(state: Ansi::ProgramStateDone, message: message))
+    seq = Ansi.set_program_status(Ansi::ProgramStatus.new(state: Ansi::ProgramState::Done, message: message))
     encoded = seq.lchop("\e]7501;state=done:msg=").rchop("\a")
     Base64.decode(encoded).size.should eq(2047)
     seq.bytesize.should be <= 4096
@@ -67,15 +67,16 @@ describe "Program Status Protocol (OSC 7501)" do
     Ultraviolet::ProgramStatus.should eq(Ansi::ProgramStatus)
     Ultraviolet::ProgramState.should eq(Ansi::ProgramState)
     Ultraviolet::ProgramStatusKind.should eq(Ansi::ProgramStatusKind)
-    Ultraviolet::ProgramStateIdle.should eq("idle")
-    Ultraviolet::ProgramStateWorking.should eq("working")
-    Ultraviolet::ProgramStateDone.should eq("done")
-    Ultraviolet::ProgramStateBlocked.should eq("blocked")
-    Ultraviolet::ProgramStateError.should eq("error")
-    Ultraviolet::ProgramStateClear.should eq("clear")
-    Ultraviolet::ProgramStatusKindPermission.should eq("permission")
-    Ultraviolet::ProgramStatusKindQuestion.should eq("question")
-    Ultraviolet::ProgramStatusKindAuth.should eq("auth")
+    Ultraviolet::ProgramStateIdle.should eq(Ansi::ProgramState::Idle)
+    Ultraviolet::ProgramStateWorking.should eq(Ansi::ProgramState::Working)
+    Ultraviolet::ProgramStateDone.should eq(Ansi::ProgramState::Done)
+    Ultraviolet::ProgramStateBlocked.should eq(Ansi::ProgramState::Blocked)
+    Ultraviolet::ProgramStateError.should eq(Ansi::ProgramState::Error)
+    Ultraviolet::ProgramStateClear.should eq(Ansi::ProgramState::Clear)
+    Ultraviolet::ProgramStatusKindPermission.should eq(Ansi::ProgramStatusKind::Permission)
+    Ultraviolet::ProgramStatusKindQuestion.should eq(Ansi::ProgramStatusKind::Question)
+    Ultraviolet::ProgramStatusKindAuth.should eq(Ansi::ProgramStatusKind::Auth)
+    Ultraviolet::ProgramStateIdle.to_s.should eq("idle")
   end
 
   it "encodes ultraviolet program statuses, including clearing" do
