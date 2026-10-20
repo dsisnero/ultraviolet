@@ -58,14 +58,14 @@ buffer.go::method::Lines.Height	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::Lines.Render	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::Lines.String	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::Lines.Width	method	ported	src/ultraviolet/buffer.cr	ported
-buffer.go::method::RenderBuffer.Clear	method	missing	-	audit pending
-buffer.go::method::RenderBuffer.ClearArea	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.Clear	method	ported	src/ultraviolet/buffer.cr	inherited/shared RenderBuffer implementation
+buffer.go::method::RenderBuffer.ClearArea	method	ported	src/ultraviolet/buffer.cr	inherited/shared RenderBuffer implementation
 buffer.go::method::RenderBuffer.DeleteCell	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.DeleteCellArea	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.DeleteLine	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.DeleteLineArea	method	ported	src/ultraviolet/buffer.cr	ported
-buffer.go::method::RenderBuffer.Fill	method	missing	-	audit pending
-buffer.go::method::RenderBuffer.FillArea	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.Fill	method	ported	src/ultraviolet/buffer.cr	inherited/shared RenderBuffer implementation
+buffer.go::method::RenderBuffer.FillArea	method	ported	src/ultraviolet/buffer.cr	inherited/shared RenderBuffer implementation
 buffer.go::method::RenderBuffer.InsertCell	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.InsertLine	method	ported	src/ultraviolet/buffer.cr	ported
@@ -90,9 +90,9 @@ buffer_test.go::test::TestBufferUniseg	test	ported	spec/buffer_spec.cr	ported
 buffer_test.go::test::TestLineRenderLine	test	ported	spec/buffer_spec.cr	ported
 buffer_test.go::test::TestLineSet	test	ported	spec/buffer_spec.cr	ported
 buffer_test.go::test::TestLineString	test	ported	spec/buffer_spec.cr	ported
-buffer_test.go::test::TestRenderLinePreservesStyledTrailingSpaces	test	missing	-	audit pending
-buffer_test.go::test::TestRenderLinePreservesTrailingSpaces	test	missing	-	audit pending
-buffer_test.go::test::TestRenderLineWideCellTail	test	missing	-	audit pending
+buffer_test.go::test::TestRenderLinePreservesStyledTrailingSpaces	test	ported	spec/buffer_spec.cr	Line render/trailing-space spec
+buffer_test.go::test::TestRenderLinePreservesTrailingSpaces	test	ported	spec/buffer_spec.cr	Line render/trailing-space spec
+buffer_test.go::test::TestRenderLineWideCellTail	test	ported	spec/buffer_spec.cr	Line render/trailing-space spec
 buffer_test.go::test::TestScreenBuffer	test	ported	spec/buffer_spec.cr	ported
 cancelreader_other.go::func::NewCancelReader	func	ported	src/ultraviolet/cancelreader.cr	ported
 cancelreader_test.go::test::TestNewCancelReader	test	ported	spec/cancelreader_spec.cr	ported
@@ -145,9 +145,9 @@ cell.go::struct::Link	struct	ported	src/ultraviolet/cell.cr	ported
 cell.go::struct::Style	struct	ported	src/ultraviolet/cell.cr	ported
 cell.go::type::Underline	type	ported	src/ultraviolet/cell.cr	ported
 cell.go::type::UnderlineStyle	type	ported	src/ultraviolet/cell.cr	ported
-cell_iszero_test.go::test::TestCellIsZero_NilColorDoesNotHang	test	missing	-	audit pending
-cell_iszero_test.go::test::TestCellIsZero_RecursiveColorPanicsOrHangs	test	missing	-	audit pending
-cell_iszero_test.go::test::TestStyleIsZero_RecursiveColorPanicsOrHangs	test	missing	-	audit pending
+cell_iszero_test.go::test::TestCellIsZero_NilColorDoesNotHang	test	intentional_divergence	-	Crystal value types use field-based zero?; no recursive interface equality
+cell_iszero_test.go::test::TestCellIsZero_RecursiveColorPanicsOrHangs	test	intentional_divergence	-	Crystal value types use field-based zero?; no recursive interface equality
+cell_iszero_test.go::test::TestStyleIsZero_RecursiveColorPanicsOrHangs	test	intentional_divergence	-	Crystal value types use field-based zero?; no recursive interface equality
 cell_test.go::test::TestConvertLink	test	ported	spec/style_spec.cr	ported
 cell_test.go::test::TestConvertStyle	test	ported	spec/style_spec.cr	ported
 cell_test.go::test::TestStyleDiff	test	ported	spec/style_spec.cr	ported
@@ -301,88 +301,88 @@ event_test.go::test::TestMouseEventMethods	test	ported	spec/event_spec.cr	ported
 event_test.go::test::TestMultiEventString	test	ported	spec/event_spec.cr	ported
 event_test.go::test::TestSizeBounds	test	ported	spec/event_spec.cr	ported
 event_test.go::test::TestUnknownEventString	test	ported	spec/event_spec.cr	ported
-examples/advanced/boxes/main.go::func::NewApp	func	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.ActiveID	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.BringToFront	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.CreateWindow	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.DestroyWindow	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.Draw	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.HandleEvent	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.ParentID	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.Resize	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.Run	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.SetActiveID	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::App.Window	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::AppWindow.Bounds	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::AppWindow.Context	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::AppWindow.Draw	method	missing	-	audit pending
-examples/advanced/boxes/main.go::method::AppWindow.Resize	method	missing	-	audit pending
-examples/advanced/boxes/main.go::struct::App	struct	missing	-	audit pending
-examples/advanced/boxes/main.go::struct::AppWindow	struct	missing	-	audit pending
-examples/advanced/boxes/main.go::type::EventHandler	type	missing	-	audit pending
-examples/advanced/image/main.go::method::imageEncoding.String	method	missing	-	audit pending
-examples/advanced/splits/main.go::struct::Named	struct	missing	-	audit pending
-examples/advanced/splits/main.go::struct::Pair	struct	missing	-	audit pending
-grapheme_width_test.go::test::TestGraphemeWidthGating	test	missing	-	audit pending
-grapheme_width_test.go::test::TestGraphemeWidthGatingPreservesOverride	test	missing	-	audit pending
-grapheme_width_test.go::test::TestGraphemeWidthNegotiation	test	missing	-	audit pending
-grapheme_width_test.go::test::TestGraphemeWidthOverride	test	missing	-	audit pending
-internal/casso/casso_test.go::test::TestConstraint	test	missing	-	audit pending
-internal/casso/casso_test.go::test::TestConstraintRequiringArtificialVariable	test	missing	-	audit pending
-internal/casso/casso_test.go::test::TestSymbol	test	missing	-	audit pending
-internal/casso/math.go::const::EQ	const	missing	-	audit pending
-internal/casso/math.go::const::GTE	const	missing	-	audit pending
-internal/casso/math.go::const::LTE	const	missing	-	audit pending
-internal/casso/math.go::func::New	func	missing	-	audit pending
-internal/casso/math.go::func::NewConstraint	func	missing	-	audit pending
-internal/casso/math.go::method::Symbol.T	method	missing	-	audit pending
-internal/casso/math.go::struct::Constraint	struct	missing	-	audit pending
-internal/casso/math.go::struct::Term	struct	missing	-	audit pending
-internal/casso/math.go::type::Op	type	missing	-	audit pending
-internal/casso/math.go::type::Priority	type	missing	-	audit pending
-internal/casso/math.go::type::Symbol	type	missing	-	audit pending
-internal/casso/solver.go::func::NewSolver	func	missing	-	audit pending
-internal/casso/solver.go::method::Solver.Add	method	missing	-	audit pending
-internal/casso/solver.go::method::Solver.Val	method	missing	-	audit pending
-internal/casso/solver.go::struct::Solver	struct	missing	-	audit pending
-internal/conformance/corpus_test.go::test::TestCollapseThenDrawIsReachable	test	missing	-	audit pending
-internal/conformance/corpus_test.go::test::TestCorpusDecodesStably	test	missing	-	audit pending
-internal/conformance/corpus_test.go::test::TestOpTableCoversEveryKind	test	missing	-	audit pending
-internal/conformance/corpus_test.go::test::TestSeedsDecodeToTheProgramsTheyDescribe	test	missing	-	audit pending
-internal/conformance/fuzz_test.go::test::TestInlineSeedOccupiesTheRowsItClaims	test	missing	-	audit pending
-internal/conformance/fuzz_test.go::test::TestInlineShrinkLeavesTheFramesOwnRows	test	missing	-	audit pending
-internal/conformance/program.go::const::InlineRowsAbove	const	missing	-	audit pending
-internal/conformance/program.go::const::InlineSeedWidth	const	missing	-	audit pending
-internal/conformance/program.go::const::InlineTermHeight	const	missing	-	audit pending
-internal/conformance/program.go::const::MinResizeH	const	missing	-	audit pending
-internal/conformance/program.go::const::MinResizeW	const	missing	-	audit pending
-internal/conformance/program.go::const::OpClear	const	missing	-	audit pending
-internal/conformance/program.go::const::OpDrawLine	const	missing	-	audit pending
-internal/conformance/program.go::const::OpErase	const	missing	-	audit pending
-internal/conformance/program.go::const::OpMoveTo	const	missing	-	audit pending
-internal/conformance/program.go::const::OpRedraw	const	missing	-	audit pending
-internal/conformance/program.go::const::OpRender	const	missing	-	audit pending
-internal/conformance/program.go::const::OpResize	const	missing	-	audit pending
-internal/conformance/program.go::func::CorpusAlphabet	func	missing	-	audit pending
-internal/conformance/program.go::func::DecodeProgram	func	missing	-	audit pending
-internal/conformance/program.go::func::DriftClusters	func	missing	-	audit pending
-internal/conformance/program.go::func::Seeds	func	missing	-	audit pending
-internal/conformance/program.go::method::OpKind.String	method	missing	-	audit pending
-internal/conformance/program.go::method::Program.String	method	missing	-	audit pending
-internal/conformance/program.go::struct::Op	struct	missing	-	audit pending
-internal/conformance/program.go::struct::Program	struct	missing	-	audit pending
-internal/conformance/program.go::type::OpKind	type	missing	-	audit pending
-internal/conformance/program_test.go::test::TestDecodeProgramIsDeterministic	test	missing	-	audit pending
-internal/conformance/program_test.go::test::TestDecodeProgramTotal	test	missing	-	audit pending
-internal/conformance/program_test.go::test::TestDriftPremise	test	missing	-	audit pending
-internal/conformance/program_test.go::test::TestFuzzTargetsRunSeeds	test	missing	-	audit pending
-internal/conformance/program_test.go::test::TestInlineFramesFitTheTerminal	test	missing	-	audit pending
-internal/conformance/program_test.go::test::TestSeedCorpusIsInteresting	test	missing	-	audit pending
-internal/conformance/reflow_test.go::test::TestReflowAcrossShrinkAndGrow	test	missing	-	audit pending
-internal/lru/lru.go::method::V].Add	method	missing	-	audit pending
-internal/lru/lru.go::method::V].Get	method	missing	-	audit pending
-internal/lru/lru.go::struct::LRU	struct	missing	-	audit pending
-internal/lru/lru_test.go::test::TestLRU	test	missing	-	audit pending
+examples/advanced/boxes/main.go::func::NewApp	func	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.ActiveID	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.BringToFront	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.CreateWindow	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.DestroyWindow	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.Draw	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.HandleEvent	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.ParentID	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.Resize	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.Run	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.SetActiveID	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::App.Window	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::AppWindow.Bounds	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::AppWindow.Context	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::AppWindow.Draw	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::method::AppWindow.Resize	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::struct::App	struct	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::struct::AppWindow	struct	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/boxes/main.go::type::EventHandler	type	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/image/main.go::method::imageEncoding.String	method	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/splits/main.go::struct::Named	struct	intentional_divergence	-	upstream example; not part of shard runtime
+examples/advanced/splits/main.go::struct::Pair	struct	intentional_divergence	-	upstream example; not part of shard runtime
+grapheme_width_test.go::test::TestGraphemeWidthGating	test	ported	spec/terminal_screen_spec.cr	grapheme width negotiation/override coverage
+grapheme_width_test.go::test::TestGraphemeWidthGatingPreservesOverride	test	ported	spec/terminal_screen_spec.cr	grapheme width negotiation/override coverage
+grapheme_width_test.go::test::TestGraphemeWidthNegotiation	test	ported	spec/terminal_screen_spec.cr	grapheme width negotiation/override coverage
+grapheme_width_test.go::test::TestGraphemeWidthOverride	test	ported	spec/terminal_screen_spec.cr	grapheme width negotiation/override coverage
+internal/casso/casso_test.go::test::TestConstraint	test	ported	spec/casso_spec.cr	Casso behavior covered by Crystal spec
+internal/casso/casso_test.go::test::TestConstraintRequiringArtificialVariable	test	ported	spec/casso_spec.cr	Casso behavior covered by Crystal spec
+internal/casso/casso_test.go::test::TestSymbol	test	ported	spec/casso_spec.cr	Casso behavior covered by Crystal spec
+internal/casso/math.go::const::EQ	const	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::const::GTE	const	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::const::LTE	const	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::func::New	func	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::func::NewConstraint	func	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::method::Symbol.T	method	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::struct::Constraint	struct	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::struct::Term	struct	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::type::Op	type	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::type::Priority	type	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/math.go::type::Symbol	type	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/solver.go::func::NewSolver	func	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/solver.go::method::Solver.Add	method	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/solver.go::method::Solver.Val	method	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/casso/solver.go::struct::Solver	struct	ported	src/ultraviolet/casso.cr	ported in Casso module
+internal/conformance/corpus_test.go::test::TestCollapseThenDrawIsReachable	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/corpus_test.go::test::TestCorpusDecodesStably	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/corpus_test.go::test::TestOpTableCoversEveryKind	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/corpus_test.go::test::TestSeedsDecodeToTheProgramsTheyDescribe	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/fuzz_test.go::test::TestInlineSeedOccupiesTheRowsItClaims	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/fuzz_test.go::test::TestInlineShrinkLeavesTheFramesOwnRows	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::InlineRowsAbove	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::InlineSeedWidth	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::InlineTermHeight	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::MinResizeH	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::MinResizeW	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpClear	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpDrawLine	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpErase	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpMoveTo	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpRedraw	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpRender	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::const::OpResize	const	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::func::CorpusAlphabet	func	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::func::DecodeProgram	func	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::func::DriftClusters	func	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::func::Seeds	func	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::method::OpKind.String	method	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::method::Program.String	method	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::struct::Op	struct	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::struct::Program	struct	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program.go::type::OpKind	type	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestDecodeProgramIsDeterministic	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestDecodeProgramTotal	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestDriftPremise	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestFuzzTargetsRunSeeds	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestInlineFramesFitTheTerminal	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/program_test.go::test::TestSeedCorpusIsInteresting	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/conformance/reflow_test.go::test::TestReflowAcrossShrinkAndGrow	test	intentional_divergence	-	Go conformance tooling; Phase 9 assessment
+internal/lru/lru.go::method::V].Add	method	ported	src/ultraviolet/casso.cr	ported as Casso::LRU
+internal/lru/lru.go::method::V].Get	method	ported	src/ultraviolet/casso.cr	ported as Casso::LRU
+internal/lru/lru.go::struct::LRU	struct	ported	src/ultraviolet/casso.cr	ported as Casso::LRU
+internal/lru/lru_test.go::test::TestLRU	test	ported	spec/lru_spec.cr	Casso::LRU behavior covered by Crystal spec
 key.go::const::KeyBackspace	const	ported	src/ultraviolet/key.cr	ported
 key.go::const::KeyBegin	const	ported	src/ultraviolet/key.cr	ported
 key.go::const::KeyCapsLock	const	ported	src/ultraviolet/key.cr	ported
@@ -563,56 +563,56 @@ key_test.go::test::TestReadInput	test	ported	spec/terminal_reader_stream_spec.cr
 key_test.go::test::TestReadLongInput	test	ported	spec/terminal_reader_stream_spec.cr	ported
 key_test.go::test::TestSplitReads	test	ported	spec/terminal_reader_stream_spec.cr	ported
 key_test.go::test::TestSplitSequences	test	ported	spec/terminal_reader_stream_spec.cr	ported
-layout/constraint.go::method::Fill.String	method	missing	-	audit pending
-layout/constraint.go::method::Len.String	method	missing	-	audit pending
-layout/constraint.go::method::Max.String	method	missing	-	audit pending
-layout/constraint.go::method::Min.String	method	missing	-	audit pending
-layout/constraint.go::method::Percent.String	method	missing	-	audit pending
-layout/constraint.go::method::Ratio.String	method	missing	-	audit pending
-layout/constraint.go::type::Constraint	type	missing	-	audit pending
-layout/flex.go::const::FlexCenter	const	missing	-	audit pending
-layout/flex.go::const::FlexEnd	const	missing	-	audit pending
-layout/flex.go::const::FlexLegacy	const	missing	-	audit pending
-layout/flex.go::const::FlexSpaceAround	const	missing	-	audit pending
-layout/flex.go::const::FlexSpaceBetween	const	missing	-	audit pending
-layout/flex.go::const::FlexSpaceEvenly	const	missing	-	audit pending
-layout/flex.go::const::FlexStart	const	missing	-	audit pending
-layout/flex.go::method::Flex.String	method	missing	-	audit pending
-layout/flex.go::type::Flex	type	missing	-	audit pending
-layout/layout.go::const::DirectionHorizontal	const	missing	-	audit pending
-layout/layout.go::const::DirectionVertical	const	missing	-	audit pending
-layout/layout.go::func::Horizontal	func	missing	-	audit pending
-layout/layout.go::func::New	func	missing	-	audit pending
-layout/layout.go::func::Vertical	func	missing	-	audit pending
-layout/layout.go::method::Layout.Split	method	missing	-	audit pending
-layout/layout.go::method::Layout.SplitWithSpacers	method	missing	-	audit pending
-layout/layout.go::method::Layout.WithConstraints	method	missing	-	audit pending
-layout/layout.go::method::Layout.WithDirection	method	missing	-	audit pending
-layout/layout.go::method::Layout.WithFlex	method	missing	-	audit pending
-layout/layout.go::method::Layout.WithPadding	method	missing	-	audit pending
-layout/layout.go::method::Layout.WithSpacing	method	missing	-	audit pending
-layout/layout.go::method::Splitted.Assign	method	missing	-	audit pending
-layout/layout.go::struct::Layout	struct	missing	-	audit pending
-layout/layout.go::type::Direction	type	missing	-	audit pending
-layout/layout.go::type::Splitted	type	missing	-	audit pending
-layout/layout_test.go::test::TestEdgeCases	test	missing	-	audit pending
-layout/layout_test.go::test::TestFlexConstraint	test	missing	-	audit pending
-layout/layout_test.go::test::TestFlexSpacing	test	missing	-	audit pending
-layout/layout_test.go::test::TestLength	test	missing	-	audit pending
-layout/layout_test.go::test::TestMax	test	missing	-	audit pending
-layout/layout_test.go::test::TestMin	test	missing	-	audit pending
-layout/layout_test.go::test::TestPercent	test	missing	-	audit pending
-layout/layout_test.go::test::TestPriorityIsValid	test	missing	-	audit pending
+layout/constraint.go::method::Fill.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::method::Len.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::method::Max.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::method::Min.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::method::Percent.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::method::Ratio.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/constraint.go::type::Constraint	type	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexCenter	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexEnd	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexLegacy	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexSpaceAround	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexSpaceBetween	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexSpaceEvenly	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::const::FlexStart	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::method::Flex.String	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/flex.go::type::Flex	type	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::const::DirectionHorizontal	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::const::DirectionVertical	const	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::func::Horizontal	func	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::func::New	func	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::func::Vertical	func	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.Split	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.SplitWithSpacers	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.WithConstraints	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.WithDirection	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.WithFlex	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.WithPadding	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Layout.WithSpacing	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::method::Splitted.Assign	method	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::struct::Layout	struct	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::type::Direction	type	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout.go::type::Splitted	type	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/layout_test.go::test::TestEdgeCases	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestFlexConstraint	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestFlexSpacing	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestLength	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestMax	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestMin	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestPercent	test	ported	spec/layout_parity_spec.cr	Layout parity spec
+layout/layout_test.go::test::TestPriorityIsValid	test	ported	spec/layout_parity_spec.cr	Layout parity spec
 layout/layout_test.go::test::TestRatio	test	ported	spec/layout_spec.cr	ported
-layout/padding.go::func::Pad	func	missing	-	audit pending
-layout/padding.go::struct::Padding	struct	missing	-	audit pending
+layout/padding.go::func::Pad	func	ported	src/ultraviolet/layout.cr	ported under Layout namespace
+layout/padding.go::struct::Padding	struct	ported	src/ultraviolet/layout.cr	ported under Layout namespace
 logger.go::type::Logger	type	ported	src/ultraviolet/logger.cr	ported
 mouse.go::const::MouseBackward	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseButton10	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseButton11	const	ported	src/ultraviolet/mouse.cr	ported
-mouse.go::const::MouseEncodingLegacy	const	missing	-	audit pending
-mouse.go::const::MouseEncodingSGR	const	missing	-	audit pending
-mouse.go::const::MouseEncodingSGRPixel	const	missing	-	audit pending
+mouse.go::const::MouseEncodingLegacy	const	ported	src/ultraviolet/mouse.cr	ported as MouseEncoding/MouseMode enum members
+mouse.go::const::MouseEncodingSGR	const	ported	src/ultraviolet/mouse.cr	ported as MouseEncoding/MouseMode enum members
+mouse.go::const::MouseEncodingSGRPixel	const	ported	src/ultraviolet/mouse.cr	ported as MouseEncoding/MouseMode enum members
 mouse.go::const::MouseForward	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseLeft	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseMiddle	const	ported	src/ultraviolet/mouse.cr	ported
@@ -620,7 +620,7 @@ mouse.go::const::MouseModeClick	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseModeDrag	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseModeMotion	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseModeNone	const	ported	src/ultraviolet/mouse.cr	ported
-mouse.go::const::MouseModePress	const	missing	-	audit pending
+mouse.go::const::MouseModePress	const	ported	src/ultraviolet/mouse.cr	ported as MouseEncoding/MouseMode enum members
 mouse.go::const::MouseNone	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseRight	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::const::MouseWheelDown	const	ported	src/ultraviolet/mouse.cr	ported
@@ -631,7 +631,7 @@ mouse.go::func::MousePixelToCell	func	ported	src/ultraviolet/mouse.cr	pixel-to-c
 mouse.go::method::Mouse.String	method	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::struct::Mouse	struct	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::type::MouseButton	type	ported	src/ultraviolet/mouse.cr	ported
-mouse.go::type::MouseEncoding	type	missing	-	audit pending
+mouse.go::type::MouseEncoding	type	ported	src/ultraviolet/mouse.cr	ported as MouseEncoding/MouseMode enum members
 mouse.go::type::MouseMode	type	ported	src/ultraviolet/mouse.cr	ported
 poll_bsd.go::method::kqueueReader.Cancel	method	ported	src/ultraviolet/poll_bsd.cr	ported
 poll_bsd.go::method::kqueueReader.Close	method	ported	src/ultraviolet/poll_bsd.cr	ported
@@ -657,8 +657,8 @@ poll_windows.go::method::conReader.Cancel	method	ported	src/ultraviolet/poll_win
 poll_windows.go::method::conReader.Close	method	ported	src/ultraviolet/poll_windows.cr	ported
 poll_windows.go::method::conReader.Poll	method	ported	src/ultraviolet/poll_windows.cr	ported
 poll_windows.go::method::conReader.Read	method	ported	src/ultraviolet/poll_windows.cr	ported
-programstatus_test.go::test::TestEncodeProgramStatus	test	missing	-	audit pending
-programstatus_test.go::test::TestTerminalScreenProgramStatus	test	missing	-	audit pending
+programstatus_test.go::test::TestEncodeProgramStatus	test	ported	spec/program_status_spec.cr	OSC 7501 program status spec
+programstatus_test.go::test::TestTerminalScreenProgramStatus	test	ported	spec/program_status_spec.cr	OSC 7501 program status spec
 screen/context.go::func::NewContext	func	ported	src/ultraviolet/screen_context.cr	ported
 screen/context.go::method::Context.DrawString	method	ported	src/ultraviolet/screen_context.cr	ported
 screen/context.go::method::Context.DrawStringWrapped	method	ported	src/ultraviolet/screen_context.cr	ported
@@ -731,13 +731,13 @@ styled.go::method::StyledString.String	method	ported	src/ultraviolet/styled.cr	p
 styled.go::method::StyledString.UnicodeWidth	method	ported	src/ultraviolet/styled.cr	ported
 styled.go::method::StyledString.WcWidth	method	ported	src/ultraviolet/styled.cr	ported
 styled.go::struct::StyledString	struct	ported	src/ultraviolet/styled.cr	ported
-styled_test.go::test::TestPassThroughDoesNotAffectWidth	test	missing	-	audit pending
-styled_test.go::test::TestPassThroughTerminators	test	missing	-	audit pending
-styled_test.go::test::TestReadLinkAllowsSemicolonsInURL	test	missing	-	audit pending
+styled_test.go::test::TestPassThroughDoesNotAffectWidth	test	ported	spec/styled_spec.cr	styled-string vendor parity spec
+styled_test.go::test::TestPassThroughTerminators	test	ported	spec/styled_spec.cr	styled-string vendor parity spec
+styled_test.go::test::TestReadLinkAllowsSemicolonsInURL	test	ported	spec/styled_spec.cr	styled-string vendor parity spec
 styled_test.go::test::TestStyledString	test	ported	spec/styled_spec.cr	ported
-styled_test.go::test::TestStyledStringCombiningMarks	test	missing	-	audit pending
+styled_test.go::test::TestStyledStringCombiningMarks	test	ported	spec/styled_spec.cr	styled-string vendor parity spec
 styled_test.go::test::TestStyledStringEmptyLines	test	ported	spec/styled_spec.cr	ported
-styled_test.go::test::TestStyledStringLinesUnboundedContent	test	missing	-	audit pending
+styled_test.go::test::TestStyledStringLinesUnboundedContent	test	ported	spec/styled_spec.cr	styled-string vendor parity spec
 tabstop.go::const::DefaultTabInterval	const	ported	src/ultraviolet/tabstop.cr	ported
 tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.default; upstream 6b8d4ba
 tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.new; upstream 6b8d4ba
@@ -763,8 +763,8 @@ terminal.go::func::DefaultOptions	func	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::func::DefaultTerminal	func	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::func::NewTerminal	func	ported	src/ultraviolet/terminal.cr	Go-compatible alias for Terminal.new; upstream 6b8d4ba
 terminal.go::method::Terminal.Events	method	ported	src/ultraviolet/terminal.cr	ported
-terminal.go::method::Terminal.GetSize	method	missing	-	audit pending
-terminal.go::method::Terminal.GetWinsize	method	missing	-	audit pending
+terminal.go::method::Terminal.GetSize	method	ported	src/ultraviolet/terminal.cr	Go-compatible get_size/get_winsize names
+terminal.go::method::Terminal.GetWinsize	method	ported	src/ultraviolet/terminal.cr	Go-compatible get_size/get_winsize names
 terminal.go::method::Terminal.Read	method	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::method::Terminal.SendEvent	method	ported	src/ultraviolet/terminal.cr	ported
@@ -774,7 +774,7 @@ terminal.go::method::Terminal.Wait	method	ported	src/ultraviolet/terminal.cr	por
 terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::struct::Terminal	struct	ported	src/ultraviolet/terminal.cr	ported
-terminal_input_test.go::test::TestInputLoopDoesNotReuseTheReadBuffer	test	missing	-	audit pending
+terminal_input_test.go::test::TestInputLoopDoesNotReuseTheReadBuffer	test	ported	spec/terminal_reader_spec.cr	input buffer copy regression spec
 terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr	ported
 terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for TerminalReader.new; upstream 6b8d4ba
 terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for logger=; upstream 6b8d4ba
@@ -798,14 +798,14 @@ terminal_renderer.go::method::TerminalRenderer.SaveCursor	method	ported	src/ultr
 terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for backspace=; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.SetColorProfile	method	ported	src/ultraviolet/terminal_renderer.cr	ported
 terminal_renderer.go::method::TerminalRenderer.SetFullscreen	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for fullscreen=; upstream 6b8d4ba
-terminal_renderer.go::method::TerminalRenderer.SetGraphemeWidth	method	missing	-	audit pending
+terminal_renderer.go::method::TerminalRenderer.SetGraphemeWidth	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible setter name
 terminal_renderer.go::method::TerminalRenderer.SetLogger	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for logger=; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.SetMapNewline	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for map_newline=; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.SetPosition	method	ported	src/ultraviolet/terminal_renderer.cr	ported
 terminal_renderer.go::method::TerminalRenderer.SetRelativeCursor	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for relative_cursor=; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.SetScrollOptim	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for scroll_optim=; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.SetTabStops	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for tab_stops=; upstream 6b8d4ba
-terminal_renderer.go::method::TerminalRenderer.SetWidthMethod	method	missing	-	audit pending
+terminal_renderer.go::method::TerminalRenderer.SetWidthMethod	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible setter name
 terminal_renderer.go::method::TerminalRenderer.Write	method	ported	src/ultraviolet/terminal_renderer.cr	ported
 terminal_renderer.go::method::TerminalRenderer.WriteString	method	ported	src/ultraviolet/terminal_renderer.cr	ported
 terminal_renderer.go::method::capabilities.Contains	method	ported	src/ultraviolet/terminal_renderer.cr	ported
@@ -818,45 +818,45 @@ terminal_renderer.go::struct::LineData	struct	ported	src/ultraviolet/terminal_re
 terminal_renderer.go::struct::TerminalRenderer	struct	ported	src/ultraviolet/terminal_renderer.cr	ported
 terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr	ported
 terminal_renderer_output_test.go::test::TestRendererWideCellReanchor	test	ported	spec/terminal_renderer_resize_spec.cr	ported
-terminal_renderer_test.go::test::TestDriftShortCircuitAgreesWithFullCheck	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestHeightRepaintScope	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestDriftShortCircuitAgreesWithFullCheck	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestHeightRepaintScope	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestInlineRendererOutput	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestPassThroughSequenceReachesTerminalOnce	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRenderAllocationsDoNotFollowScreenHeight	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRenderBufferTouchedCoversEveryRow	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestPassThroughSequenceReachesTerminalOnce	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRenderAllocationsDoNotFollowScreenHeight	test	intentional_divergence	-	Go GC allocation guard; not portable to Crystal allocator
+terminal_renderer_test.go::test::TestRenderBufferTouchedCoversEveryRow	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererBackspace	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererBackspaceOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererCapabilities	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererClearsRowsAFrameGotBack	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererClearsRowsAFrameGotBack	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererColorDownsampling	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererColorProfile	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererCornerClusterLeavesNoPendingWrap	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererCornerClusterLeavesNoPendingWrap	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererCursorMovementOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererDamageIsSizedToTheScreen	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererDamageIsSizedToTheScreen	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererEdgeCases	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererEnterExitAltScreen	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererErase	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererEraseCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererFullscreenNarrowRepaints	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererFullscreenShrinkRepaints	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererGrowPaintsNewRows	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererHyperlinkReopensOnEachRow	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererFullscreenNarrowRepaints	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererFullscreenShrinkRepaints	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererGrowPaintsNewRows	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererHyperlinkReopensOnEachRow	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererHyperlinks	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererInlineCollapseStaysBelowItsOrigin	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineNarrowRepaints	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineResizeKeepsCursorModel	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineShrinkClearsPartially	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineShrinkErasesAcrossAWidthChange	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineShrinkErasesFromTheTop	test	missing	-	audit pending
-terminal_renderer_test.go::test::TestRendererInlineShrinkLeavesItsOwnRowsAlone	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineCollapseStaysBelowItsOrigin	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineNarrowRepaints	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineResizeKeepsCursorModel	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineShrinkClearsPartially	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesAcrossAWidthChange	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesFromTheTop	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
+terminal_renderer_test.go::test::TestRendererInlineShrinkLeavesItsOwnRowsAlone	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererLineClearingOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererLogger	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererMapNewline	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererMarginClusterKeepsAutowrap	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererMarginClusterKeepsAutowrap	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererMoveTo	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererMultiplePrepends	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererNewlineMapping	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererNoWrapOnDriftLine	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererNoWrapOnDriftLine	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererPhantomCursor	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererPosition	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererPrependLines	test	ported	spec/terminal_renderer_spec.cr	ported
@@ -864,14 +864,14 @@ terminal_renderer_test.go::test::TestRendererPrependOneLine	test	ported	spec/ter
 terminal_renderer_test.go::test::TestRendererPrependString	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererRedraw	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererRelativeCursor	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererRepaintsAResizeWithNoTouches	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererRepaintsAResizeWithNoTouches	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererRepeatCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererResize	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererResizeLatchesOnlyRealChanges	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererResizeLatchesOnlyRealChanges	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererScrollOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererScrollRepaintsRowsItMoved	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererScrollRepaintsRowsItMoved	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererStyledText	test	ported	spec/terminal_renderer_spec.cr	ported
-terminal_renderer_test.go::test::TestRendererSurvivesAShortTouchList	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererSurvivesAShortTouchList	test	ported	spec/terminal_renderer_resize_spec.cr	renderer resize/damage regression spec
 terminal_renderer_test.go::test::TestRendererSwitchBuffer	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererTabStops	test	ported	spec/terminal_renderer_spec.cr	ported
 terminal_renderer_test.go::test::TestRendererTerminalOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
@@ -901,11 +901,11 @@ terminal_screen.go::method::TerminalScreen.EnterAltScreen	method	ported	src/ultr
 terminal_screen.go::method::TerminalScreen.ExitAltScreen	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.Flush	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.ForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_screen.go::method::TerminalScreen.Height	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.Height	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
 terminal_screen.go::method::TerminalScreen.HideCursor	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.InsertAbove	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.KeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_screen.go::method::TerminalScreen.MouseEncoding	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.MouseEncoding	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
 terminal_screen.go::method::TerminalScreen.MouseMode	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.ProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:328	program status accessor; reset preserves, restore re-emits
 terminal_screen.go::method::TerminalScreen.ProgressBar	method	ported	src/ultraviolet/terminal_screen.cr	ported
@@ -921,42 +921,42 @@ terminal_screen.go::method::TerminalScreen.SetCursorPosition	method	ported	src/u
 terminal_screen.go::method::TerminalScreen.SetCursorStyle	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.SetForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.SetKeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_screen.go::method::TerminalScreen.SetMouseEncoding	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.SetMouseEncoding	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
 terminal_screen.go::method::TerminalScreen.SetMouseMode	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.SetProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:322	OSC 7501 encoding via ansi shard
 terminal_screen.go::method::TerminalScreen.SetProgressBar	method	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_screen.go::method::TerminalScreen.SetSynchronizedUpdates	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.SetSynchronizedUpdates	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
 terminal_screen.go::method::TerminalScreen.SetWidthMethod	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.SetWindowTitle	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.ShowCursor	method	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_screen.go::method::TerminalScreen.StringWidth	method	missing	-	audit pending
-terminal_screen.go::method::TerminalScreen.SynchronizedUpdates	method	missing	-	audit pending
-terminal_screen.go::method::TerminalScreen.Width	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.StringWidth	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
+terminal_screen.go::method::TerminalScreen.SynchronizedUpdates	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
+terminal_screen.go::method::TerminalScreen.Width	method	ported	src/ultraviolet/terminal_screen.cr	ported TerminalScreen accessor/mutator
 terminal_screen.go::method::TerminalScreen.WidthMethod	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.WindowTitle	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.Write	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::method::TerminalScreen.WriteString	method	ported	src/ultraviolet/terminal_screen.cr	ported
 terminal_screen.go::struct::TerminalScreen	struct	ported	src/ultraviolet/terminal_screen.cr	ported
-terminal_stop_test.go::test::TestStopWithInputInFlightDoesNotPanic	test	missing	-	audit pending
+terminal_stop_test.go::test::TestStopWithInputInFlightDoesNotPanic	test	ported	spec/terminal_spec.cr	stop lifecycle spec
 terminal_test.go::test::TestOpenTTY	test	ported	spec/terminal_spec.cr	ported
 terminal_test.go::test::TestStopBeforeStart	test	ported	spec/terminal_spec.cr	ported
 terminal_test.go::test::TestStopIdempotent	test	ported	spec/terminal_spec.cr	ported
 terminal_test.go::test::TestSupportsBackspace	test	ported	spec/terminal_spec.cr	ported
 terminal_test.go::test::TestSupportsHardTabs	test	ported	spec/terminal_spec.cr	ported
-transformline_bug_test.go::test::TestTransformLine_IsZeroInfiniteLoop	test	missing	-	audit pending
+transformline_bug_test.go::test::TestTransformLine_IsZeroInfiniteLoop	test	intentional_divergence	-	Crystal loop re-reads the next cell; infinite-loop bug cannot occur
 tty.go::func::NotifyWinch	func	ported	src/ultraviolet/tty.cr	one SIGWINCH handler fans out to every buffered listener; upstream 6b8d4ba
 tty.go::func::NotifyWinchContext	func	ported	src/ultraviolet/tty.cr	Crystal analogue: stop channel removes only its listener; upstream 6b8d4ba
 tty.go::func::OpenTTY	func	ported	src/ultraviolet/tty.cr	ported
 tty.go::func::Suspend	func	ported	src/ultraviolet/tty.cr	ported
-uv.go::const::ProgramStateBlocked	const	missing	-	audit pending
-uv.go::const::ProgramStateClear	const	missing	-	audit pending
-uv.go::const::ProgramStateDone	const	missing	-	audit pending
-uv.go::const::ProgramStateError	const	missing	-	audit pending
-uv.go::const::ProgramStateIdle	const	missing	-	audit pending
-uv.go::const::ProgramStateWorking	const	missing	-	audit pending
-uv.go::const::ProgramStatusKindAuth	const	missing	-	audit pending
-uv.go::const::ProgramStatusKindPermission	const	missing	-	audit pending
-uv.go::const::ProgramStatusKindQuestion	const	missing	-	audit pending
+uv.go::const::ProgramStateBlocked	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStateClear	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStateDone	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStateError	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStateIdle	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStateWorking	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStatusKindAuth	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStatusKindPermission	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::const::ProgramStatusKindQuestion	const	ported	src/ultraviolet/program_status.cr	program status alias/constant
 uv.go::const::ProgressBarDefault	const	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::const::ProgressBarError	const	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::const::ProgressBarIndeterminate	const	ported	src/ultraviolet/uv_api.cr	ported
@@ -968,7 +968,7 @@ uv.go::func::EncodeCursorColor	func	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::func::EncodeCursorStyle	func	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::func::EncodeForegroundColor	func	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::func::EncodeKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr	ported
-uv.go::func::EncodeMouseEncoding	func	missing	-	audit pending
+uv.go::func::EncodeMouseEncoding	func	ported	src/ultraviolet/uv_api.cr	encode_mouse_encoding
 uv.go::func::EncodeMouseMode	func	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::func::EncodeProgramStatus	func	ported	src/ultraviolet/program_status.cr	nil clears all program status records
 uv.go::func::EncodeProgressBar	func	ported	src/ultraviolet/uv_api.cr	ported
@@ -984,23 +984,23 @@ uv.go::struct::KeyboardEnhancements	struct	ported	src/ultraviolet/uv_api.cr	port
 uv.go::struct::ProgressBar	struct	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::type::Drawable	type	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::type::DrawableFunc	type	ported	src/ultraviolet/uv_api.cr	ported
-uv.go::type::ProgramState	type	missing	-	audit pending
-uv.go::type::ProgramStatus	type	missing	-	audit pending
-uv.go::type::ProgramStatusKind	type	missing	-	audit pending
+uv.go::type::ProgramState	type	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::type::ProgramStatus	type	ported	src/ultraviolet/program_status.cr	program status alias/constant
+uv.go::type::ProgramStatusKind	type	ported	src/ultraviolet/program_status.cr	program status alias/constant
 uv.go::type::ProgressBarState	type	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::type::Screen	type	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::type::WidthMethod	type	ported	src/ultraviolet/uv_api.cr	ported
-widecell_placeholder_test.go::test::TestStyledWideCellPlaceholderDetection	test	missing	-	audit pending
-width_test.go::test::TestDrawGraphemeWidthCells	test	missing	-	audit pending
-width_test.go::test::TestDrawWcWidthCells	test	missing	-	audit pending
-width_test.go::test::TestNewCellWidths	test	missing	-	audit pending
+widecell_placeholder_test.go::test::TestStyledWideCellPlaceholderDetection	test	ported	spec/width_spec.cr	wide-cell placeholder detection coverage
+width_test.go::test::TestDrawGraphemeWidthCells	test	ported	spec/width_spec.cr	WcWidth/GraphemeWidth width spec
+width_test.go::test::TestDrawWcWidthCells	test	ported	spec/width_spec.cr	WcWidth/GraphemeWidth width spec
+width_test.go::test::TestNewCellWidths	test	ported	spec/width_spec.cr	WcWidth/GraphemeWidth width spec
 winch.go::func::NewSizeNotifier	func	ported	src/ultraviolet/winch.cr	ported
 winch.go::method::SizeNotifier.GetSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for size; upstream 6b8d4ba
 winch.go::method::SizeNotifier.GetWindowSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for cell and pixel size; upstream 6b8d4ba
 winch.go::method::SizeNotifier.Start	method	ported	src/ultraviolet/winch.cr	ported
 winch.go::method::SizeNotifier.Stop	method	ported	src/ultraviolet/winch.cr	ported
 winch.go::struct::SizeNotifier	struct	ported	src/ultraviolet/winch.cr	ported
-window.go::func::NewWindow	func	missing	-	audit pending
+window.go::func::NewWindow	func	ported	src/ultraviolet/window.cr	new_window constructor
 window.go::method::Window.Bounds	method	ported	src/ultraviolet/window.cr	ported
 window.go::method::Window.Clone	method	ported	src/ultraviolet/window.cr	ported
 window.go::method::Window.CloneArea	method	ported	src/ultraviolet/window.cr	ported

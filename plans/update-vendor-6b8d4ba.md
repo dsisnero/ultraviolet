@@ -6,9 +6,8 @@
 **Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba`
 follow-ups
 
-The vendored Go snapshot has been refreshed. Phases 1–7 are complete. Phase 8
-triages the refreshed inventory; Phase 9 evaluates the optional Go conformance
-harness.
+The vendored Go snapshot has been refreshed. Phases 1–8 are complete. Phase 9
+evaluates the optional Go conformance harness.
 
 ```text
 67 commits
@@ -83,25 +82,24 @@ into one-off work items here.
 - **Evidence:** `check_source_parity` (819 items), `check_test_parity`
   (196 tests), and `check_port_inventory` (1015 items) pass.
 
-### Phase 8 — Inventory triage (next)
+### Phase 8 — Inventory triage ✅
 
-Feature-sized scope:
+- Resolved shared/inherited implementations: `RenderBuffer` accessors, Terminal
+  getters, TerminalScreen methods, mouse enums, window constructor.
+- Mapped Casso, LRU, and Layout rows to their consolidated Crystal files.
+- Classified examples and Go conformance tooling as intentional divergences.
+- Added the remaining renderer regressions for hyperlink row reopening and the
+  drift short-circuit.
+- **Result:** 954 ported, 61 intentional divergences, 0 missing.
+- **Evidence:** `check_source_parity` (819 items), `check_test_parity`
+  (196 tests), and `check_port_inventory` (1015 items) pass.
 
-- Resolve rows whose implementation is shared/inherited but currently marked
-  `missing` (for example `RenderBuffer.Clear` via `Buffer`).
-- Classify example, `internal/casso`, `internal/lru`, and conformance rows as
-  runtime, tooling, or intentional divergence.
-- Leave only true porting gaps as `missing`, with file references or a
-  documented divergence.
-
-Current audit-pending split: 49 core tests, 42 layout, 34 core source,
-34 conformance, 22 examples, 18 casso, 4 lru.
-
-### Phase 9 — Conformance harness assessment (deferred)
+### Phase 9 — Conformance harness assessment (next)
 
 Decide whether the Go `internal/conformance` harness adds coverage the Crystal
 renderer specs cannot express. Port only the portable corpus/operation layer if
-it does; record a divergence for the Go-only emulator oracle.
+it does; record a divergence for the Go-only emulator oracle. The inventory
+already classifies the current conformance rows as intentional divergences.
 
 ### Phase 10 — Next vendor refresh (deferred)
 

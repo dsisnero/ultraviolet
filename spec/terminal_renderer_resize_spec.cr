@@ -492,3 +492,42 @@ describe "TerminalRenderer wide-cell reanchor parity" do
     grapheme.scan("\e[1;5H").size.should eq(0)
   end
 end
+
+describe "TerminalRenderer vendor regressions" do
+  it "reopens a hyperlink on every row it covers" do
+    output = IO::Memory.new
+    renderer = RendererResizeSpecHelper.renderer(output)
+    renderer.color_profile = Ultraviolet::ColorProfile::TrueColor
+
+    cellbuf = Ultraviolet::RenderBuffer.new(4, 2)
+    link = Ultraviolet::Link.new("https://example.com")
+    2.times do |y|
+      4.times do |x|
+        cellbuf.set_cell(x, y, Ultraviolet::Cell.new("a", 1, Ultraviolet::Style.new, link))
+      end
+    end
+
+    renderer.render(cellbuf)
+    renderer.flush
+
+    output.to_s.scan(Ansi.set_hyperlink(link.url, link.params)).size.should eq(2)
+  end
+
+  it "keeps the drift short-circuit in agreement with the full check" do
+    contents = ["a", "世", "e\u0301", "⚠️", "👨‍💻", "🏳️‍🌈", "👍🏽", "\e_x\e\\a", "", " "]
+
+    [Ansi::WcWidth, Ansi::GraphemeWidth].each do |method|
+      contents.each do |content|
+        [0, 1, 2].each do |width|
+          cell = Ultraviolet::Cell.new(content, width)
+          line = Ultraviolet::Line.new(1)
+          line.cells[0] = cell
+          got = Ultraviolet::TerminalRenderer.line_has_drift(method, line)
+          want = cell.width != 0 && !cell.content.empty? &&
+                 (cell.width > 1 || method.string_width(cell.content) != Ansi.string_width(cell.content))
+          got.should eq(want), "#{method} #{content.inspect} width=#{width}"
+        end
+      end
+    end
+  end
+end

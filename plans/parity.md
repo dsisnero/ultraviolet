@@ -7,19 +7,16 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 ## Where we are
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md).
-- **Current focus:** Phase 8, triaging the refreshed inventory. The vendor delta
-  and its feature follow-ups are implemented.
+- **Current focus:** Phase 9, assessing the optional Go conformance harness. The
+  vendor delta, feature follow-ups, and inventory triage are complete.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 8 — Inventory triage:** resolve inherited/shared-implementation
-     rows, classify example/internal-tooling rows, and leave only true porting
-     gaps as `missing`.
-  2. **Phase 9 — Conformance harness assessment:** decide whether the Go
+  1. **Phase 9 — Conformance harness assessment:** decide whether the Go
      conformance harness adds coverage Crystal specs cannot express.
-  3. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
+  2. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
      upstream moves past `6b8d4ba`.
-- **Chunk status:** phases 1–7 complete; phase 8 next; phases 9–10 deferred.
+- **Chunk status:** phases 1–8 complete; phase 9 next; phase 10 deferred.
 - **Last code feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
-- **Gates:** `make lint` and `make test` pass (`392` examples).
+- **Gates:** `make lint` and `make test` pass (`394` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the completed `6b8d4ba` follow-ups).
@@ -38,8 +35,8 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 5 | Width + Unicode layout | ✅ | `f68c0af` |
 | 6 | API surface compatibility: mouse, sizes, winch, aliases | ✅ | `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`, `8659366`, `2a85b32` |
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
-| 8 | Inventory triage | **Next** | 203 audit-pending rows |
-| 9 | Conformance harness assessment | Deferred | — |
+| 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
+| 9 | Conformance harness assessment | **Next** | — |
 | 10 | Next vendor refresh | Deferred | — |
 
 ## Status overview
@@ -58,13 +55,13 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 392 Crystal specs |
-| **Source API parity** | 819 Go APIs | 690 ported, 129 audit pending |
-| **Test parity** | 196 Go tests | 122 ported, 74 audit pending |
-| **Port inventory** | 1015 items | 812 ported, 203 audit pending |
+| **Test coverage** | 196 Go tests | 394 Crystal specs |
+| **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
+| **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
+| **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
 
-Many audit-pending rows are shared/inherited implementations or
-example/internal-tooling noise; Phase 8 resolves them.
+No `missing` rows remain. The 61 divergences are examples, Go-only conformance
+tooling, or Go-specific safety/allocation guards.
 
 \* Crystal merges `Terminal` and `Screen`; Go keeps them separate. Crystal also
 extracts `EventScanner` from `TerminalReader`, matching Go's `eventScanner`.
@@ -95,7 +92,7 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
   `context.Context`.
 - ANSI parsing, width tables, and terminfo come from Crystal shards rather than
   direct ports.
-- The Go conformance harness is tooling, not runtime code; Phase 8 decides
+- The Go conformance harness is tooling, not runtime code; Phase 9 decides
   whether any of it should be ported.
 
 ## Test coverage
