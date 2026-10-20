@@ -97,4 +97,14 @@ module Ultraviolet
       end
     end
   end
+
+  # Go-compatible constructor alias for [TabStops.new].
+  def self.new_tab_stops(width : Int32, interval : Int32) : TabStops
+    TabStops.new(width, interval)
+  end
+
+  # Go-compatible alias for [TabStops.default].
+  def self.default_tab_stops(cols : Int32) : TabStops
+    TabStops.default(cols)
+  end
 end

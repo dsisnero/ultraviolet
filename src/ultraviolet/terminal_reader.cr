@@ -213,4 +213,14 @@ module Ultraviolet
       combined
     end
   end
+
+  # Go-compatible constructor alias for [TerminalReader.new].
+  def self.new_terminal_reader(
+    reader : IO,
+    term_type : String,
+    legacy : LegacyKeyEncoding = LegacyKeyEncoding.new,
+    use_terminfo : Bool = false,
+  ) : TerminalReader
+    TerminalReader.new(reader, term_type, legacy, use_terminfo)
+  end
 end

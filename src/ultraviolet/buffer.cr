@@ -719,6 +719,14 @@ module Ultraviolet
     end
   end
 
+  def self.new_line(width : Int32) : Line
+    Line.new(width)
+  end
+
+  def self.new_buffer(width : Int32, height : Int32) : Buffer
+    Buffer.new(width, height)
+  end
+
   def self.new_render_buffer(width : Int32, height : Int32) : RenderBuffer
     RenderBuffer.new(width, height)
   end

@@ -480,4 +480,9 @@ module Ultraviolet
       @renderer.flush
     end
   end
+
+  # Go-compatible constructor alias for [TerminalScreen.new].
+  def self.new_terminal_screen(writer : IO, env : Array(String) = [] of String) : TerminalScreen
+    TerminalScreen.new(writer, env)
+  end
 end

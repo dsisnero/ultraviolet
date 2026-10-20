@@ -748,4 +748,9 @@ module Ultraviolet
   def self.read_link_from_data(data : Bytes, link : Link) : Link
     read_link(data, link)
   end
+
+  # Go-compatible constructor alias for [StyledString.new].
+  def self.new_styled_string(text : String = "", wrap : Bool = false, tail : String = "") : StyledString
+    StyledString.new(text, wrap, tail)
+  end
 end

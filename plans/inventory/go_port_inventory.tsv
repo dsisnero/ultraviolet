@@ -27,8 +27,8 @@ buffer_test.go::test::TestLineRenderLine	test	ported	spec/buffer_spec.cr		auto-g
 buffer_test.go::test::TestLineSet	test	ported	spec/buffer_spec.cr		auto-generated
 buffer_test.go::test::TestLineString	test	ported	spec/buffer_spec.cr		auto-generated
 buffer_test.go::test::TestScreenBuffer	test	ported	spec/buffer_spec.cr		auto-generated
-buffer.go::func::NewBuffer	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::func::NewLine	func	ported	src/ultraviolet/buffer.cr		auto-generated
+buffer.go::func::NewBuffer	func	ported	src/ultraviolet/buffer.cr	Go-compatible top-level alias for Buffer.new_buffer; upstream 6b8d4ba	auto-generated
+buffer.go::func::NewLine	func	ported	src/ultraviolet/buffer.cr	Go-compatible alias for Line.new; upstream 6b8d4ba	auto-generated
 buffer.go::func::NewRenderBuffer	func	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::func::NewScreenBuffer	func	ported	src/ultraviolet/buffer.cr		auto-generated
 buffer.go::func::Pos	func	ported	src/ultraviolet/buffer.cr		auto-generated
@@ -122,7 +122,7 @@ cell.go::func::ConvertLink	func	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::func::ConvertStyle	func	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::func::NewCell	func	ported	src/ultraviolet/cell.cr	agrees with WcWidth/GraphemeWidth models, including clusters wider than four columns; upstream 6b8d4ba
 cell.go::func::NewLink	func	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::func::StyleDiff	func	ported	src/ultraviolet/cell.cr		auto-generated
+cell.go::func::StyleDiff	func	ported	src/ultraviolet/style.cr	Go-compatible alias for Style.diff; upstream 6b8d4ba	auto-generated
 cell.go::method::Cell.Clone	method	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::method::Cell.Empty	method	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::method::Cell.Equal	method	ported	src/ultraviolet/cell.cr		auto-generated
@@ -143,7 +143,7 @@ cell.go::type::Underline	type	ported	src/ultraviolet/cell.cr		auto-generated
 cell.go::type::UnderlineStyle	type	ported	src/ultraviolet/cell.cr		auto-generated
 console.go::func::ControllingConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.controlling; upstream 6b8d4ba
 console.go::func::DefaultConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.default; upstream 6b8d4ba
-console.go::func::NewConsole	func	ported	src/ultraviolet/console.cr		auto-generated
+console.go::func::NewConsole	func	ported	src/ultraviolet/console.cr	Go-compatible top-level alias for Console.new_console; upstream 6b8d4ba	auto-generated
 console.go::method::console.Close	method	ported	src/ultraviolet/console.cr		auto-generated
 console.go::method::console.Environ	method	ported	src/ultraviolet/console.cr		auto-generated
 console.go::method::console.Getenv	method	ported	src/ultraviolet/console.cr		auto-generated
@@ -603,7 +603,7 @@ screen/screen.go::func::Fill	func	ported	src/ultraviolet/screen.cr		auto-generat
 screen/screen.go::func::FillArea	func	ported	src/ultraviolet/screen.cr		auto-generated
 styled_test.go::test::TestStyledString	test	ported	spec/styled_spec.cr		auto-generated
 styled_test.go::test::TestStyledStringEmptyLines	test	ported	spec/styled_spec.cr		auto-generated
-styled.go::func::NewStyledString	func	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::func::NewStyledString	func	ported	src/ultraviolet/styled.cr	Go-compatible alias for StyledString.new; upstream 6b8d4ba	auto-generated
 styled.go::func::ReadLink	func	ported	src/ultraviolet/styled.cr	preserves semicolons in the URI; upstream 6b8d4ba
 styled.go::func::ReadStyle	func	ported	src/ultraviolet/styled.cr		auto-generated
 styled.go::method::StyledString.Bounds	method	ported	src/ultraviolet/styled.cr		auto-generated
@@ -620,8 +620,8 @@ tabstop_test.go::test::TestTabStopsNavigation	test	ported	spec/tabstop_spec.cr		
 tabstop_test.go::test::TestTabStopsResize	test	ported	spec/tabstop_spec.cr		auto-generated
 tabstop_test.go::test::TestTabStopsResizeEdgeCases	test	ported	spec/tabstop_spec.cr		auto-generated
 tabstop.go::const::DefaultTabInterval	const	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr		auto-generated
+tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.default; upstream 6b8d4ba	auto-generated
+tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.new; upstream 6b8d4ba	auto-generated
 tabstop.go::method::TabStops.Clear	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::method::TabStops.Find	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::method::TabStops.IsStop	method	ported	src/ultraviolet/tabstop.cr		auto-generated
@@ -633,7 +633,7 @@ tabstop.go::method::TabStops.Set	method	ported	src/ultraviolet/tabstop.cr		auto-
 tabstop.go::method::TabStops.Width	method	ported	src/ultraviolet/tabstop.cr		auto-generated
 tabstop.go::struct::TabStops	struct	ported	src/ultraviolet/tabstop.cr		auto-generated
 terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr		auto-generated
-terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr		auto-generated
+terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for TerminalReader.new; upstream 6b8d4ba	auto-generated
 terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
 terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr		auto-generated
@@ -680,7 +680,7 @@ terminal_renderer_test.go::test::TestRendererWrite	test	ported	spec/terminal_ren
 terminal_renderer_test.go::test::TestRendererWriteString	test	ported	spec/terminal_renderer_spec.cr		auto-generated
 terminal_renderer_test.go::test::TestRendererZeroWidthCharacters	test	ported	spec/terminal_renderer_spec.cr		auto-generated
 terminal_renderer_test.go::test::TestSimpleRendererOutput	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer.go::func::NewTerminalRenderer	func	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
+terminal_renderer.go::func::NewTerminalRenderer	func	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for TerminalRenderer.new; upstream 6b8d4ba	auto-generated
 terminal_renderer.go::method::capabilities.Contains	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::capabilities.Reset	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::capabilities.Set	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
@@ -714,7 +714,7 @@ terminal_renderer.go::method::tFlag.Reset	method	ported	src/ultraviolet/terminal
 terminal_renderer.go::method::tFlag.Set	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::struct::LineData	struct	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::struct::TerminalRenderer	struct	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_screen.go::func::NewTerminalScreen	func	ported	src/ultraviolet/terminal_screen.cr		auto-generated
+terminal_screen.go::func::NewTerminalScreen	func	ported	src/ultraviolet/terminal_screen.cr	Go-compatible alias for TerminalScreen.new; upstream 6b8d4ba	auto-generated
 terminal_screen.go::method::TerminalScreen.AltScreen	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.BackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.Bounds	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
@@ -770,7 +770,7 @@ terminal.go::const::DefaultEventTimeout	const	ported	src/ultraviolet/terminal.cr
 terminal.go::func::ControllingTerminal	func	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::func::DefaultOptions	func	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::func::DefaultTerminal	func	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::func::NewTerminal	func	ported	src/ultraviolet/terminal.cr		auto-generated
+terminal.go::func::NewTerminal	func	ported	src/ultraviolet/terminal.cr	Go-compatible alias for Terminal.new; upstream 6b8d4ba	auto-generated
 terminal.go::method::Terminal.Events	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.Read	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr		auto-generated

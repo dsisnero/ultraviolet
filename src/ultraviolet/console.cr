@@ -305,4 +305,9 @@ module Ultraviolet
 
   class WinCon < Console
   end
+
+  # Go-compatible alias for [Console.new_console].
+  def self.new_console(input : IO? = nil, output : IO? = nil, environ : Array(String)? = nil) : Console
+    Console.new_console(input, output, environ)
+  end
 end

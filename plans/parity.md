@@ -20,11 +20,12 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
     renderer damage/resize model, terminal input-loop fixes, width handling,
     idempotent `Terminal#stop`, mouse pixel-to-cell conversion,
     `SizeNotifier` compatibility accessors, multi-listener winch signal helpers,
-    cancelable select reads, and Console compatibility aliases.
+    cancelable select reads, Console compatibility aliases, and Go constructor
+    aliases.
   - **In progress:** inventory regeneration.
   - **Remaining:** the optional conformance harness.
-- **Last feature commit:** `08b76f2` (`port: add Console compatibility aliases`).
-- **Gates:** `make lint` and `make test` pass (`388` examples).
+- **Last feature commit:** `4dab9d6` (`port: fan out winch signals to multiple listeners`).
+- **Gates:** `make lint` and `make test` pass (`390` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
 > `7cc6674` plus the completed `6b8d4ba` follow-ups)
@@ -45,7 +46,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 388 Crystal specs |
+| **Test coverage** | 122 Go tests | 390 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -59,6 +60,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +2 specs | Go-compatible constructor and `style_diff` aliases |
 | 2026-10-19 | +1 spec | Multi-listener winch fan-out and independent unsubscribe |
 | 2026-10-19 | +1 spec | Console `DefaultConsole` / `ControllingConsole` aliases |
 | 2026-10-19 | No net new | Poll cancellation spec strengthened to block before cancel |
@@ -252,6 +254,16 @@ a spec.
 
 **Files changed:** `src/ultraviolet/console.cr`
 **Specs:** `spec/console_spec.cr`
+
+### F18. Go-compatible constructor aliases ✅
+
+Added direct Go-name aliases for `new_styled_string`, `new_line`, `new_buffer`,
+`new_console`, `new_tab_stops`, `default_tab_stops`, `new_terminal`,
+`new_terminal_reader`, `new_terminal_renderer`, `new_terminal_screen`, and
+`style_diff`.
+
+**Files changed:** `src/ultraviolet/{styled,buffer,console,tabstop,terminal,terminal_reader,terminal_renderer,terminal_screen,style}.cr`
+**Specs:** `spec/go_compat_aliases_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

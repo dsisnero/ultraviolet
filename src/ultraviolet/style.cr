@@ -461,4 +461,9 @@ module Ultraviolet
       end
     end
   end
+
+  # Go-compatible alias for [Style.diff].
+  def self.style_diff(from : Style?, to : Style?) : String
+    Style.diff(from, to)
+  end
 end

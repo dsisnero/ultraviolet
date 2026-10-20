@@ -195,7 +195,18 @@ scheduler. The select fd-set helpers also use the platform word size.
 **Completed 2026-10-19.** The Go-compatible names delegate to the existing
 `Console.default` and `Console.controlling` constructors.
 
-### 12. Dependency and platform notes
+### 12. Go-compatible constructor aliases
+
+- [x] Add `new_styled_string`, `new_line`, `new_buffer`, `new_console`
+- [x] Add `new_tab_stops`, `default_tab_stops`
+- [x] Add `new_terminal`, `new_terminal_reader`, `new_terminal_renderer`,
+  `new_terminal_screen`
+- [x] Add `style_diff`
+
+**Completed 2026-10-19.** The Go constructor and diff names now delegate to the
+existing Crystal constructors.
+
+### 13. Dependency and platform notes
 
 - Upstream moved to `ansi v0.11.9`; the Crystal `ansi` shard is already updated
   for OSC 7501.

@@ -758,4 +758,9 @@ module Ultraviolet
       @owned_tty = nil
     end
   end
+
+  # Go-compatible constructor alias for [Terminal.new].
+  def self.new_terminal(console : Console, options : Options = Options.default) : Terminal
+    Terminal.new(console, options)
+  end
 end

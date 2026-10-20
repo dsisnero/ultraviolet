@@ -1488,4 +1488,9 @@ module Ultraviolet
         Capabilities::REP | Capabilities::ECH | Capabilities::ICH | Capabilities::SD | Capabilities::SU
     end
   end
+
+  # Go-compatible constructor alias for [TerminalRenderer.new].
+  def self.new_terminal_renderer(writer : IO, env : Array(String) = [] of String) : TerminalRenderer
+    TerminalRenderer.new(writer, env)
+  end
 end
