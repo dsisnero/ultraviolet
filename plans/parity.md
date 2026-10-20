@@ -7,24 +7,24 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
   — use its checklist as the working order.
 - **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. Program
-  status, styled/buffer, and renderer damage/resize fixes are complete; the
-  terminal input loop is next.
+  status, styled/buffer, renderer, and terminal input-loop fixes are complete;
+  width handling is next.
 - **Next up:**
-  1. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
-  2. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
-  3. Regenerate the parity inventories after the remaining API-affecting chunks.
+  1. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
+  2. Regenerate the parity inventories after the remaining API-affecting chunks.
+  3. Port the optional conformance harness if the remaining width cases need it.
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
-    OSC 7501, program status reset/restore, styled-string/buffer fixes, and the
-    renderer damage/resize model.
-  - **In progress:** the `6b8d4ba` vendor delta (terminal input loop).
-  - **Remaining:** the three next-up items above, plus the optional conformance
-    harness work in the active plan.
-- **Last commit:** `bcdf389` (`port: vendor styled string and buffer fixes`).
-- **Gates:** `make lint` and `make test` pass (`375` examples).
+    OSC 7501, program status reset/restore, styled-string/buffer fixes, the
+    renderer damage/resize model, and the terminal input-loop fixes.
+  - **In progress:** the `6b8d4ba` vendor delta (width handling).
+  - **Remaining:** the three next-up items above.
+- **Last commit:** `d6dd62a` (`port: vendor renderer damage and resize model`).
+- **Gates:** `make lint` and `make test` pass (`376` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the program status, styled/buffer, and renderer follow-ups)
+> `7cc6674` plus the program status, styled/buffer, renderer, and input-loop
+> follow-ups)
 
 ## Status Overview
 
@@ -42,7 +42,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 375 Crystal specs |
+| **Test coverage** | 122 Go tests | 376 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -56,6 +56,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | Terminal input loop: reusable read buffer copied before dispatch |
 | 2026-10-19 | +21 specs | Renderer damage/resize: inline/fullscreen resize, repaint latching, drift/autowrap, corner clusters, scroll repaint, short touch lists |
 | 2026-10-19 | +14 specs | Styled strings and buffers: pass-through sequences, combining marks, hyperlink URLs, trailing spaces, wide clusters, RenderBuffer resize/touched |
 | 2026-10-19 | +1 spec | Program status reset/restore parity (`TestTerminalScreenProgramStatus`) |
@@ -160,6 +161,17 @@ marking rows moved by hardware scrolls.
 `src/ultraviolet/buffer.cr`
 **Specs:** `spec/terminal_renderer_resize_spec.cr`,
 `spec/terminal_renderer_spec.cr`, `spec/terminal_renderer_output_spec.cr`
+
+### F10. Terminal input loop (vendor `6b8d4ba`) ✅
+
+The Crystal reader now reuses a single read buffer and copies each chunk before
+sending it to the event loop, matching upstream's input-loop fix. The input loop
+already captured a stable local reader reference, so the Go stop-time nil
+dereference has no Crystal equivalent; a comment records the invariant.
+
+**Files changed:** `src/ultraviolet/terminal_reader.cr`,
+`src/ultraviolet/terminal.cr`
+**Specs:** `spec/terminal_reader_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

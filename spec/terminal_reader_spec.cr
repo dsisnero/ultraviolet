@@ -154,3 +154,67 @@ module Ultraviolet
     end
   end
 end
+
+module Ultraviolet
+  private class ChunkedIO < IO
+    @chunks : Array(Bytes)
+    @index : Int32
+
+    def initialize(@chunks : Array(Bytes))
+      @index = 0
+    end
+
+    def read(slice : Bytes) : Int32
+      return 0 if @index >= @chunks.size
+
+      chunk = @chunks[@index]
+      @index += 1
+      size = Math.min(slice.size, chunk.size)
+      slice[0, size].copy_from(chunk[0, size])
+      size
+    end
+
+    def write(slice : Bytes) : Nil
+    end
+
+    def flush : Nil
+    end
+
+    def close : Nil
+    end
+  end
+
+  describe TerminalReader do
+    it "does not reuse the read buffer between reads" do
+      decrpm = "\e[?1016;2$y"
+      kitty = "\e_Gi=31;OK\e\\"
+      rounds = 500
+      chunks = [] of Bytes
+      rounds.times do
+        chunks << decrpm.to_slice
+        chunks << kitty.to_slice
+      end
+
+      reader = TerminalReader.new(ChunkedIO.new(chunks), "xterm-256color")
+      reader.buffer_size = 64
+      events = Channel(Event).new
+
+      spawn { reader.stream_events(events) }
+
+      received = [] of Event
+      (rounds * 2).times do
+        select
+        when event = events.receive
+          received << event
+        when timeout(2.seconds)
+          fail "timed out after #{received.size} events"
+        end
+      end
+
+      received.each_slice(2).with_index do |pair, index|
+        pair[0].is_a?(ModeReportEvent).should be_true, "round #{index}: #{pair[0]}"
+        pair[1].is_a?(KittyGraphicsEvent).should be_true, "round #{index}: #{pair[1]}"
+      end
+    end
+  end
+end

@@ -19,6 +19,7 @@ module Ultraviolet
     @term : String
     @logger : Logger?
     @lookup : Bool = true
+    @read_buf : Bytes
 
     {% if flag?(:win32) %}
       @vt_input : Bool = false
@@ -37,6 +38,7 @@ module Ultraviolet
       @scanner.lookup = @lookup
       @scanner.build_table(@term)
       @logger = nil
+      @read_buf = Bytes.empty
     end
 
     def lookup? : Bool
@@ -156,7 +158,10 @@ module Ultraviolet
     private def send_bytes(readc : Channel(Bytes), stop : Channel(Nil)?) : Nil
       loop do
         break if stop && stop.closed?
-        buf = Bytes.new(@buffer_size)
+        if @read_buf.size != @buffer_size
+          @read_buf = Bytes.new(@buffer_size)
+        end
+        buf = @read_buf
         n = @reader.read(buf)
         if n == 0
           STDERR.puts("uv: read eof") if ENV["UV_DEBUG_IO"]?
@@ -172,7 +177,12 @@ module Ultraviolet
           end
           STDERR.puts("uv: read #{n} bytes: #{hex}")
         end
-        readc.send(buf[0, n])
+        # Hand the consumer its own copy. The next read reuses @read_buf, so
+        # sending the slice directly lets it overwrite bytes the event loop has
+        # not scanned yet.
+        data = Bytes.new(n)
+        data.copy_from(buf[0, n])
+        readc.send(data)
       end
     end
 

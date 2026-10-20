@@ -641,6 +641,9 @@ module Ultraviolet
     end
 
     private def input_loop(reader : TerminalReader, stop : Channel(Nil), done : Channel(Nil)) : Nil
+      # Hold a local reference for the loop's lifetime. stop_input clears
+      # @reader, and a loop that read the field each iteration could evaluate it
+      # after that has happened.
       STDERR.puts("uv: reader start") if ENV["UV_DEBUG_IO"]?
       reader.stream_events(@evch, stop)
     rescue ex

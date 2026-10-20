@@ -633,7 +633,7 @@ tabstop.go::struct::TabStops	struct	ported	src/ultraviolet/tabstop.cr		auto-gene
 terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr		auto-generated
-terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr		auto-generated
+terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
 terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr		auto-generated
 terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr		auto-generated
 terminal_renderer_test.go::test::TestInlineRendererOutput	test	ported	spec/terminal_renderer_spec.cr		auto-generated
@@ -771,8 +771,8 @@ terminal.go::method::Terminal.Read	method	ported	src/ultraviolet/terminal.cr		au
 terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.SendEvent	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.SetLogger	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.Start	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.Stop	method	ported	src/ultraviolet/terminal.cr		auto-generated
+terminal.go::method::Terminal.Start	method	ported	src/ultraviolet/terminal.cr	input loop holds a stable local reader reference; upstream 6b8d4ba
+terminal.go::method::Terminal.Stop	method	ported	src/ultraviolet/terminal.cr	cancel + stop channel; no nil-reader dereference; upstream 6b8d4ba
 terminal.go::method::Terminal.Wait	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr		auto-generated
 terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr		auto-generated

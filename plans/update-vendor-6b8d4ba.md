@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, and renderer follow-ups from `6b8d4ba`
+**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, renderer, and input-loop follow-ups from `6b8d4ba`
 
 The vendored Go snapshot has been refreshed. Porting has started: the program
-status reset/restore, styled-string/buffer, and renderer damage/resize
-follow-ups are complete. The remaining delta is still outstanding.
+status reset/restore, styled-string/buffer, renderer damage/resize, and terminal
+input-loop follow-ups are complete. The remaining delta is still outstanding.
 
 ```text
 67 commits
@@ -19,12 +19,14 @@ follow-ups are complete. The remaining delta is still outstanding.
 
 - `vendor/ultraviolet/` is now at `6b8d4ba`.
 - The Crystal implementation and specs match the previous `7cc6674` behavior
-  plus the completed program status, styled/buffer, and renderer follow-ups.
+  plus the completed program status, styled/buffer, renderer, and input-loop
+  follow-ups.
 - Program Status Protocol (OSC 7501) support is fully ported, including
   reset/restore behavior.
 - Styled strings and buffers now include the `6b8d4ba` fixes.
 - The renderer now uses the damage/resize model from `6b8d4ba`.
-- Next step: section 4, the terminal input loop.
+- The reader now copies each read before handing it to the event loop.
+- Next step: section 5, width handling.
 
 ## Porting checklist
 
@@ -103,9 +105,16 @@ Upstream files: `terminal.go`, `terminal_input_test.go`,
 
 Commits: `666ce5e`, `d4534d5`.
 
-- [ ] Keep a stable poll-reader reference for the input loop lifetime
-- [ ] Copy each read before sending it to the event loop
-- [ ] Cover stop/restart and input-copy behavior
+- [x] Keep a stable poll-reader reference for the input loop lifetime
+- [x] Copy each read before sending it to the event loop
+- [x] Cover stop/restart and input-copy behavior
+
+**Completed 2026-10-19.** `Terminal#input_loop` already held a local reader
+reference, so the Go nil-dereference bug has no Crystal equivalent; a comment now
+records that invariant. `TerminalReader#send_bytes` reuses its read buffer and
+copies each chunk before sending it, with a regression spec that sends 500 pairs
+of back-to-back mode-report and Kitty replies. Stop/restart continues to use the
+existing `CancelReader` + stop-channel path.
 
 ### 5. Width handling
 
