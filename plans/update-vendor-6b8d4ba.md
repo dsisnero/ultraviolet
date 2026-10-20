@@ -6,9 +6,9 @@
 **Crystal implementation tracks:** `7cc6674` plus the completed `6b8d4ba`
 follow-ups
 
-The vendored Go snapshot has been refreshed. Phases 1–6 are complete. Phase 7
-(refresh the parity inventories) is next; Phase 8 evaluates the optional Go
-conformance harness.
+The vendored Go snapshot has been refreshed. Phases 1–7 are complete. Phase 8
+triages the refreshed inventory; Phase 9 evaluates the optional Go conformance
+harness.
 
 ```text
 67 commits
@@ -75,25 +75,35 @@ into one-off work items here.
 - **Evidence:** `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`,
   `8659366`, `2a85b32`; mouse, TTY, console, and alias specs.
 
-### Phase 7 — Parity inventory refresh (next)
+### Phase 7 — Parity inventory refresh ✅
+
+- Regenerated source, test, and curated inventory manifests from `6b8d4ba`.
+- Preserved curated statuses/refs for matching items and removed stale ids.
+- New baseline: 1015 items, 812 ported, 203 audit pending.
+- **Evidence:** `check_source_parity` (819 items), `check_test_parity`
+  (196 tests), and `check_port_inventory` (1015 items) pass.
+
+### Phase 8 — Inventory triage (next)
 
 Feature-sized scope:
 
-- Regenerate the source and test manifests from `6b8d4ba`.
-- Reconcile the curated `go_port_inventory.tsv` with the new manifests.
-- Resolve stale `missing` rows that are actually ported, and stale references.
-- Re-run the parity checks and record the remaining true gaps.
+- Resolve rows whose implementation is shared/inherited but currently marked
+  `missing` (for example `RenderBuffer.Clear` via `Buffer`).
+- Classify example, `internal/casso`, `internal/lru`, and conformance rows as
+  runtime, tooling, or intentional divergence.
+- Leave only true porting gaps as `missing`, with file references or a
+  documented divergence.
 
-**Done when:** `check_source_parity`, `check_test_parity`, and
-`check_port_inventory` are current and their remaining findings are documented.
+Current audit-pending split: 49 core tests, 42 layout, 34 core source,
+34 conformance, 22 examples, 18 casso, 4 lru.
 
-### Phase 8 — Conformance harness assessment (deferred)
+### Phase 9 — Conformance harness assessment (deferred)
 
 Decide whether the Go `internal/conformance` harness adds coverage the Crystal
 renderer specs cannot express. Port only the portable corpus/operation layer if
 it does; record a divergence for the Go-only emulator oracle.
 
-### Phase 9 — Next vendor refresh (deferred)
+### Phase 10 — Next vendor refresh (deferred)
 
 Repeat this workflow when upstream moves past `6b8d4ba`.
 

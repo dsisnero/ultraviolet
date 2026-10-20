@@ -1,123 +1,197 @@
 # source_test_id	status	crystal_refs	notes
-border_test.go::test::TestBorderConstructors	missing	-	baseline
-border_test.go::test::TestBorderDrawHiddenStyleLink	missing	-	baseline
-border_test.go::test::TestBorderDrawNormal	missing	-	baseline
-border_test.go::test::TestBorderDrawSmallAreas	missing	-	baseline
-border_test.go::test::TestBorderStyleAndLink	missing	-	baseline
-buffer_test.go::test::TestBufferCellOperations	missing	-	baseline
-buffer_test.go::test::TestBufferLineOperations	missing	-	baseline
-buffer_test.go::test::TestBufferMethods	missing	-	baseline
-buffer_test.go::test::TestBufferUniseg	missing	-	baseline
-buffer_test.go::test::TestLineRenderLine	missing	-	baseline
-buffer_test.go::test::TestLineSet	missing	-	baseline
-buffer_test.go::test::TestLineString	missing	-	baseline
-buffer_test.go::test::TestScreenBuffer	missing	-	baseline
-cancelreader_test.go::test::TestNewCancelReader	missing	-	baseline
-cell_test.go::test::TestConvertLink	missing	-	baseline
-cell_test.go::test::TestConvertStyle	missing	-	baseline
-cell_test.go::test::TestStyleDiff	missing	-	baseline
-cursor_test.go::test::TestCursorShape_Encode	missing	-	baseline
-decoder_test.go::test::TestDeviceAttributesParsing	missing	-	baseline
-decoder_test.go::test::TestHelperFunctions	missing	-	baseline
-decoder_test.go::test::TestLegacyKeyEncodingMethods	missing	-	baseline
-decoder_test.go::test::TestParseControl	missing	-	baseline
-decoder_test.go::test::TestParseTermcap	missing	-	baseline
-decoder_test.go::test::TestParseUtf8	missing	-	baseline
-decoder_test.go::test::TestWin32Functions	missing	-	baseline
-event_test.go::test::TestClipboardEventString	missing	-	baseline
-event_test.go::test::TestColorEventMethods	missing	-	baseline
-event_test.go::test::TestEventTypes	missing	-	baseline
-event_test.go::test::TestKeyPressEventMethods	missing	-	baseline
-event_test.go::test::TestKeyReleaseEventMethods	missing	-	baseline
-event_test.go::test::TestKittyEnhancementsEventContains	missing	-	baseline
-event_test.go::test::TestMouseEventMethods	missing	-	baseline
-event_test.go::test::TestMultiEventString	missing	-	baseline
-event_test.go::test::TestSizeBounds	missing	-	baseline
-event_test.go::test::TestUnknownEventString	missing	-	baseline
-key_test.go::test::TestBlur	missing	-	baseline
-key_test.go::test::TestEmptyBufferDecode	missing	-	baseline
-key_test.go::test::TestFocus	missing	-	baseline
-key_test.go::test::TestKeyMatchString	missing	-	baseline
-key_test.go::test::TestKeyString	missing	-	baseline
-key_test.go::test::TestKeyStringMore	missing	-	baseline
-key_test.go::test::TestKeystroke	missing	-	baseline
-key_test.go::test::TestKeystrokeCoverage	missing	-	baseline
-key_test.go::test::TestMatchStrings	missing	-	baseline
-key_test.go::test::TestMouseEvent_String	missing	-	baseline
-key_test.go::test::TestParseSGRMouseEvent	missing	-	baseline
-key_test.go::test::TestParseSequence	missing	-	baseline
-key_test.go::test::TestParseX10MouseDownEvent	missing	-	baseline
-key_test.go::test::TestReadInput	missing	-	baseline
-key_test.go::test::TestReadLongInput	missing	-	baseline
-key_test.go::test::TestSplitReads	missing	-	baseline
-key_test.go::test::TestSplitSequences	missing	-	baseline
-layout/layout_test.go::test::TestFixedApply	missing	-	baseline
-layout/layout_test.go::test::TestPercentApply	missing	-	baseline
-layout/layout_test.go::test::TestRatio	missing	-	baseline
-layout/layout_test.go::test::TestSplitHorizontal	missing	-	baseline
-layout/layout_test.go::test::TestSplitVertical	missing	-	baseline
-poll_default_test.go::test::TestReader	missing	-	baseline
-poll_fallback_test.go::test::TestFallbackReader	missing	-	baseline
-poll_fallback_test.go::test::TestFallbackReaderConcurrentCancel	missing	-	baseline
-poll_test.go::test::TestReaderNonFile	missing	-	baseline
-screen/screen_test.go::test::TestClear	missing	-	baseline
-screen/screen_test.go::test::TestClearArea	missing	-	baseline
-screen/screen_test.go::test::TestClone	missing	-	baseline
-screen/screen_test.go::test::TestCloneArea	missing	-	baseline
-screen/screen_test.go::test::TestEdgeCases	missing	-	baseline
-screen/screen_test.go::test::TestFill	missing	-	baseline
-screen/screen_test.go::test::TestFillArea	missing	-	baseline
-screen/screen_test.go::test::TestMinimalScreenFallbacks	missing	-	baseline
-screen/screen_test.go::test::TestScreenBufferIntegration	missing	-	baseline
-styled_test.go::test::TestStyledString	missing	-	baseline
-styled_test.go::test::TestStyledStringEmptyLines	missing	-	baseline
-tabstop_test.go::test::TestTabStops	missing	-	baseline
-tabstop_test.go::test::TestTabStopsClear	missing	-	baseline
-tabstop_test.go::test::TestTabStopsNavigation	missing	-	baseline
-tabstop_test.go::test::TestTabStopsResize	missing	-	baseline
-tabstop_test.go::test::TestTabStopsResizeEdgeCases	missing	-	baseline
-terminal_renderer_output_test.go::test::TestRendererOutput	missing	-	baseline
-terminal_renderer_test.go::test::TestInlineRendererOutput	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererBackspace	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererBackspaceOptimization	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererCapabilities	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererColorDownsampling	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererColorProfile	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererCursorMovementOptimizations	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererEdgeCases	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererEnterExitAltScreen	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererErase	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererEraseCharacterOptimization	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererHyperlinks	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererLineClearingOptimizations	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererLogger	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererMapNewline	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererMoveTo	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererMultiplePrepends	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererNewlineMapping	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererPhantomCursor	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererPosition	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererPrependLines	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererPrependOneLine	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererPrependString	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererRedraw	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererRelativeCursor	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererRepeatCharacterOptimization	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererResize	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererScrollOptimization	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererStyledText	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererSwitchBuffer	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererTabStops	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererTerminalOptimizations	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererTextAttributes	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererTouched	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererUnderlineStyles	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererUpdates	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererWideCharacters	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererWrite	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererWriteString	missing	-	baseline
-terminal_renderer_test.go::test::TestRendererZeroWidthCharacters	missing	-	baseline
-terminal_renderer_test.go::test::TestSimpleRendererOutput	missing	-	baseline
-terminal_test.go::test::TestOpenTTY	missing	-	baseline
-terminal_test.go::test::TestSupportsBackspace	missing	-	baseline
-terminal_test.go::test::TestSupportsHardTabs	missing	-	baseline
+border_test.go::test::TestBorderConstructors	ported	spec/border_spec.cr		ported
+border_test.go::test::TestBorderDrawHiddenStyleLink	ported	spec/border_spec.cr		ported
+border_test.go::test::TestBorderDrawNormal	ported	spec/border_spec.cr		ported
+border_test.go::test::TestBorderDrawSmallAreas	ported	spec/border_spec.cr		ported
+border_test.go::test::TestBorderStyleAndLink	ported	spec/border_spec.cr		ported
+buffer_test.go::test::TestBufferCellOperations	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestBufferLineOperations	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestBufferMethods	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestBufferUniseg	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestLineRenderLine	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestLineSet	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestLineString	ported	spec/buffer_spec.cr		ported
+buffer_test.go::test::TestRenderLinePreservesStyledTrailingSpaces	missing	-	audit pending	ported
+buffer_test.go::test::TestRenderLinePreservesTrailingSpaces	missing	-	audit pending	ported
+buffer_test.go::test::TestRenderLineWideCellTail	missing	-	audit pending	ported
+buffer_test.go::test::TestScreenBuffer	ported	spec/buffer_spec.cr		ported
+cancelreader_test.go::test::TestNewCancelReader	ported	spec/cancelreader_spec.cr		ported
+cell_iszero_test.go::test::TestCellIsZero_NilColorDoesNotHang	missing	-	audit pending	ported
+cell_iszero_test.go::test::TestCellIsZero_RecursiveColorPanicsOrHangs	missing	-	audit pending	ported
+cell_iszero_test.go::test::TestStyleIsZero_RecursiveColorPanicsOrHangs	missing	-	audit pending	ported
+cell_test.go::test::TestConvertLink	ported	spec/style_spec.cr		ported
+cell_test.go::test::TestConvertStyle	ported	spec/style_spec.cr		ported
+cell_test.go::test::TestStyleDiff	ported	spec/style_spec.cr		ported
+cursor_test.go::test::TestCursorShape_Encode	ported	spec/cursor_spec.cr		ported
+decoder_test.go::test::TestDeviceAttributesParsing	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestHelperFunctions	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestLegacyKeyEncodingMethods	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestParseControl	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestParseTermcap	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestParseUtf8	ported	spec/decoder_function_spec.cr		ported
+decoder_test.go::test::TestWin32Functions	ported	spec/decoder_function_spec.cr		ported
+event_test.go::test::TestClipboardEventString	ported	spec/event_spec.cr		ported
+event_test.go::test::TestColorEventMethods	ported	spec/event_spec.cr		ported
+event_test.go::test::TestEventTypes	ported	spec/event_spec.cr		ported
+event_test.go::test::TestKeyPressEventMethods	ported	spec/event_spec.cr		ported
+event_test.go::test::TestKeyReleaseEventMethods	ported	spec/event_spec.cr		ported
+event_test.go::test::TestKittyEnhancementsEventContains	ported	spec/event_spec.cr		ported
+event_test.go::test::TestMouseEventMethods	ported	spec/event_spec.cr		ported
+event_test.go::test::TestMultiEventString	ported	spec/event_spec.cr		ported
+event_test.go::test::TestSizeBounds	ported	spec/event_spec.cr		ported
+event_test.go::test::TestUnknownEventString	ported	spec/event_spec.cr		ported
+grapheme_width_test.go::test::TestGraphemeWidthGating	missing	-	audit pending	ported
+grapheme_width_test.go::test::TestGraphemeWidthGatingPreservesOverride	missing	-	audit pending	ported
+grapheme_width_test.go::test::TestGraphemeWidthNegotiation	missing	-	audit pending	ported
+grapheme_width_test.go::test::TestGraphemeWidthOverride	missing	-	audit pending	ported
+internal/casso/casso_test.go::test::TestConstraint	missing	-	audit pending	ported
+internal/casso/casso_test.go::test::TestConstraintRequiringArtificialVariable	missing	-	audit pending	ported
+internal/casso/casso_test.go::test::TestSymbol	missing	-	audit pending	ported
+internal/conformance/corpus_test.go::test::TestCollapseThenDrawIsReachable	missing	-	audit pending	ported
+internal/conformance/corpus_test.go::test::TestCorpusDecodesStably	missing	-	audit pending	ported
+internal/conformance/corpus_test.go::test::TestOpTableCoversEveryKind	missing	-	audit pending	ported
+internal/conformance/corpus_test.go::test::TestSeedsDecodeToTheProgramsTheyDescribe	missing	-	audit pending	ported
+internal/conformance/fuzz_test.go::test::TestInlineSeedOccupiesTheRowsItClaims	missing	-	audit pending	ported
+internal/conformance/fuzz_test.go::test::TestInlineShrinkLeavesTheFramesOwnRows	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestDecodeProgramIsDeterministic	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestDecodeProgramTotal	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestDriftPremise	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestFuzzTargetsRunSeeds	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestInlineFramesFitTheTerminal	missing	-	audit pending	ported
+internal/conformance/program_test.go::test::TestSeedCorpusIsInteresting	missing	-	audit pending	ported
+internal/conformance/reflow_test.go::test::TestReflowAcrossShrinkAndGrow	missing	-	audit pending	ported
+internal/lru/lru_test.go::test::TestLRU	missing	-	audit pending	ported
+key_test.go::test::TestBlur	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestEmptyBufferDecode	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestFocus	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestKeyMatchString	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestKeyString	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestKeyStringMore	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestKeystroke	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestKeystrokeCoverage	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestMatchStrings	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestMouseEvent_String	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestMousePixelToCell	ported	spec/mouse_spec.cr		ported
+key_test.go::test::TestParseSGRMouseEvent	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestParseSequence	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestParseX10MouseDownEvent	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestReadInput	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestReadLongInput	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestSplitReads	ported	spec/terminal_reader_stream_spec.cr		ported
+key_test.go::test::TestSplitSequences	ported	spec/terminal_reader_stream_spec.cr		ported
+layout/layout_test.go::test::TestEdgeCases	missing	-	audit pending	ported
+layout/layout_test.go::test::TestFlexConstraint	missing	-	audit pending	ported
+layout/layout_test.go::test::TestFlexSpacing	missing	-	audit pending	ported
+layout/layout_test.go::test::TestLength	missing	-	audit pending	ported
+layout/layout_test.go::test::TestMax	missing	-	audit pending	ported
+layout/layout_test.go::test::TestMin	missing	-	audit pending	ported
+layout/layout_test.go::test::TestPercent	missing	-	audit pending	ported
+layout/layout_test.go::test::TestPriorityIsValid	missing	-	audit pending	ported
+layout/layout_test.go::test::TestRatio	ported	spec/layout_spec.cr		ported
+poll_default_test.go::test::TestReader	ported	spec/poll_spec.cr	cancels a read that is already blocked; upstream 6b8d4ba	ported
+poll_fallback_test.go::test::TestFallbackReader	ported	spec/poll_fallback_spec.cr		ported
+poll_fallback_test.go::test::TestFallbackReaderConcurrentCancel	ported	spec/poll_fallback_spec.cr		ported
+poll_test.go::test::TestReaderNonFile	ported	spec/poll_spec.cr		ported
+programstatus_test.go::test::TestEncodeProgramStatus	missing	-	audit pending	ported
+programstatus_test.go::test::TestTerminalScreenProgramStatus	missing	-	audit pending	ported
+screen/screen_test.go::test::TestClear	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestClearArea	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestClone	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestCloneArea	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestEdgeCases	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestFill	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestFillArea	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestMinimalScreenFallbacks	ported	spec/screen_spec.cr		ported
+screen/screen_test.go::test::TestScreenBufferIntegration	ported	spec/screen_spec.cr		ported
+styled_test.go::test::TestPassThroughDoesNotAffectWidth	missing	-	audit pending	ported
+styled_test.go::test::TestPassThroughTerminators	missing	-	audit pending	ported
+styled_test.go::test::TestReadLinkAllowsSemicolonsInURL	missing	-	audit pending	ported
+styled_test.go::test::TestStyledString	ported	spec/styled_spec.cr		ported
+styled_test.go::test::TestStyledStringCombiningMarks	missing	-	audit pending	ported
+styled_test.go::test::TestStyledStringEmptyLines	ported	spec/styled_spec.cr		ported
+styled_test.go::test::TestStyledStringLinesUnboundedContent	missing	-	audit pending	ported
+tabstop_test.go::test::TestTabStops	ported	spec/tabstop_spec.cr		ported
+tabstop_test.go::test::TestTabStopsClear	ported	spec/tabstop_spec.cr		ported
+tabstop_test.go::test::TestTabStopsNavigation	ported	spec/tabstop_spec.cr		ported
+tabstop_test.go::test::TestTabStopsResize	ported	spec/tabstop_spec.cr		ported
+tabstop_test.go::test::TestTabStopsResizeEdgeCases	ported	spec/tabstop_spec.cr		ported
+terminal_input_test.go::test::TestInputLoopDoesNotReuseTheReadBuffer	missing	-	audit pending	ported
+terminal_renderer_output_test.go::test::TestRendererOutput	ported	spec/terminal_renderer_output_spec.cr		ported
+terminal_renderer_output_test.go::test::TestRendererWideCellReanchor	ported	spec/terminal_renderer_resize_spec.cr		ported
+terminal_renderer_test.go::test::TestDriftShortCircuitAgreesWithFullCheck	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestHeightRepaintScope	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestInlineRendererOutput	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestPassThroughSequenceReachesTerminalOnce	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRenderAllocationsDoNotFollowScreenHeight	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRenderBufferTouchedCoversEveryRow	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererBackspace	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererBackspaceOptimization	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererCapabilities	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererClearsRowsAFrameGotBack	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererColorDownsampling	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererColorProfile	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererCornerClusterLeavesNoPendingWrap	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererCursorMovementOptimizations	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererDamageIsSizedToTheScreen	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererEdgeCases	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererEnterExitAltScreen	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererErase	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererEraseCharacterOptimization	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererFullscreenNarrowRepaints	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererFullscreenShrinkRepaints	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererGrowPaintsNewRows	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererHyperlinkReopensOnEachRow	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererHyperlinks	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererInlineCollapseStaysBelowItsOrigin	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineNarrowRepaints	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineResizeKeepsCursorModel	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineShrinkClearsPartially	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesAcrossAWidthChange	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesFromTheTop	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererInlineShrinkLeavesItsOwnRowsAlone	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererLineClearingOptimizations	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererLogger	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererMapNewline	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererMarginClusterKeepsAutowrap	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererMoveTo	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererMultiplePrepends	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererNewlineMapping	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererNoWrapOnDriftLine	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererPhantomCursor	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererPosition	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererPrependLines	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererPrependOneLine	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererPrependString	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererRedraw	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererRelativeCursor	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererRepaintsAResizeWithNoTouches	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererRepeatCharacterOptimization	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererResize	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererResizeLatchesOnlyRealChanges	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererScrollOptimization	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererScrollRepaintsRowsItMoved	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererStyledText	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererSurvivesAShortTouchList	missing	-	audit pending	ported
+terminal_renderer_test.go::test::TestRendererSwitchBuffer	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererTabStops	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererTerminalOptimizations	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererTextAttributes	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererTouched	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererUnderlineStyles	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererUpdates	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererWideCharacters	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererWrite	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererWriteString	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestRendererZeroWidthCharacters	ported	spec/terminal_renderer_spec.cr		ported
+terminal_renderer_test.go::test::TestSimpleRendererOutput	ported	spec/terminal_renderer_spec.cr		ported
+terminal_stop_test.go::test::TestStopWithInputInFlightDoesNotPanic	missing	-	audit pending	ported
+terminal_test.go::test::TestOpenTTY	ported	spec/terminal_spec.cr		ported
+terminal_test.go::test::TestStopBeforeStart	ported	spec/terminal_spec.cr		ported
+terminal_test.go::test::TestStopIdempotent	ported	spec/terminal_spec.cr		ported
+terminal_test.go::test::TestSupportsBackspace	ported	spec/terminal_spec.cr		ported
+terminal_test.go::test::TestSupportsHardTabs	ported	spec/terminal_spec.cr		ported
+transformline_bug_test.go::test::TestTransformLine_IsZeroInfiniteLoop	missing	-	audit pending	ported
+widecell_placeholder_test.go::test::TestStyledWideCellPlaceholderDetection	missing	-	audit pending	ported
+width_test.go::test::TestDrawGraphemeWidthCells	missing	-	audit pending	ported
+width_test.go::test::TestDrawWcWidthCells	missing	-	audit pending	ported
+width_test.go::test::TestNewCellWidths	missing	-	audit pending	ported

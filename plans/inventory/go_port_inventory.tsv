@@ -1,837 +1,1016 @@
 # go_id	kind	status	crystal_refs	notes
-border_test.go::test::TestBorderConstructors	test	ported	spec/border_spec.cr		auto-generated
-border_test.go::test::TestBorderDrawHiddenStyleLink	test	ported	spec/border_spec.cr		auto-generated
-border_test.go::test::TestBorderDrawNormal	test	ported	spec/border_spec.cr		auto-generated
-border_test.go::test::TestBorderDrawSmallAreas	test	ported	spec/border_spec.cr		auto-generated
-border_test.go::test::TestBorderStyleAndLink	test	ported	spec/border_spec.cr		auto-generated
-border.go::func::ASCIIBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::BlockBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::DoubleBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::HiddenBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::InnerHalfBlockBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::MarkdownBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::NormalBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::OuterHalfBlockBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::RoundedBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::func::ThickBorder	func	ported	src/ultraviolet/border.cr		auto-generated
-border.go::method::Border.Draw	method	ported	src/ultraviolet/border.cr		auto-generated
-border.go::method::Border.Link	method	ported	src/ultraviolet/border.cr		auto-generated
-border.go::method::Border.Style	method	ported	src/ultraviolet/border.cr		auto-generated
-border.go::struct::Border	struct	ported	src/ultraviolet/border.cr		auto-generated
-border.go::struct::Side	struct	ported	src/ultraviolet/border.cr		auto-generated
-buffer_test.go::test::TestBufferCellOperations	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestBufferLineOperations	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestBufferMethods	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestBufferUniseg	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestLineRenderLine	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestLineSet	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestLineString	test	ported	spec/buffer_spec.cr		auto-generated
-buffer_test.go::test::TestScreenBuffer	test	ported	spec/buffer_spec.cr		auto-generated
-buffer.go::func::NewBuffer	func	ported	src/ultraviolet/buffer.cr	Go-compatible top-level alias for Buffer.new_buffer; upstream 6b8d4ba	auto-generated
-buffer.go::func::NewLine	func	ported	src/ultraviolet/buffer.cr	Go-compatible alias for Line.new; upstream 6b8d4ba	auto-generated
-buffer.go::func::NewRenderBuffer	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::func::NewScreenBuffer	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::func::Pos	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::func::Rect	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::func::TrimSpace	func	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Bounds	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.CellAt	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Clear	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.ClearArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Clone	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.CloneArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.DeleteCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.DeleteCellArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.DeleteLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.DeleteLineArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Draw	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Fill	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.FillArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Height	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.InsertCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.InsertLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.InsertLineArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Line	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Render	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Resize	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.SetCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.String	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Buffer.Width	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Line.At	method	ported	src/ultraviolet/buffer.cr		auto-generated
+border.go::func::ASCIIBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::BlockBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::DoubleBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::HiddenBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::InnerHalfBlockBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::MarkdownBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::NormalBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::OuterHalfBlockBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::RoundedBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::func::ThickBorder	func	ported	src/ultraviolet/border.cr	ported
+border.go::method::Border.Draw	method	ported	src/ultraviolet/border.cr	ported
+border.go::method::Border.Link	method	ported	src/ultraviolet/border.cr	ported
+border.go::method::Border.Style	method	ported	src/ultraviolet/border.cr	ported
+border.go::struct::Border	struct	ported	src/ultraviolet/border.cr	ported
+border.go::struct::Side	struct	ported	src/ultraviolet/border.cr	ported
+border_test.go::test::TestBorderConstructors	test	ported	spec/border_spec.cr	ported
+border_test.go::test::TestBorderDrawHiddenStyleLink	test	ported	spec/border_spec.cr	ported
+border_test.go::test::TestBorderDrawNormal	test	ported	spec/border_spec.cr	ported
+border_test.go::test::TestBorderDrawSmallAreas	test	ported	spec/border_spec.cr	ported
+border_test.go::test::TestBorderStyleAndLink	test	ported	spec/border_spec.cr	ported
+buffer.go::func::NewBuffer	func	ported	src/ultraviolet/buffer.cr	Go-compatible top-level alias for Buffer.new_buffer; upstream 6b8d4ba
+buffer.go::func::NewLine	func	ported	src/ultraviolet/buffer.cr	Go-compatible alias for Line.new; upstream 6b8d4ba
+buffer.go::func::NewRenderBuffer	func	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::func::NewScreenBuffer	func	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::func::Pos	func	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::func::Rect	func	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::func::TrimSpace	func	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Bounds	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.CellAt	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Clear	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.ClearArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Clone	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.CloneArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.DeleteCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.DeleteCellArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.DeleteLine	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.DeleteLineArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Draw	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Fill	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.FillArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Height	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.InsertCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.InsertLine	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.InsertLineArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Line	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Render	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Resize	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.SetCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.String	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Buffer.Width	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Line.At	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::Line.Render	method	ported	src/ultraviolet/buffer.cr	preserves trailing empty cells as spaces; upstream 6b8d4ba
-buffer.go::method::Line.Set	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Line.String	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Lines.Height	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Lines.Render	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Lines.String	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::Lines.Width	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.DeleteCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.DeleteCellArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.DeleteLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.DeleteLineArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.InsertCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.InsertLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.InsertLineArea	method	ported	src/ultraviolet/buffer.cr		auto-generated
+buffer.go::method::Line.Set	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Line.String	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Lines.Height	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Lines.Render	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Lines.String	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::Lines.Width	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.Clear	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.ClearArea	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.DeleteCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.DeleteCellArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.DeleteLine	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.DeleteLineArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.Fill	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.FillArea	method	missing	-	audit pending
+buffer.go::method::RenderBuffer.InsertCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.InsertCellArea	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.InsertLine	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.InsertLineArea	method	ported	src/ultraviolet/buffer.cr	ported
 buffer.go::method::RenderBuffer.Resize	method	ported	src/ultraviolet/buffer.cr	touches columns and rows created by resize; upstream 6b8d4ba
-buffer.go::method::RenderBuffer.SetCell	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.Touch	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.TouchedLines	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::RenderBuffer.TouchLine	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::method::ScreenBuffer.WidthMethod	method	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::struct::Buffer	struct	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::struct::RenderBuffer	struct	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::struct::ScreenBuffer	struct	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::type::Line	type	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::type::Lines	type	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::type::Position	type	ported	src/ultraviolet/buffer.cr		auto-generated
-buffer.go::type::Rectangle	type	ported	src/ultraviolet/buffer.cr		auto-generated
-cancelreader_other.go::func::NewCancelReader	func	ported	src/ultraviolet/cancelreader.cr		auto-generated
-cancelreader_test.go::test::TestNewCancelReader	test	ported	spec/cancelreader_spec.cr		auto-generated
-cancelreader_windows.go::func::NewCancelReader	func	ported	src/ultraviolet/cancelreader_windows.cr		auto-generated
-cancelreader_windows.go::method::conInputReader.Cancel	method	ported	src/ultraviolet/cancelreader_windows.cr		auto-generated
-cancelreader_windows.go::method::conInputReader.Close	method	ported	src/ultraviolet/cancelreader_windows.cr		auto-generated
-cancelreader_windows.go::method::conInputReader.Read	method	ported	src/ultraviolet/cancelreader_windows.cr		auto-generated
-cell_test.go::test::TestConvertLink	test	ported	spec/style_spec.cr		auto-generated
-cell_test.go::test::TestConvertStyle	test	ported	spec/style_spec.cr		auto-generated
-cell_test.go::test::TestStyleDiff	test	ported	spec/style_spec.cr		auto-generated
-cell.go::const::AttrBlink	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrBold	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrConceal	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrFaint	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrItalic	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrRapidBlink	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrReset	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrReverse	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrSlowBlink	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::AttrStrikethrough	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineCurly	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineDashed	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineDotted	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineDouble	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineNone	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineSingle	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleCurly	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleDashed	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleDotted	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleDouble	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleNone	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::const::UnderlineStyleSingle	const	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::func::ConvertLink	func	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::func::ConvertStyle	func	ported	src/ultraviolet/cell.cr		auto-generated
+buffer.go::method::RenderBuffer.SetCell	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.Touch	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.TouchLine	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::RenderBuffer.TouchedLines	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::method::ScreenBuffer.WidthMethod	method	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::struct::Buffer	struct	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::struct::RenderBuffer	struct	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::struct::ScreenBuffer	struct	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::type::Line	type	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::type::Lines	type	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::type::Position	type	ported	src/ultraviolet/buffer.cr	ported
+buffer.go::type::Rectangle	type	ported	src/ultraviolet/buffer.cr	ported
+buffer_test.go::test::TestBufferCellOperations	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestBufferLineOperations	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestBufferMethods	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestBufferUniseg	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestLineRenderLine	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestLineSet	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestLineString	test	ported	spec/buffer_spec.cr	ported
+buffer_test.go::test::TestRenderLinePreservesStyledTrailingSpaces	test	missing	-	audit pending
+buffer_test.go::test::TestRenderLinePreservesTrailingSpaces	test	missing	-	audit pending
+buffer_test.go::test::TestRenderLineWideCellTail	test	missing	-	audit pending
+buffer_test.go::test::TestScreenBuffer	test	ported	spec/buffer_spec.cr	ported
+cancelreader_other.go::func::NewCancelReader	func	ported	src/ultraviolet/cancelreader.cr	ported
+cancelreader_test.go::test::TestNewCancelReader	test	ported	spec/cancelreader_spec.cr	ported
+cancelreader_windows.go::func::NewCancelReader	func	ported	src/ultraviolet/cancelreader_windows.cr	ported
+cancelreader_windows.go::method::conInputReader.Cancel	method	ported	src/ultraviolet/cancelreader_windows.cr	ported
+cancelreader_windows.go::method::conInputReader.Close	method	ported	src/ultraviolet/cancelreader_windows.cr	ported
+cancelreader_windows.go::method::conInputReader.Read	method	ported	src/ultraviolet/cancelreader_windows.cr	ported
+cell.go::const::AttrBlink	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrBold	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrConceal	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrFaint	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrItalic	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrRapidBlink	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrReset	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrReverse	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrSlowBlink	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::AttrStrikethrough	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineCurly	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineDashed	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineDotted	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineDouble	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineNone	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineSingle	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleCurly	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleDashed	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleDotted	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleDouble	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleNone	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::const::UnderlineStyleSingle	const	ported	src/ultraviolet/cell.cr	ported
+cell.go::func::ConvertLink	func	ported	src/ultraviolet/cell.cr	ported
+cell.go::func::ConvertStyle	func	ported	src/ultraviolet/cell.cr	ported
 cell.go::func::NewCell	func	ported	src/ultraviolet/cell.cr	agrees with WcWidth/GraphemeWidth models, including clusters wider than four columns; upstream 6b8d4ba
-cell.go::func::NewLink	func	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::func::StyleDiff	func	ported	src/ultraviolet/style.cr	Go-compatible alias for Style.diff; upstream 6b8d4ba	auto-generated
-cell.go::method::Cell.Clone	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Cell.Empty	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Cell.Equal	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Cell.IsZero	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Cell.String	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Link.Equal	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Link.IsZero	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Link.String	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Style.Diff	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Style.Equal	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Style.IsZero	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Style.String	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::method::Style.Styled	method	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::struct::Cell	struct	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::struct::Link	struct	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::struct::Style	struct	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::type::Underline	type	ported	src/ultraviolet/cell.cr		auto-generated
-cell.go::type::UnderlineStyle	type	ported	src/ultraviolet/cell.cr		auto-generated
+cell.go::func::NewLink	func	ported	src/ultraviolet/cell.cr	ported
+cell.go::func::StyleDiff	func	ported	src/ultraviolet/style.cr	Go-compatible alias for Style.diff; upstream 6b8d4ba
+cell.go::method::Cell.Clone	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Cell.Empty	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Cell.Equal	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Cell.IsZero	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Cell.String	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Link.Equal	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Link.IsZero	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Link.String	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Style.Diff	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Style.Equal	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Style.IsZero	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Style.String	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::method::Style.Styled	method	ported	src/ultraviolet/cell.cr	ported
+cell.go::struct::Cell	struct	ported	src/ultraviolet/cell.cr	ported
+cell.go::struct::Link	struct	ported	src/ultraviolet/cell.cr	ported
+cell.go::struct::Style	struct	ported	src/ultraviolet/cell.cr	ported
+cell.go::type::Underline	type	ported	src/ultraviolet/cell.cr	ported
+cell.go::type::UnderlineStyle	type	ported	src/ultraviolet/cell.cr	ported
+cell_iszero_test.go::test::TestCellIsZero_NilColorDoesNotHang	test	missing	-	audit pending
+cell_iszero_test.go::test::TestCellIsZero_RecursiveColorPanicsOrHangs	test	missing	-	audit pending
+cell_iszero_test.go::test::TestStyleIsZero_RecursiveColorPanicsOrHangs	test	missing	-	audit pending
+cell_test.go::test::TestConvertLink	test	ported	spec/style_spec.cr	ported
+cell_test.go::test::TestConvertStyle	test	ported	spec/style_spec.cr	ported
+cell_test.go::test::TestStyleDiff	test	ported	spec/style_spec.cr	ported
 console.go::func::ControllingConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.controlling; upstream 6b8d4ba
 console.go::func::DefaultConsole	func	ported	src/ultraviolet/console.cr	Go-compatible alias for Console.default; upstream 6b8d4ba
-console.go::func::NewConsole	func	ported	src/ultraviolet/console.cr	Go-compatible top-level alias for Console.new_console; upstream 6b8d4ba	auto-generated
-console.go::method::console.Close	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Environ	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Getenv	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.GetSize	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.GetWinsize	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.LookupEnv	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.MakeRaw	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Read	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Reader	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Restore	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Write	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::method::console.Writer	method	ported	src/ultraviolet/console.cr		auto-generated
-console.go::struct::TTY	struct	ported	src/ultraviolet/console.cr		auto-generated
-console.go::struct::WinCon	struct	ported	src/ultraviolet/console.cr		auto-generated
-console.go::struct::Winsize	struct	ported	src/ultraviolet/console.cr		auto-generated
-console.go::type::Console	type	ported	src/ultraviolet/console.cr		auto-generated
-console.go::type::File	type	ported	src/ultraviolet/console.cr		auto-generated
-cursor_test.go::test::TestCursorShape_Encode	test	ported	spec/cursor_spec.cr		auto-generated
-cursor.go::const::CursorBar	const	ported	src/ultraviolet/cursor.cr		auto-generated
-cursor.go::const::CursorBlock	const	ported	src/ultraviolet/cursor.cr		auto-generated
-cursor.go::const::CursorUnderline	const	ported	src/ultraviolet/cursor.cr		auto-generated
-cursor.go::method::CursorShape.Encode	method	ported	src/ultraviolet/cursor.cr		auto-generated
-cursor.go::type::CursorShape	type	ported	src/ultraviolet/cursor.cr		auto-generated
-decoder_test.go::test::TestDeviceAttributesParsing	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestHelperFunctions	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestLegacyKeyEncodingMethods	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestParseControl	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestParseTermcap	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestParseUtf8	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder_test.go::test::TestWin32Functions	test	ported	spec/decoder_function_spec.cr		auto-generated
-decoder.go::method::EventDecoder.Decode	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.Backspace	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.CtrlAt	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.CtrlI	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.CtrlM	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.CtrlOpenBracket	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.Find	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.FKeys	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::method::LegacyKeyEncoding.Select	method	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::struct::EventDecoder	struct	ported	src/ultraviolet/decoder.cr		auto-generated
-decoder.go::type::LegacyKeyEncoding	type	ported	src/ultraviolet/decoder.cr		auto-generated
-environ.go::method::Environ.Getenv	method	ported	src/ultraviolet/environ.cr		auto-generated
-environ.go::method::Environ.LookupEnv	method	ported	src/ultraviolet/environ.cr		auto-generated
-environ.go::type::Environ	type	ported	src/ultraviolet/environ.cr		auto-generated
-event_test.go::test::TestClipboardEventString	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestColorEventMethods	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestEventTypes	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestKeyPressEventMethods	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestKeyReleaseEventMethods	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestKittyEnhancementsEventContains	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestMouseEventMethods	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestMultiEventString	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestSizeBounds	test	ported	spec/event_spec.cr		auto-generated
-event_test.go::test::TestUnknownEventString	test	ported	spec/event_spec.cr		auto-generated
-event.go::const::PrimaryClipboard	const	ported	src/ultraviolet/event.cr		auto-generated
-event.go::const::SystemClipboard	const	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::BackgroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
-event.go::method::BackgroundColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::CapabilityEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::CellSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::ClipboardEvent.Clipboard	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::ClipboardEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::CursorColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
-event.go::method::CursorColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::ForegroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba	auto-generated
-event.go::method::ForegroundColorEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyboardEnhancementsEvent.Contains	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyboardEnhancementsEvent.SupportsKeyDisambiguation	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyboardEnhancementsEvent.SupportsKeyReleases	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyboardEnhancementsEvent.SupportsUniformKeyLayout	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyPressEvent.Key	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyPressEvent.Keystroke	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyPressEvent.MatchString	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyPressEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyReleaseEvent.Key	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyReleaseEvent.Keystroke	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyReleaseEvent.MatchString	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::KeyReleaseEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseClickEvent.Mouse	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseClickEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseMotionEvent.Mouse	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseMotionEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseReleaseEvent.Mouse	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseReleaseEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseWheelEvent.Mouse	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MouseWheelEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::MultiEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::PasteEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::PixelSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::Size.Bounds	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::TerminalVersionEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownApcEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownCsiEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownDcsEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownOscEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownPmEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownSosEvent.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::UnknownSs3Event.String	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::method::WindowSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::BackgroundColorEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::BlurEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::CapabilityEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::ClipboardEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::CursorColorEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::CursorPositionEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::DarkColorSchemeEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::FocusEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::ForegroundColorEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::KeyboardEnhancementsEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::KittyGraphicsEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::LightColorSchemeEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::ModeReportEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::ModifyOtherKeysEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::PasteEndEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::PasteEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::PasteStartEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
+console.go::func::NewConsole	func	ported	src/ultraviolet/console.cr	Go-compatible top-level alias for Console.new_console; upstream 6b8d4ba
+console.go::method::console.Close	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Environ	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.GetSize	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.GetWinsize	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Getenv	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.LookupEnv	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.MakeRaw	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Read	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Reader	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Restore	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Write	method	ported	src/ultraviolet/console.cr	ported
+console.go::method::console.Writer	method	ported	src/ultraviolet/console.cr	ported
+console.go::struct::TTY	struct	ported	src/ultraviolet/console.cr	ported
+console.go::struct::WinCon	struct	ported	src/ultraviolet/console.cr	ported
+console.go::struct::Winsize	struct	ported	src/ultraviolet/console.cr	ported
+console.go::type::Console	type	ported	src/ultraviolet/console.cr	ported
+console.go::type::File	type	ported	src/ultraviolet/console.cr	ported
+cursor.go::const::CursorBar	const	ported	src/ultraviolet/cursor.cr	ported
+cursor.go::const::CursorBlock	const	ported	src/ultraviolet/cursor.cr	ported
+cursor.go::const::CursorUnderline	const	ported	src/ultraviolet/cursor.cr	ported
+cursor.go::method::CursorShape.Encode	method	ported	src/ultraviolet/cursor.cr	ported
+cursor.go::type::CursorShape	type	ported	src/ultraviolet/cursor.cr	ported
+cursor_test.go::test::TestCursorShape_Encode	test	ported	spec/cursor_spec.cr	ported
+decoder.go::method::EventDecoder.Decode	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.Backspace	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.CtrlAt	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.CtrlI	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.CtrlM	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.CtrlOpenBracket	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.FKeys	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.Find	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::method::LegacyKeyEncoding.Select	method	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::struct::EventDecoder	struct	ported	src/ultraviolet/decoder.cr	ported
+decoder.go::type::LegacyKeyEncoding	type	ported	src/ultraviolet/decoder.cr	ported
+decoder_test.go::test::TestDeviceAttributesParsing	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestHelperFunctions	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestLegacyKeyEncodingMethods	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestParseControl	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestParseTermcap	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestParseUtf8	test	ported	spec/decoder_function_spec.cr	ported
+decoder_test.go::test::TestWin32Functions	test	ported	spec/decoder_function_spec.cr	ported
+environ.go::method::Environ.Getenv	method	ported	src/ultraviolet/environ.cr	ported
+environ.go::method::Environ.LookupEnv	method	ported	src/ultraviolet/environ.cr	ported
+environ.go::type::Environ	type	ported	src/ultraviolet/environ.cr	ported
+event.go::const::PrimaryClipboard	const	ported	src/ultraviolet/event.cr	ported
+event.go::const::SystemClipboard	const	ported	src/ultraviolet/event.cr	ported
+event.go::method::BackgroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba
+event.go::method::BackgroundColorEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::CapabilityEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::CellSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::ClipboardEvent.Clipboard	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::ClipboardEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::CursorColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba
+event.go::method::CursorColorEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::ForegroundColorEvent.IsDark	method	ported	src/ultraviolet/event.cr	Go-compatible alias for dark?; upstream 6b8d4ba
+event.go::method::ForegroundColorEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyPressEvent.Key	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyPressEvent.Keystroke	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyPressEvent.MatchString	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyPressEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyReleaseEvent.Key	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyReleaseEvent.Keystroke	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyReleaseEvent.MatchString	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyReleaseEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyboardEnhancementsEvent.Contains	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyboardEnhancementsEvent.SupportsKeyDisambiguation	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyboardEnhancementsEvent.SupportsKeyReleases	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::KeyboardEnhancementsEvent.SupportsUniformKeyLayout	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseClickEvent.Mouse	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseClickEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseMotionEvent.Mouse	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseMotionEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseReleaseEvent.Mouse	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseReleaseEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseWheelEvent.Mouse	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MouseWheelEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::MultiEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::PasteEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::PixelSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::Size.Bounds	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::TerminalVersionEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownApcEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownCsiEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownDcsEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownOscEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownPmEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownSosEvent.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::UnknownSs3Event.String	method	ported	src/ultraviolet/event.cr	ported
+event.go::method::WindowSizeEvent.Bounds	method	ported	src/ultraviolet/event.cr	ported
+event.go::struct::BackgroundColorEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::BlurEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::CapabilityEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::ClipboardEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::CursorColorEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::CursorPositionEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::DarkColorSchemeEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::FocusEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::ForegroundColorEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::KeyboardEnhancementsEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::KittyGraphicsEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::LightColorSchemeEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::ModeReportEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::ModifyOtherKeysEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::PasteEndEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::PasteEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::PasteStartEvent	struct	ported	src/ultraviolet/event.cr	ported
 event.go::struct::ProgramStatusSupportEvent	struct	ported	src/ultraviolet/program_status.cr	OSC 7501 support reply
-event.go::struct::Size	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::TerminalVersionEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::struct::WindowOpEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::CellSizeEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::ClipboardSelection	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::Event	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::EventStreamer	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::KeyEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::KeyPressEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::KeyReleaseEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MouseClickEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MouseEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MouseMotionEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MouseReleaseEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MouseWheelEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::MultiEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::PixelSizeEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::PrimaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::SecondaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::TertiaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownApcEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownCsiEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownDcsEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownOscEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownPmEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownSosEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::UnknownSs3Event	type	ported	src/ultraviolet/event.cr		auto-generated
-event.go::type::WindowSizeEvent	type	ported	src/ultraviolet/event.cr		auto-generated
-examples/image/main.go::method::imageEncoding.String	method	intentional_divergence	src/ultraviolet/image_encoding.cr	ImageEncoding enum ported; full example not ported
-key_test.go::test::TestBlur	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestEmptyBufferDecode	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestFocus	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestKeyMatchString	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestKeyString	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestKeyStringMore	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestKeystroke	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestKeystrokeCoverage	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestMatchStrings	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestMouseEvent_String	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestMousePixelToCell	test	ported	spec/mouse_spec.cr		upstream 6b8d4ba
-key_test.go::test::TestParseSequence	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestParseSGRMouseEvent	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestParseX10MouseDownEvent	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestReadInput	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestReadLongInput	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestSplitReads	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key_test.go::test::TestSplitSequences	test	ported	spec/terminal_reader_stream_spec.cr		auto-generated
-key.go::const::KeyBackspace	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyBegin	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyCapsLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyDelete	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyDown	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyEnd	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyEnter	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyEsc	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyEscape	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyExtended	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF1	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF10	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF11	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF12	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF13	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF14	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF15	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF16	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF17	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF18	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF19	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF2	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF20	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF21	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF22	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF23	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF24	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF25	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF26	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF27	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF28	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF29	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF3	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF30	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF31	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF32	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF33	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF34	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF35	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF36	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF37	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF38	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF39	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF4	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF40	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF41	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF42	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF43	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF44	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF45	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF46	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF47	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF48	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF49	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF5	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF50	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF51	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF52	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF53	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF54	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF55	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF56	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF57	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF58	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF59	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF6	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF60	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF61	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF62	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF63	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF7	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF8	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyF9	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyFind	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyHome	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyInsert	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyIsoLevel3Shift	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyIsoLevel5Shift	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp0	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp1	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp2	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp3	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp4	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp5	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp6	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp7	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp8	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKp9	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpBegin	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpComma	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpDecimal	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpDelete	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpDivide	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpDown	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpEnd	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpEnter	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpEqual	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpHome	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpInsert	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpLeft	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpMinus	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpMultiply	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpPgDown	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpPgUp	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpPlus	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpRight	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpSep	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyKpUp	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeft	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftAlt	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftCtrl	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftHyper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftMeta	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftShift	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLeftSuper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyLowerVol	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaFastForward	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaNext	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaPause	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaPlay	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaPlayPause	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaPrev	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaRecord	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaReverse	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaRewind	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMediaStop	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMenu	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyMute	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyNumLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyPause	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyPgDown	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyPgUp	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyPrintScreen	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRaiseVol	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyReturn	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRight	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightAlt	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightCtrl	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightHyper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightMeta	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightShift	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyRightSuper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyScrollLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeySelect	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeySpace	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyTab	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::KeyUp	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModAlt	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModCapsLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModCtrl	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModHyper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModMeta	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModNumLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModScrollLock	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModShift	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::const::ModSuper	const	ported	src/ultraviolet/key.cr		auto-generated
-key.go::method::Key.Keystroke	method	ported	src/ultraviolet/key.cr		auto-generated
-key.go::method::Key.MatchString	method	ported	src/ultraviolet/key.cr		auto-generated
-key.go::method::Key.String	method	ported	src/ultraviolet/key.cr		auto-generated
-key.go::method::KeyMod.Contains	method	ported	src/ultraviolet/key.cr		auto-generated
-key.go::struct::Key	struct	ported	src/ultraviolet/key.cr		auto-generated
-key.go::type::KeyMod	type	ported	src/ultraviolet/key.cr		auto-generated
-layout/layout_test.go::test::TestFixedApply	test	ported	spec/layout_spec.cr		auto-generated
-layout/layout_test.go::test::TestPercentApply	test	ported	spec/layout_spec.cr		auto-generated
-layout/layout_test.go::test::TestRatio	test	ported	spec/layout_spec.cr		auto-generated
-layout/layout_test.go::test::TestSplitHorizontal	test	ported	spec/layout_spec.cr		auto-generated
-layout/layout_test.go::test::TestSplitVertical	test	ported	spec/layout_spec.cr		auto-generated
-layout/layout.go::func::BottomCenterRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::BottomLeftRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::BottomRightRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::CenterRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::LeftCenterRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::Ratio	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::RightCenterRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::SplitHorizontal	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::SplitVertical	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::TopCenterRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::TopLeftRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::func::TopRightRect	func	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::method::Fixed.Apply	method	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::method::Percent.Apply	method	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::type::Constraint	type	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::type::Fixed	type	ported	src/ultraviolet/layout.cr		auto-generated
-layout/layout.go::type::Percent	type	ported	src/ultraviolet/layout.cr		auto-generated
-logger.go::type::Logger	type	ported	src/ultraviolet/logger.cr		auto-generated
-mouse.go::const::MouseBackward	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseButton10	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseButton11	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseForward	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseLeft	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseMiddle	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseModeClick	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseModeDrag	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseModeMotion	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseModeNone	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseNone	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseRight	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseWheelDown	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseWheelLeft	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseWheelRight	const	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::const::MouseWheelUp	const	ported	src/ultraviolet/mouse.cr		auto-generated
+event.go::struct::Size	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::TerminalVersionEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::struct::WindowOpEvent	struct	ported	src/ultraviolet/event.cr	ported
+event.go::type::CellSizeEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::ClipboardSelection	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::Event	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::EventStreamer	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::KeyEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::KeyPressEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::KeyReleaseEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MouseClickEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MouseEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MouseMotionEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MouseReleaseEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MouseWheelEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::MultiEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::PixelSizeEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::PrimaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::SecondaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::TertiaryDeviceAttributesEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownApcEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownCsiEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownDcsEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownOscEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownPmEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownSosEvent	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::UnknownSs3Event	type	ported	src/ultraviolet/event.cr	ported
+event.go::type::WindowSizeEvent	type	ported	src/ultraviolet/event.cr	ported
+event_test.go::test::TestClipboardEventString	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestColorEventMethods	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestEventTypes	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestKeyPressEventMethods	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestKeyReleaseEventMethods	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestKittyEnhancementsEventContains	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestMouseEventMethods	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestMultiEventString	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestSizeBounds	test	ported	spec/event_spec.cr	ported
+event_test.go::test::TestUnknownEventString	test	ported	spec/event_spec.cr	ported
+examples/advanced/boxes/main.go::func::NewApp	func	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.ActiveID	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.BringToFront	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.CreateWindow	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.DestroyWindow	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.Draw	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.HandleEvent	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.ParentID	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.Resize	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.Run	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.SetActiveID	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::App.Window	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::AppWindow.Bounds	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::AppWindow.Context	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::AppWindow.Draw	method	missing	-	audit pending
+examples/advanced/boxes/main.go::method::AppWindow.Resize	method	missing	-	audit pending
+examples/advanced/boxes/main.go::struct::App	struct	missing	-	audit pending
+examples/advanced/boxes/main.go::struct::AppWindow	struct	missing	-	audit pending
+examples/advanced/boxes/main.go::type::EventHandler	type	missing	-	audit pending
+examples/advanced/image/main.go::method::imageEncoding.String	method	missing	-	audit pending
+examples/advanced/splits/main.go::struct::Named	struct	missing	-	audit pending
+examples/advanced/splits/main.go::struct::Pair	struct	missing	-	audit pending
+grapheme_width_test.go::test::TestGraphemeWidthGating	test	missing	-	audit pending
+grapheme_width_test.go::test::TestGraphemeWidthGatingPreservesOverride	test	missing	-	audit pending
+grapheme_width_test.go::test::TestGraphemeWidthNegotiation	test	missing	-	audit pending
+grapheme_width_test.go::test::TestGraphemeWidthOverride	test	missing	-	audit pending
+internal/casso/casso_test.go::test::TestConstraint	test	missing	-	audit pending
+internal/casso/casso_test.go::test::TestConstraintRequiringArtificialVariable	test	missing	-	audit pending
+internal/casso/casso_test.go::test::TestSymbol	test	missing	-	audit pending
+internal/casso/math.go::const::EQ	const	missing	-	audit pending
+internal/casso/math.go::const::GTE	const	missing	-	audit pending
+internal/casso/math.go::const::LTE	const	missing	-	audit pending
+internal/casso/math.go::func::New	func	missing	-	audit pending
+internal/casso/math.go::func::NewConstraint	func	missing	-	audit pending
+internal/casso/math.go::method::Symbol.T	method	missing	-	audit pending
+internal/casso/math.go::struct::Constraint	struct	missing	-	audit pending
+internal/casso/math.go::struct::Term	struct	missing	-	audit pending
+internal/casso/math.go::type::Op	type	missing	-	audit pending
+internal/casso/math.go::type::Priority	type	missing	-	audit pending
+internal/casso/math.go::type::Symbol	type	missing	-	audit pending
+internal/casso/solver.go::func::NewSolver	func	missing	-	audit pending
+internal/casso/solver.go::method::Solver.Add	method	missing	-	audit pending
+internal/casso/solver.go::method::Solver.Val	method	missing	-	audit pending
+internal/casso/solver.go::struct::Solver	struct	missing	-	audit pending
+internal/conformance/corpus_test.go::test::TestCollapseThenDrawIsReachable	test	missing	-	audit pending
+internal/conformance/corpus_test.go::test::TestCorpusDecodesStably	test	missing	-	audit pending
+internal/conformance/corpus_test.go::test::TestOpTableCoversEveryKind	test	missing	-	audit pending
+internal/conformance/corpus_test.go::test::TestSeedsDecodeToTheProgramsTheyDescribe	test	missing	-	audit pending
+internal/conformance/fuzz_test.go::test::TestInlineSeedOccupiesTheRowsItClaims	test	missing	-	audit pending
+internal/conformance/fuzz_test.go::test::TestInlineShrinkLeavesTheFramesOwnRows	test	missing	-	audit pending
+internal/conformance/program.go::const::InlineRowsAbove	const	missing	-	audit pending
+internal/conformance/program.go::const::InlineSeedWidth	const	missing	-	audit pending
+internal/conformance/program.go::const::InlineTermHeight	const	missing	-	audit pending
+internal/conformance/program.go::const::MinResizeH	const	missing	-	audit pending
+internal/conformance/program.go::const::MinResizeW	const	missing	-	audit pending
+internal/conformance/program.go::const::OpClear	const	missing	-	audit pending
+internal/conformance/program.go::const::OpDrawLine	const	missing	-	audit pending
+internal/conformance/program.go::const::OpErase	const	missing	-	audit pending
+internal/conformance/program.go::const::OpMoveTo	const	missing	-	audit pending
+internal/conformance/program.go::const::OpRedraw	const	missing	-	audit pending
+internal/conformance/program.go::const::OpRender	const	missing	-	audit pending
+internal/conformance/program.go::const::OpResize	const	missing	-	audit pending
+internal/conformance/program.go::func::CorpusAlphabet	func	missing	-	audit pending
+internal/conformance/program.go::func::DecodeProgram	func	missing	-	audit pending
+internal/conformance/program.go::func::DriftClusters	func	missing	-	audit pending
+internal/conformance/program.go::func::Seeds	func	missing	-	audit pending
+internal/conformance/program.go::method::OpKind.String	method	missing	-	audit pending
+internal/conformance/program.go::method::Program.String	method	missing	-	audit pending
+internal/conformance/program.go::struct::Op	struct	missing	-	audit pending
+internal/conformance/program.go::struct::Program	struct	missing	-	audit pending
+internal/conformance/program.go::type::OpKind	type	missing	-	audit pending
+internal/conformance/program_test.go::test::TestDecodeProgramIsDeterministic	test	missing	-	audit pending
+internal/conformance/program_test.go::test::TestDecodeProgramTotal	test	missing	-	audit pending
+internal/conformance/program_test.go::test::TestDriftPremise	test	missing	-	audit pending
+internal/conformance/program_test.go::test::TestFuzzTargetsRunSeeds	test	missing	-	audit pending
+internal/conformance/program_test.go::test::TestInlineFramesFitTheTerminal	test	missing	-	audit pending
+internal/conformance/program_test.go::test::TestSeedCorpusIsInteresting	test	missing	-	audit pending
+internal/conformance/reflow_test.go::test::TestReflowAcrossShrinkAndGrow	test	missing	-	audit pending
+internal/lru/lru.go::method::V].Add	method	missing	-	audit pending
+internal/lru/lru.go::method::V].Get	method	missing	-	audit pending
+internal/lru/lru.go::struct::LRU	struct	missing	-	audit pending
+internal/lru/lru_test.go::test::TestLRU	test	missing	-	audit pending
+key.go::const::KeyBackspace	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyBegin	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyCapsLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyDelete	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyDown	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyEnd	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyEnter	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyEsc	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyEscape	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyExtended	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF1	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF10	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF11	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF12	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF13	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF14	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF15	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF16	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF17	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF18	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF19	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF2	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF20	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF21	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF22	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF23	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF24	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF25	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF26	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF27	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF28	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF29	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF3	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF30	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF31	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF32	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF33	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF34	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF35	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF36	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF37	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF38	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF39	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF4	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF40	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF41	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF42	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF43	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF44	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF45	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF46	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF47	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF48	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF49	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF5	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF50	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF51	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF52	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF53	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF54	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF55	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF56	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF57	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF58	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF59	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF6	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF60	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF61	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF62	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF63	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF7	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF8	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyF9	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyFind	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyHome	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyInsert	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyIsoLevel3Shift	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyIsoLevel5Shift	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp0	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp1	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp2	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp3	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp4	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp5	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp6	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp7	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp8	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKp9	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpBegin	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpComma	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpDecimal	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpDelete	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpDivide	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpDown	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpEnd	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpEnter	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpEqual	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpHome	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpInsert	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpLeft	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpMinus	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpMultiply	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpPgDown	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpPgUp	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpPlus	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpRight	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpSep	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyKpUp	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeft	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftAlt	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftCtrl	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftHyper	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftMeta	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftShift	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLeftSuper	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyLowerVol	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaFastForward	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaNext	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaPause	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaPlay	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaPlayPause	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaPrev	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaRecord	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaReverse	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaRewind	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMediaStop	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMenu	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyMute	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyNumLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyPause	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyPgDown	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyPgUp	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyPrintScreen	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRaiseVol	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyReturn	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRight	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightAlt	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightCtrl	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightHyper	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightMeta	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightShift	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyRightSuper	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyScrollLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeySelect	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeySpace	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyTab	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::KeyUp	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModAlt	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModCapsLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModCtrl	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModHyper	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModMeta	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModNumLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModScrollLock	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModShift	const	ported	src/ultraviolet/key.cr	ported
+key.go::const::ModSuper	const	ported	src/ultraviolet/key.cr	ported
+key.go::method::Key.Keystroke	method	ported	src/ultraviolet/key.cr	ported
+key.go::method::Key.MatchString	method	ported	src/ultraviolet/key.cr	ported
+key.go::method::Key.String	method	ported	src/ultraviolet/key.cr	ported
+key.go::method::KeyMod.Contains	method	ported	src/ultraviolet/key.cr	ported
+key.go::struct::Key	struct	ported	src/ultraviolet/key.cr	ported
+key.go::type::KeyMod	type	ported	src/ultraviolet/key.cr	ported
+key_test.go::test::TestBlur	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestEmptyBufferDecode	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestFocus	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestKeyMatchString	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestKeyString	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestKeyStringMore	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestKeystroke	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestKeystrokeCoverage	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestMatchStrings	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestMouseEvent_String	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestMousePixelToCell	test	ported	spec/mouse_spec.cr	ported
+key_test.go::test::TestParseSGRMouseEvent	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestParseSequence	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestParseX10MouseDownEvent	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestReadInput	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestReadLongInput	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestSplitReads	test	ported	spec/terminal_reader_stream_spec.cr	ported
+key_test.go::test::TestSplitSequences	test	ported	spec/terminal_reader_stream_spec.cr	ported
+layout/constraint.go::method::Fill.String	method	missing	-	audit pending
+layout/constraint.go::method::Len.String	method	missing	-	audit pending
+layout/constraint.go::method::Max.String	method	missing	-	audit pending
+layout/constraint.go::method::Min.String	method	missing	-	audit pending
+layout/constraint.go::method::Percent.String	method	missing	-	audit pending
+layout/constraint.go::method::Ratio.String	method	missing	-	audit pending
+layout/constraint.go::type::Constraint	type	missing	-	audit pending
+layout/flex.go::const::FlexCenter	const	missing	-	audit pending
+layout/flex.go::const::FlexEnd	const	missing	-	audit pending
+layout/flex.go::const::FlexLegacy	const	missing	-	audit pending
+layout/flex.go::const::FlexSpaceAround	const	missing	-	audit pending
+layout/flex.go::const::FlexSpaceBetween	const	missing	-	audit pending
+layout/flex.go::const::FlexSpaceEvenly	const	missing	-	audit pending
+layout/flex.go::const::FlexStart	const	missing	-	audit pending
+layout/flex.go::method::Flex.String	method	missing	-	audit pending
+layout/flex.go::type::Flex	type	missing	-	audit pending
+layout/layout.go::const::DirectionHorizontal	const	missing	-	audit pending
+layout/layout.go::const::DirectionVertical	const	missing	-	audit pending
+layout/layout.go::func::Horizontal	func	missing	-	audit pending
+layout/layout.go::func::New	func	missing	-	audit pending
+layout/layout.go::func::Vertical	func	missing	-	audit pending
+layout/layout.go::method::Layout.Split	method	missing	-	audit pending
+layout/layout.go::method::Layout.SplitWithSpacers	method	missing	-	audit pending
+layout/layout.go::method::Layout.WithConstraints	method	missing	-	audit pending
+layout/layout.go::method::Layout.WithDirection	method	missing	-	audit pending
+layout/layout.go::method::Layout.WithFlex	method	missing	-	audit pending
+layout/layout.go::method::Layout.WithPadding	method	missing	-	audit pending
+layout/layout.go::method::Layout.WithSpacing	method	missing	-	audit pending
+layout/layout.go::method::Splitted.Assign	method	missing	-	audit pending
+layout/layout.go::struct::Layout	struct	missing	-	audit pending
+layout/layout.go::type::Direction	type	missing	-	audit pending
+layout/layout.go::type::Splitted	type	missing	-	audit pending
+layout/layout_test.go::test::TestEdgeCases	test	missing	-	audit pending
+layout/layout_test.go::test::TestFlexConstraint	test	missing	-	audit pending
+layout/layout_test.go::test::TestFlexSpacing	test	missing	-	audit pending
+layout/layout_test.go::test::TestLength	test	missing	-	audit pending
+layout/layout_test.go::test::TestMax	test	missing	-	audit pending
+layout/layout_test.go::test::TestMin	test	missing	-	audit pending
+layout/layout_test.go::test::TestPercent	test	missing	-	audit pending
+layout/layout_test.go::test::TestPriorityIsValid	test	missing	-	audit pending
+layout/layout_test.go::test::TestRatio	test	ported	spec/layout_spec.cr	ported
+layout/padding.go::func::Pad	func	missing	-	audit pending
+layout/padding.go::struct::Padding	struct	missing	-	audit pending
+logger.go::type::Logger	type	ported	src/ultraviolet/logger.cr	ported
+mouse.go::const::MouseBackward	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseButton10	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseButton11	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseEncodingLegacy	const	missing	-	audit pending
+mouse.go::const::MouseEncodingSGR	const	missing	-	audit pending
+mouse.go::const::MouseEncodingSGRPixel	const	missing	-	audit pending
+mouse.go::const::MouseForward	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseLeft	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseMiddle	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseModeClick	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseModeDrag	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseModeMotion	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseModeNone	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseModePress	const	missing	-	audit pending
+mouse.go::const::MouseNone	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseRight	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseWheelDown	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseWheelLeft	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseWheelRight	const	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::const::MouseWheelUp	const	ported	src/ultraviolet/mouse.cr	ported
 mouse.go::func::MousePixelToCell	func	ported	src/ultraviolet/mouse.cr	pixel-to-cell conversion for SGRPixel input; upstream 6b8d4ba
-mouse.go::method::Mouse.String	method	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::struct::Mouse	struct	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::type::MouseButton	type	ported	src/ultraviolet/mouse.cr		auto-generated
-mouse.go::type::MouseMode	type	ported	src/ultraviolet/mouse.cr		auto-generated
-poll_bsd.go::method::kqueueReader.Cancel	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
-poll_bsd.go::method::kqueueReader.Close	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
-poll_bsd.go::method::kqueueReader.Poll	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
-poll_bsd.go::method::kqueueReader.Read	method	ported	src/ultraviolet/poll_bsd.cr		auto-generated
+mouse.go::method::Mouse.String	method	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::struct::Mouse	struct	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::type::MouseButton	type	ported	src/ultraviolet/mouse.cr	ported
+mouse.go::type::MouseEncoding	type	missing	-	audit pending
+mouse.go::type::MouseMode	type	ported	src/ultraviolet/mouse.cr	ported
+poll_bsd.go::method::kqueueReader.Cancel	method	ported	src/ultraviolet/poll_bsd.cr	ported
+poll_bsd.go::method::kqueueReader.Close	method	ported	src/ultraviolet/poll_bsd.cr	ported
+poll_bsd.go::method::kqueueReader.Poll	method	ported	src/ultraviolet/poll_bsd.cr	ported
+poll_bsd.go::method::kqueueReader.Read	method	ported	src/ultraviolet/poll_bsd.cr	ported
 poll_default_test.go::test::TestReader	test	ported	spec/poll_spec.cr	cancels a read that is already blocked; upstream 6b8d4ba
-poll_fallback_test.go::test::TestFallbackReader	test	ported	spec/poll_fallback_spec.cr		auto-generated
-poll_fallback_test.go::test::TestFallbackReaderConcurrentCancel	test	ported	spec/poll_fallback_spec.cr		auto-generated
-poll_fallback.go::method::fallbackReader.Cancel	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_fallback.go::method::fallbackReader.Close	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_fallback.go::method::fallbackReader.Poll	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_fallback.go::method::fallbackReader.Read	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_linux.go::method::epollReader.Cancel	method	ported	src/ultraviolet/poll_linux.cr		auto-generated
-poll_linux.go::method::epollReader.Close	method	ported	src/ultraviolet/poll_linux.cr		auto-generated
-poll_linux.go::method::epollReader.Poll	method	ported	src/ultraviolet/poll_linux.cr		auto-generated
-poll_linux.go::method::epollReader.Read	method	ported	src/ultraviolet/poll_linux.cr		auto-generated
-poll_select.go::method::selectReader.Cancel	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_select.go::method::selectReader.Close	method	ported	src/ultraviolet/poll.cr		auto-generated
-poll_select.go::method::selectReader.Poll	method	ported	src/ultraviolet/poll.cr		auto-generated
+poll_fallback.go::method::fallbackReader.Cancel	method	ported	src/ultraviolet/poll.cr	ported
+poll_fallback.go::method::fallbackReader.Close	method	ported	src/ultraviolet/poll.cr	ported
+poll_fallback.go::method::fallbackReader.Poll	method	ported	src/ultraviolet/poll.cr	ported
+poll_fallback.go::method::fallbackReader.Read	method	ported	src/ultraviolet/poll.cr	ported
+poll_fallback_test.go::test::TestFallbackReader	test	ported	spec/poll_fallback_spec.cr	ported
+poll_fallback_test.go::test::TestFallbackReaderConcurrentCancel	test	ported	spec/poll_fallback_spec.cr	ported
+poll_linux.go::method::epollReader.Cancel	method	ported	src/ultraviolet/poll_linux.cr	ported
+poll_linux.go::method::epollReader.Close	method	ported	src/ultraviolet/poll_linux.cr	ported
+poll_linux.go::method::epollReader.Poll	method	ported	src/ultraviolet/poll_linux.cr	ported
+poll_linux.go::method::epollReader.Read	method	ported	src/ultraviolet/poll_linux.cr	ported
+poll_select.go::method::selectReader.Cancel	method	ported	src/ultraviolet/poll.cr	ported
+poll_select.go::method::selectReader.Close	method	ported	src/ultraviolet/poll.cr	ported
+poll_select.go::method::selectReader.Poll	method	ported	src/ultraviolet/poll.cr	ported
 poll_select.go::method::selectReader.Read	method	ported	src/ultraviolet/poll.cr	timeout-sliced reads recheck cancel; upstream 6b8d4ba
-poll_test.go::test::TestReaderNonFile	test	ported	spec/poll_spec.cr		auto-generated
-poll_windows.go::method::conReader.Cancel	method	ported	src/ultraviolet/poll_windows.cr		auto-generated
-poll_windows.go::method::conReader.Close	method	ported	src/ultraviolet/poll_windows.cr		auto-generated
-poll_windows.go::method::conReader.Poll	method	ported	src/ultraviolet/poll_windows.cr		auto-generated
-poll_windows.go::method::conReader.Read	method	ported	src/ultraviolet/poll_windows.cr		auto-generated
-screen/context.go::func::NewContext	func	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.DrawString	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.DrawStringWrapped	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.MoveTo	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Position	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Print	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Printf	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Println	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Reset	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetAttrs	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetBackground	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetBlink	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetBold	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetConceal	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetFaint	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetForeground	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetItalic	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetLink	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetPosition	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetReverse	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetStrikethrough	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetStyle	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetUnderline	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetUnderlineColor	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetUnderlineStyle	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.SetURL	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithAttrs	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithBackground	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithBlink	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithBold	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithConceal	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithFaint	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithForeground	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithItalic	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithLink	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithPosition	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithReverse	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithStrikethrough	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithStyle	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithUnderline	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithUnderlineColor	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithUnderlineStyle	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WithURL	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.Write	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::method::Context.WriteString	method	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/context.go::struct::Context	struct	ported	src/ultraviolet/screen_context.cr		auto-generated
-screen/screen_test.go::test::TestClear	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestClearArea	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestClone	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestCloneArea	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestEdgeCases	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestFill	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestFillArea	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestMinimalScreenFallbacks	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen_test.go::test::TestScreenBufferIntegration	test	ported	spec/screen_spec.cr		auto-generated
-screen/screen.go::func::Clear	func	ported	src/ultraviolet/screen.cr		auto-generated
-screen/screen.go::func::ClearArea	func	ported	src/ultraviolet/screen.cr		auto-generated
-screen/screen.go::func::Clone	func	ported	src/ultraviolet/screen.cr		auto-generated
-screen/screen.go::func::CloneArea	func	ported	src/ultraviolet/screen.cr		auto-generated
-screen/screen.go::func::Fill	func	ported	src/ultraviolet/screen.cr		auto-generated
-screen/screen.go::func::FillArea	func	ported	src/ultraviolet/screen.cr		auto-generated
-styled_test.go::test::TestStyledString	test	ported	spec/styled_spec.cr		auto-generated
-styled_test.go::test::TestStyledStringEmptyLines	test	ported	spec/styled_spec.cr		auto-generated
-styled.go::func::NewStyledString	func	ported	src/ultraviolet/styled.cr	Go-compatible alias for StyledString.new; upstream 6b8d4ba	auto-generated
+poll_test.go::test::TestReaderNonFile	test	ported	spec/poll_spec.cr	ported
+poll_windows.go::method::conReader.Cancel	method	ported	src/ultraviolet/poll_windows.cr	ported
+poll_windows.go::method::conReader.Close	method	ported	src/ultraviolet/poll_windows.cr	ported
+poll_windows.go::method::conReader.Poll	method	ported	src/ultraviolet/poll_windows.cr	ported
+poll_windows.go::method::conReader.Read	method	ported	src/ultraviolet/poll_windows.cr	ported
+programstatus_test.go::test::TestEncodeProgramStatus	test	missing	-	audit pending
+programstatus_test.go::test::TestTerminalScreenProgramStatus	test	missing	-	audit pending
+screen/context.go::func::NewContext	func	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.DrawString	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.DrawStringWrapped	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.MoveTo	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Position	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Print	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Printf	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Println	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Reset	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetAttrs	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetBackground	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetBlink	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetBold	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetConceal	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetFaint	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetForeground	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetItalic	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetLink	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetPosition	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetReverse	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetStrikethrough	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetStyle	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetURL	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetUnderline	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetUnderlineColor	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.SetUnderlineStyle	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithAttrs	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithBackground	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithBlink	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithBold	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithConceal	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithFaint	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithForeground	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithItalic	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithLink	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithPosition	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithReverse	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithStrikethrough	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithStyle	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithURL	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithUnderline	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithUnderlineColor	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WithUnderlineStyle	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.Write	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::method::Context.WriteString	method	ported	src/ultraviolet/screen_context.cr	ported
+screen/context.go::struct::Context	struct	ported	src/ultraviolet/screen_context.cr	ported
+screen/screen.go::func::Clear	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen.go::func::ClearArea	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen.go::func::Clone	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen.go::func::CloneArea	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen.go::func::Fill	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen.go::func::FillArea	func	ported	src/ultraviolet/screen.cr	ported
+screen/screen_test.go::test::TestClear	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestClearArea	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestClone	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestCloneArea	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestEdgeCases	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestFill	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestFillArea	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestMinimalScreenFallbacks	test	ported	spec/screen_spec.cr	ported
+screen/screen_test.go::test::TestScreenBufferIntegration	test	ported	spec/screen_spec.cr	ported
+styled.go::func::NewStyledString	func	ported	src/ultraviolet/styled.cr	Go-compatible alias for StyledString.new; upstream 6b8d4ba
 styled.go::func::ReadLink	func	ported	src/ultraviolet/styled.cr	preserves semicolons in the URI; upstream 6b8d4ba
-styled.go::func::ReadStyle	func	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::method::StyledString.Bounds	method	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::func::ReadStyle	func	ported	src/ultraviolet/styled.cr	ported
+styled.go::method::StyledString.Bounds	method	ported	src/ultraviolet/styled.cr	ported
 styled.go::method::StyledString.Draw	method	ported	src/ultraviolet/styled.cr	pass-through sequences, combining marks, wide clusters; upstream 6b8d4ba
-styled.go::method::StyledString.Height	method	ported	src/ultraviolet/styled.cr		auto-generated
+styled.go::method::StyledString.Height	method	ported	src/ultraviolet/styled.cr	ported
 styled.go::method::StyledString.Lines	method	ported	src/ultraviolet/styled.cr	unbounded content and pass-through handling; upstream 6b8d4ba
-styled.go::method::StyledString.String	method	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::method::StyledString.UnicodeWidth	method	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::method::StyledString.WcWidth	method	ported	src/ultraviolet/styled.cr		auto-generated
-styled.go::struct::StyledString	struct	ported	src/ultraviolet/styled.cr		auto-generated
-tabstop_test.go::test::TestTabStops	test	ported	spec/tabstop_spec.cr		auto-generated
-tabstop_test.go::test::TestTabStopsClear	test	ported	spec/tabstop_spec.cr		auto-generated
-tabstop_test.go::test::TestTabStopsNavigation	test	ported	spec/tabstop_spec.cr		auto-generated
-tabstop_test.go::test::TestTabStopsResize	test	ported	spec/tabstop_spec.cr		auto-generated
-tabstop_test.go::test::TestTabStopsResizeEdgeCases	test	ported	spec/tabstop_spec.cr		auto-generated
-tabstop.go::const::DefaultTabInterval	const	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.default; upstream 6b8d4ba	auto-generated
-tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.new; upstream 6b8d4ba	auto-generated
-tabstop.go::method::TabStops.Clear	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Find	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.IsStop	method	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for stop?; upstream 6b8d4ba	auto-generated
-tabstop.go::method::TabStops.Next	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Prev	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Reset	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Resize	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Set	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::method::TabStops.Width	method	ported	src/ultraviolet/tabstop.cr		auto-generated
-tabstop.go::struct::TabStops	struct	ported	src/ultraviolet/tabstop.cr		auto-generated
-terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr		auto-generated
-terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for TerminalReader.new; upstream 6b8d4ba	auto-generated
-terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for logger=; upstream 6b8d4ba	auto-generated
-terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
-terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr		auto-generated
-terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr		auto-generated
-terminal_renderer_output_test.go::test::TestRendererWideCellReanchor	test	ported	spec/terminal_renderer_resize_spec.cr		upstream 6b8d4ba
-terminal_renderer_test.go::test::TestInlineRendererOutput	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererBackspace	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererBackspaceOptimization	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererCapabilities	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererColorDownsampling	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererColorProfile	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererCursorMovementOptimizations	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererEdgeCases	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererEnterExitAltScreen	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererErase	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererEraseCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererHyperlinks	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererLineClearingOptimizations	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererLogger	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererMapNewline	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererMoveTo	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererMultiplePrepends	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererNewlineMapping	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererPhantomCursor	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererPosition	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererPrependLines	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererPrependOneLine	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererPrependString	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererRedraw	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererRelativeCursor	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererRepeatCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererResize	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererScrollOptimization	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererStyledText	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererSwitchBuffer	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererTabStops	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererTerminalOptimizations	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererTextAttributes	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererTouched	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererUnderlineStyles	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererUpdates	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererWideCharacters	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererWrite	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererWriteString	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestRendererZeroWidthCharacters	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer_test.go::test::TestSimpleRendererOutput	test	ported	spec/terminal_renderer_spec.cr		auto-generated
-terminal_renderer.go::func::NewTerminalRenderer	func	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for TerminalRenderer.new; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::capabilities.Contains	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::capabilities.Reset	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::capabilities.Set	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Buffered	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.EnterAltScreen	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Erase	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.ExitAltScreen	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Flush	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Fullscreen	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.MoveTo	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Position	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.PrependString	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Redraw	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Render	method	ported	src/ultraviolet/terminal_renderer.cr	damage record, resize reconciliation, repaint/paint-line routing; upstream 6b8d4ba
-terminal_renderer.go::method::TerminalRenderer.Resize	method	ported	src/ultraviolet/terminal_renderer.cr	latches real size changes and invalidates the cursor model; upstream 6b8d4ba
-terminal_renderer.go::method::TerminalRenderer.RestoreCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SaveCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for backspace=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetColorProfile	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetFullscreen	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for fullscreen=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetLogger	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for logger=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetMapNewline	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for map_newline=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetPosition	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetRelativeCursor	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for relative_cursor=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetScrollOptim	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for scroll_optim=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.SetTabStops	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for tab_stops=; upstream 6b8d4ba	auto-generated
-terminal_renderer.go::method::TerminalRenderer.Write	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.WriteString	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::tFlag.Contains	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::tFlag.Reset	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::tFlag.Set	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::struct::LineData	struct	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::struct::TerminalRenderer	struct	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_screen.go::func::NewTerminalScreen	func	ported	src/ultraviolet/terminal_screen.cr	Go-compatible alias for TerminalScreen.new; upstream 6b8d4ba	auto-generated
-terminal_screen.go::method::TerminalScreen.AltScreen	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.BackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Bounds	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.BracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.CellAt	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.CursorColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.CursorPosition	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.CursorStyle	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.CursorVisible	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.DisableBracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Display	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.EnableBracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.EnterAltScreen	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.ExitAltScreen	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Flush	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.ForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.HideCursor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.InsertAbove	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.KeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.MouseMode	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.ProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:328	program status accessor; reset preserves, restore re-emits
-terminal_screen.go::method::TerminalScreen.ProgressBar	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Render	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Reset	method	ported	src/ultraviolet/terminal_screen.cr:332-402	KittyKeyboard(0,1) before alt screen exit; leaves program status in place; golden spec at spec/terminal_screen_spec.cr:69
-terminal_screen.go::method::TerminalScreen.Resize	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Restore	method	ported	src/ultraviolet/terminal_screen.cr:404-468	raw ANSI emission (no state mutation), re-emits program status; golden spec at spec/terminal_screen_spec.cr:91 and spec/program_status_spec.cr
-terminal_screen.go::method::TerminalScreen.SetBackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetCell	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetColorProfile	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetCursorColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetCursorPosition	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetCursorStyle	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetKeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetMouseMode	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:322	OSC 7501 encoding via ansi shard
-terminal_screen.go::method::TerminalScreen.SetProgressBar	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetWidthMethod	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.SetWindowTitle	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.ShowCursor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.WidthMethod	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.WindowTitle	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Write	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.WriteString	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::struct::TerminalScreen	struct	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_test.go::test::TestOpenTTY	test	ported	spec/terminal_spec.cr		auto-generated
-terminal_test.go::test::TestStopBeforeStart	test	ported	spec/terminal_spec.cr		upstream 6b8d4ba
-terminal_test.go::test::TestStopIdempotent	test	ported	spec/terminal_spec.cr		upstream 6b8d4ba
-terminal_test.go::test::TestSupportsBackspace	test	ported	spec/terminal_spec.cr		auto-generated
-terminal_test.go::test::TestSupportsHardTabs	test	ported	spec/terminal_spec.cr		auto-generated
-terminal.go::const::DefaultBufferSize	const	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::const::DefaultEventTimeout	const	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::func::ControllingTerminal	func	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::func::DefaultOptions	func	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::func::DefaultTerminal	func	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::func::NewTerminal	func	ported	src/ultraviolet/terminal.cr	Go-compatible alias for Terminal.new; upstream 6b8d4ba	auto-generated
-terminal.go::method::Terminal.Events	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.Read	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.SendEvent	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.SetLogger	method	ported	src/ultraviolet/terminal.cr		auto-generated
+styled.go::method::StyledString.String	method	ported	src/ultraviolet/styled.cr	ported
+styled.go::method::StyledString.UnicodeWidth	method	ported	src/ultraviolet/styled.cr	ported
+styled.go::method::StyledString.WcWidth	method	ported	src/ultraviolet/styled.cr	ported
+styled.go::struct::StyledString	struct	ported	src/ultraviolet/styled.cr	ported
+styled_test.go::test::TestPassThroughDoesNotAffectWidth	test	missing	-	audit pending
+styled_test.go::test::TestPassThroughTerminators	test	missing	-	audit pending
+styled_test.go::test::TestReadLinkAllowsSemicolonsInURL	test	missing	-	audit pending
+styled_test.go::test::TestStyledString	test	ported	spec/styled_spec.cr	ported
+styled_test.go::test::TestStyledStringCombiningMarks	test	missing	-	audit pending
+styled_test.go::test::TestStyledStringEmptyLines	test	ported	spec/styled_spec.cr	ported
+styled_test.go::test::TestStyledStringLinesUnboundedContent	test	missing	-	audit pending
+tabstop.go::const::DefaultTabInterval	const	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::func::DefaultTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.default; upstream 6b8d4ba
+tabstop.go::func::NewTabStops	func	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for TabStops.new; upstream 6b8d4ba
+tabstop.go::method::TabStops.Clear	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Find	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.IsStop	method	ported	src/ultraviolet/tabstop.cr	Go-compatible alias for stop?; upstream 6b8d4ba
+tabstop.go::method::TabStops.Next	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Prev	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Reset	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Resize	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Set	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::method::TabStops.Width	method	ported	src/ultraviolet/tabstop.cr	ported
+tabstop.go::struct::TabStops	struct	ported	src/ultraviolet/tabstop.cr	ported
+tabstop_test.go::test::TestTabStops	test	ported	spec/tabstop_spec.cr	ported
+tabstop_test.go::test::TestTabStopsClear	test	ported	spec/tabstop_spec.cr	ported
+tabstop_test.go::test::TestTabStopsNavigation	test	ported	spec/tabstop_spec.cr	ported
+tabstop_test.go::test::TestTabStopsResize	test	ported	spec/tabstop_spec.cr	ported
+tabstop_test.go::test::TestTabStopsResizeEdgeCases	test	ported	spec/tabstop_spec.cr	ported
+terminal.go::const::DefaultBufferSize	const	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::const::DefaultEventTimeout	const	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::func::ControllingTerminal	func	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::func::DefaultOptions	func	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::func::DefaultTerminal	func	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::func::NewTerminal	func	ported	src/ultraviolet/terminal.cr	Go-compatible alias for Terminal.new; upstream 6b8d4ba
+terminal.go::method::Terminal.Events	method	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::method::Terminal.GetSize	method	missing	-	audit pending
+terminal.go::method::Terminal.GetWinsize	method	missing	-	audit pending
+terminal.go::method::Terminal.Read	method	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::method::Terminal.Screen	method	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::method::Terminal.SendEvent	method	ported	src/ultraviolet/terminal.cr	ported
 terminal.go::method::Terminal.Start	method	ported	src/ultraviolet/terminal.cr	input loop holds a stable local reader reference; upstream 6b8d4ba
 terminal.go::method::Terminal.Stop	method	ported	src/ultraviolet/terminal.cr	idempotent and safe before Start; cancel + stop channel; upstream 6b8d4ba
-terminal.go::method::Terminal.Wait	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr		auto-generated
-terminal.go::struct::Terminal	struct	ported	src/ultraviolet/terminal.cr		auto-generated
+terminal.go::method::Terminal.Wait	method	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::method::Terminal.Write	method	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::struct::Options	struct	ported	src/ultraviolet/terminal.cr	ported
+terminal.go::struct::Terminal	struct	ported	src/ultraviolet/terminal.cr	ported
+terminal_input_test.go::test::TestInputLoopDoesNotReuseTheReadBuffer	test	missing	-	audit pending
+terminal_reader.go::const::DefaultEscTimeout	const	ported	src/ultraviolet/terminal_reader.cr	ported
+terminal_reader.go::func::NewTerminalReader	func	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for TerminalReader.new; upstream 6b8d4ba
+terminal_reader.go::method::TerminalReader.SetLogger	method	ported	src/ultraviolet/terminal_reader.cr	Go-compatible alias for logger=; upstream 6b8d4ba
+terminal_reader.go::method::TerminalReader.StreamEvents	method	ported	src/ultraviolet/terminal_reader.cr	copies each reusable read buffer before dispatch; upstream 6b8d4ba
+terminal_reader.go::struct::TerminalReader	struct	ported	src/ultraviolet/terminal_reader.cr	ported
+terminal_renderer.go::func::NewTerminalRenderer	func	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for TerminalRenderer.new; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.Buffered	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.EnterAltScreen	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Erase	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.ExitAltScreen	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Flush	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Fullscreen	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.MoveTo	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Position	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.PrependString	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Redraw	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.Render	method	ported	src/ultraviolet/terminal_renderer.cr	damage record, resize reconciliation, repaint/paint-line routing; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.Resize	method	ported	src/ultraviolet/terminal_renderer.cr	latches real size changes and invalidates the cursor model; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.RestoreCursor	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.SaveCursor	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for backspace=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetColorProfile	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.SetFullscreen	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for fullscreen=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetGraphemeWidth	method	missing	-	audit pending
+terminal_renderer.go::method::TerminalRenderer.SetLogger	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for logger=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetMapNewline	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for map_newline=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetPosition	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.SetRelativeCursor	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for relative_cursor=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetScrollOptim	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for scroll_optim=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetTabStops	method	ported	src/ultraviolet/terminal_renderer.cr	Go-compatible alias for tab_stops=; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.SetWidthMethod	method	missing	-	audit pending
+terminal_renderer.go::method::TerminalRenderer.Write	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::TerminalRenderer.WriteString	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::capabilities.Contains	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::capabilities.Reset	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::capabilities.Set	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::tFlag.Contains	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::tFlag.Reset	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::method::tFlag.Set	method	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::struct::LineData	struct	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer.go::struct::TerminalRenderer	struct	ported	src/ultraviolet/terminal_renderer.cr	ported
+terminal_renderer_output_test.go::test::TestRendererOutput	test	ported	spec/terminal_renderer_output_spec.cr	ported
+terminal_renderer_output_test.go::test::TestRendererWideCellReanchor	test	ported	spec/terminal_renderer_resize_spec.cr	ported
+terminal_renderer_test.go::test::TestDriftShortCircuitAgreesWithFullCheck	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestHeightRepaintScope	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestInlineRendererOutput	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestPassThroughSequenceReachesTerminalOnce	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRenderAllocationsDoNotFollowScreenHeight	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRenderBufferTouchedCoversEveryRow	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererBackspace	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererBackspaceOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererCapabilities	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererClearsRowsAFrameGotBack	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererColorDownsampling	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererColorProfile	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererCornerClusterLeavesNoPendingWrap	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererCursorMovementOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererDamageIsSizedToTheScreen	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererEdgeCases	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererEnterExitAltScreen	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererErase	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererEraseCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererFullscreenNarrowRepaints	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererFullscreenShrinkRepaints	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererGrowPaintsNewRows	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererHyperlinkReopensOnEachRow	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererHyperlinks	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererInlineCollapseStaysBelowItsOrigin	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineNarrowRepaints	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineResizeKeepsCursorModel	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineShrinkClearsPartially	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesAcrossAWidthChange	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineShrinkErasesFromTheTop	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererInlineShrinkLeavesItsOwnRowsAlone	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererLineClearingOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererLogger	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererMapNewline	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererMarginClusterKeepsAutowrap	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererMoveTo	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererMultiplePrepends	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererNewlineMapping	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererNoWrapOnDriftLine	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererPhantomCursor	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererPosition	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererPrependLines	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererPrependOneLine	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererPrependString	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererRedraw	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererRelativeCursor	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererRepaintsAResizeWithNoTouches	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererRepeatCharacterOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererResize	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererResizeLatchesOnlyRealChanges	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererScrollOptimization	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererScrollRepaintsRowsItMoved	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererStyledText	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererSurvivesAShortTouchList	test	missing	-	audit pending
+terminal_renderer_test.go::test::TestRendererSwitchBuffer	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererTabStops	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererTerminalOptimizations	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererTextAttributes	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererTouched	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererUnderlineStyles	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererUpdates	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererWideCharacters	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererWrite	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererWriteString	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestRendererZeroWidthCharacters	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_renderer_test.go::test::TestSimpleRendererOutput	test	ported	spec/terminal_renderer_spec.cr	ported
+terminal_screen.go::func::NewTerminalScreen	func	ported	src/ultraviolet/terminal_screen.cr	Go-compatible alias for TerminalScreen.new; upstream 6b8d4ba
+terminal_screen.go::method::TerminalScreen.AltScreen	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.BackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Bounds	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.BracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.CellAt	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.CursorColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.CursorPosition	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.CursorStyle	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.CursorVisible	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.DisableBracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Display	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.EnableBracketedPaste	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.EnterAltScreen	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.ExitAltScreen	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Flush	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.ForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Height	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.HideCursor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.InsertAbove	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.KeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.MouseEncoding	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.MouseMode	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.ProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:328	program status accessor; reset preserves, restore re-emits
+terminal_screen.go::method::TerminalScreen.ProgressBar	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Render	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Reset	method	ported	src/ultraviolet/terminal_screen.cr:332-402	KittyKeyboard(0,1) before alt screen exit; leaves program status in place; golden spec at spec/terminal_screen_spec.cr:69
+terminal_screen.go::method::TerminalScreen.Resize	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Restore	method	ported	src/ultraviolet/terminal_screen.cr:404-468	raw ANSI emission (no state mutation), re-emits program status; golden spec at spec/terminal_screen_spec.cr:91 and spec/program_status_spec.cr
+terminal_screen.go::method::TerminalScreen.SetBackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetCell	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetColorProfile	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetCursorColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetCursorPosition	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetCursorStyle	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetKeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetMouseEncoding	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.SetMouseMode	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:322	OSC 7501 encoding via ansi shard
+terminal_screen.go::method::TerminalScreen.SetProgressBar	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetSynchronizedUpdates	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.SetWidthMethod	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.SetWindowTitle	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.ShowCursor	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.StringWidth	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.SynchronizedUpdates	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.Width	method	missing	-	audit pending
+terminal_screen.go::method::TerminalScreen.WidthMethod	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.WindowTitle	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.Write	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::method::TerminalScreen.WriteString	method	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_screen.go::struct::TerminalScreen	struct	ported	src/ultraviolet/terminal_screen.cr	ported
+terminal_stop_test.go::test::TestStopWithInputInFlightDoesNotPanic	test	missing	-	audit pending
+terminal_test.go::test::TestOpenTTY	test	ported	spec/terminal_spec.cr	ported
+terminal_test.go::test::TestStopBeforeStart	test	ported	spec/terminal_spec.cr	ported
+terminal_test.go::test::TestStopIdempotent	test	ported	spec/terminal_spec.cr	ported
+terminal_test.go::test::TestSupportsBackspace	test	ported	spec/terminal_spec.cr	ported
+terminal_test.go::test::TestSupportsHardTabs	test	ported	spec/terminal_spec.cr	ported
+transformline_bug_test.go::test::TestTransformLine_IsZeroInfiniteLoop	test	missing	-	audit pending
 tty.go::func::NotifyWinch	func	ported	src/ultraviolet/tty.cr	one SIGWINCH handler fans out to every buffered listener; upstream 6b8d4ba
 tty.go::func::NotifyWinchContext	func	ported	src/ultraviolet/tty.cr	Crystal analogue: stop channel removes only its listener; upstream 6b8d4ba
-tty.go::func::OpenTTY	func	ported	src/ultraviolet/tty.cr		auto-generated
-tty.go::func::Suspend	func	ported	src/ultraviolet/tty.cr		auto-generated
-uv.go::const::ProgressBarDefault	const	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::const::ProgressBarError	const	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::const::ProgressBarIndeterminate	const	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::const::ProgressBarNone	const	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::const::ProgressBarWarning	const	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeBackgroundColor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeBracketedPaste	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeCursorColor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeCursorStyle	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeForegroundColor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeMouseMode	func	ported	src/ultraviolet/uv_api.cr		auto-generated
+tty.go::func::OpenTTY	func	ported	src/ultraviolet/tty.cr	ported
+tty.go::func::Suspend	func	ported	src/ultraviolet/tty.cr	ported
+uv.go::const::ProgramStateBlocked	const	missing	-	audit pending
+uv.go::const::ProgramStateClear	const	missing	-	audit pending
+uv.go::const::ProgramStateDone	const	missing	-	audit pending
+uv.go::const::ProgramStateError	const	missing	-	audit pending
+uv.go::const::ProgramStateIdle	const	missing	-	audit pending
+uv.go::const::ProgramStateWorking	const	missing	-	audit pending
+uv.go::const::ProgramStatusKindAuth	const	missing	-	audit pending
+uv.go::const::ProgramStatusKindPermission	const	missing	-	audit pending
+uv.go::const::ProgramStatusKindQuestion	const	missing	-	audit pending
+uv.go::const::ProgressBarDefault	const	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::const::ProgressBarError	const	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::const::ProgressBarIndeterminate	const	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::const::ProgressBarNone	const	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::const::ProgressBarWarning	const	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeBackgroundColor	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeBracketedPaste	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeCursorColor	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeCursorStyle	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeForegroundColor	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeMouseEncoding	func	missing	-	audit pending
+uv.go::func::EncodeMouseMode	func	ported	src/ultraviolet/uv_api.cr	ported
 uv.go::func::EncodeProgramStatus	func	ported	src/ultraviolet/program_status.cr	nil clears all program status records
-uv.go::func::EncodeProgressBar	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::EncodeWindowTitle	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::NewCursor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::NewKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::func::NewProgressBar	func	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::method::DrawableFunc.Draw	method	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::method::KeyboardEnhancements.Flags	method	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::method::ProgressBarState.String	method	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::struct::Cursor	struct	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::struct::KeyboardEnhancements	struct	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::struct::ProgressBar	struct	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::type::Drawable	type	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::type::DrawableFunc	type	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::type::ProgressBarState	type	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::type::Screen	type	ported	src/ultraviolet/uv_api.cr		auto-generated
-uv.go::type::WidthMethod	type	ported	src/ultraviolet/uv_api.cr		auto-generated
-winch.go::func::NewSizeNotifier	func	ported	src/ultraviolet/winch.cr		auto-generated
+uv.go::func::EncodeProgressBar	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::EncodeWindowTitle	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::NewCursor	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::NewKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::func::NewProgressBar	func	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::method::DrawableFunc.Draw	method	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::method::KeyboardEnhancements.Flags	method	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::method::ProgressBarState.String	method	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::struct::Cursor	struct	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::struct::KeyboardEnhancements	struct	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::struct::ProgressBar	struct	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::type::Drawable	type	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::type::DrawableFunc	type	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::type::ProgramState	type	missing	-	audit pending
+uv.go::type::ProgramStatus	type	missing	-	audit pending
+uv.go::type::ProgramStatusKind	type	missing	-	audit pending
+uv.go::type::ProgressBarState	type	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::type::Screen	type	ported	src/ultraviolet/uv_api.cr	ported
+uv.go::type::WidthMethod	type	ported	src/ultraviolet/uv_api.cr	ported
+widecell_placeholder_test.go::test::TestStyledWideCellPlaceholderDetection	test	missing	-	audit pending
+width_test.go::test::TestDrawGraphemeWidthCells	test	missing	-	audit pending
+width_test.go::test::TestDrawWcWidthCells	test	missing	-	audit pending
+width_test.go::test::TestNewCellWidths	test	missing	-	audit pending
+winch.go::func::NewSizeNotifier	func	ported	src/ultraviolet/winch.cr	ported
 winch.go::method::SizeNotifier.GetSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for size; upstream 6b8d4ba
 winch.go::method::SizeNotifier.GetWindowSize	method	ported	src/ultraviolet/winch.cr	Go-compatible wrapper for cell and pixel size; upstream 6b8d4ba
-winch.go::method::SizeNotifier.Start	method	ported	src/ultraviolet/winch.cr		auto-generated
-winch.go::method::SizeNotifier.Stop	method	ported	src/ultraviolet/winch.cr		auto-generated
-winch.go::struct::SizeNotifier	struct	ported	src/ultraviolet/winch.cr		auto-generated
-window.go::func::NewScreen	func	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.Bounds	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.Clone	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.CloneArea	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.HasParent	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.MoveBy	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.MoveTo	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.NewView	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.NewWindow	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.Parent	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.Resize	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.SetWidthMethod	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::method::Window.WidthMethod	method	ported	src/ultraviolet/window.cr		auto-generated
-window.go::struct::Window	struct	ported	src/ultraviolet/window.cr		auto-generated
+winch.go::method::SizeNotifier.Start	method	ported	src/ultraviolet/winch.cr	ported
+winch.go::method::SizeNotifier.Stop	method	ported	src/ultraviolet/winch.cr	ported
+winch.go::struct::SizeNotifier	struct	ported	src/ultraviolet/winch.cr	ported
+window.go::func::NewWindow	func	missing	-	audit pending
+window.go::method::Window.Bounds	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.Clone	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.CloneArea	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.HasParent	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.MoveBy	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.MoveTo	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.NewView	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.NewWindow	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.Parent	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.Resize	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.SetWidthMethod	method	ported	src/ultraviolet/window.cr	ported
+window.go::method::Window.WidthMethod	method	ported	src/ultraviolet/window.cr	ported
+window.go::struct::Window	struct	ported	src/ultraviolet/window.cr	ported

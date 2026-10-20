@@ -7,18 +7,18 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
 ## Where we are
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md).
-- **Current focus:** Phase 7, refreshing the parity inventories. The vendor
-  delta and its feature follow-ups are implemented.
+- **Current focus:** Phase 8, triaging the refreshed inventory. The vendor delta
+  and its feature follow-ups are implemented.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 7 — Parity inventory refresh:** regenerate the source/test
-     manifests, reconcile curated inventory rows, and remove drift.
-  2. **Phase 8 — Conformance harness assessment:** decide whether the Go
-     conformance harness adds coverage Crystal specs cannot express, and port
-     only that portion if it does.
-  3. **Phase 9 — Next vendor refresh:** repeat the vendor-update workflow when
+  1. **Phase 8 — Inventory triage:** resolve inherited/shared-implementation
+     rows, classify example/internal-tooling rows, and leave only true porting
+     gaps as `missing`.
+  2. **Phase 9 — Conformance harness assessment:** decide whether the Go
+     conformance harness adds coverage Crystal specs cannot express.
+  3. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
      upstream moves past `6b8d4ba`.
-- **Chunk status:** phases 1–6 complete; phase 7 next; phases 8–9 deferred.
-- **Last feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
+- **Chunk status:** phases 1–7 complete; phase 8 next; phases 9–10 deferred.
+- **Last code feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
 - **Gates:** `make lint` and `make test` pass (`392` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
@@ -37,9 +37,10 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 4 | Terminal I/O robustness: input copy, stop lifecycle, cancelable reads | ✅ | `2a512a2`, `94f85f4`, `b357f5d` |
 | 5 | Width + Unicode layout | ✅ | `f68c0af` |
 | 6 | API surface compatibility: mouse, sizes, winch, aliases | ✅ | `cc5ca2d`, `756d7a7`, `c8b0dc2`, `21e8aa8`, `08b76f2`, `8659366`, `2a85b32` |
-| 7 | Parity inventory refresh | **Next** | — |
-| 8 | Conformance harness assessment | Deferred | — |
-| 9 | Next vendor refresh | Deferred | — |
+| 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
+| 8 | Inventory triage | **Next** | 203 audit-pending rows |
+| 9 | Conformance harness assessment | Deferred | — |
+| 10 | Next vendor refresh | Deferred | — |
 
 ## Status overview
 
@@ -57,9 +58,13 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 392 Crystal specs |
-| **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
-| **Port inventory** | 826 items | 825 ported, 1 skipped |
+| **Test coverage** | 196 Go tests | 392 Crystal specs |
+| **Source API parity** | 819 Go APIs | 690 ported, 129 audit pending |
+| **Test parity** | 196 Go tests | 122 ported, 74 audit pending |
+| **Port inventory** | 1015 items | 812 ported, 203 audit pending |
+
+Many audit-pending rows are shared/inherited implementations or
+example/internal-tooling noise; Phase 8 resolves them.
 
 \* Crystal merges `Terminal` and `Screen`; Go keeps them separate. Crystal also
 extracts `EventScanner` from `TerminalReader`, matching Go's `eventScanner`.
