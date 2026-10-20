@@ -6,26 +6,25 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
   — use its checklist as the working order.
-- **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. The vendor
-  tree is refreshed; the Crystal implementation still tracks `7cc6674`.
+- **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. Program
+  status reset/restore is complete; styled strings and buffers are next.
 - **Next up:**
-  1. [Program status reset/restore follow-ups](update-vendor-6b8d4ba.md#1-program-status-follow-ups).
-  2. [Styled-string and buffer fixes](update-vendor-6b8d4ba.md#2-styled-strings-and-buffers).
-  3. [Renderer damage/resize model and regression tests](update-vendor-6b8d4ba.md#3-renderer-damage-and-resize-model).
-  4. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
-  5. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
-  6. Regenerate the parity inventories after the API-affecting chunks (2–4).
+  1. [Styled-string and buffer fixes](update-vendor-6b8d4ba.md#2-styled-strings-and-buffers).
+  2. [Renderer damage/resize model and regression tests](update-vendor-6b8d4ba.md#3-renderer-damage-and-resize-model).
+  3. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
+  4. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
+  5. Regenerate the parity inventories after the API-affecting chunks (1–3).
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
-    and OSC 7501.
-  - **In progress:** the `6b8d4ba` vendor delta.
-  - **Remaining:** the six next-up items above, plus the optional conformance
+    OSC 7501, and the program status reset/restore follow-ups.
+  - **In progress:** the `6b8d4ba` vendor delta (styled strings and buffers).
+  - **Remaining:** the five next-up items above, plus the optional conformance
     harness work in the active plan.
-- **Last commit:** `a425791` (`chore: update vendored ultraviolet to 6b8d4ba`).
-- **Gates:** `make lint` and `make test` pass (`339` examples).
+- **Last commit:** `38f1b04` (`docs: clarify parity plan active link and next steps`).
+- **Gates:** `make lint` and `make test` pass (`340` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674`)
+> `7cc6674` plus the program status follow-ups)
 
 ## Status Overview
 
@@ -43,7 +42,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 339 Crystal specs |
+| **Test coverage** | 122 Go tests | 340 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -57,6 +56,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +1 spec | Program status reset/restore parity (`TestTerminalScreenProgramStatus`) |
 | 2026-10-19 | Vendor refreshed | `vendor/ultraviolet` `7cc6674` → `6b8d4ba`; Crystal port unchanged, work tracked in the active plan |
 | 2026-10-19 | +8 specs | Program Status Protocol (OSC 7501): encoding, support event, screen accessors |
 | 2025-05-26 | +42 specs | terminal_screen reset/restore (5), X10 mouse (8), SGR mouse (9), helpers (3), scan_events (3), grapheme buf (2), TerminalReader stream (14) |
@@ -127,10 +127,11 @@ and `TerminalScreen#set_program_status` / `#program_status`.
 **Files changed:** `src/ultraviolet/program_status.cr`,
 `src/ultraviolet/decoder.cr`, `src/ultraviolet/event.cr`,
 `src/ultraviolet/terminal_screen.cr`
-**Specs:** `spec/program_status_spec.cr` (8 examples)
+**Specs:** `spec/program_status_spec.cr` (9 examples)
 **Divergence:** none. Upstream `6b8d4ba` provides the types through
 `charmbracelet/x/ansi`; the Crystal port uses the `ansi` shard for the same
-types.
+types. `reset` leaves the program status record in place and `restore` re-emits
+it, matching upstream.
 
 ## Remaining Work (Upstream-Limited)
 

@@ -387,6 +387,11 @@ module Ultraviolet
         @renderer.write_string(seq)
       end
 
+      # The program status is deliberately left in place. The Program Status
+      # Protocol expects done and error records to outlive the program, and
+      # terminals drop working and blocked records on their own when the
+      # process exits or the next shell prompt starts.
+
       # KittyKeyboard(0,1) is also emitted here if keyboard enhancements exist.
       # Preserve @keyboard_enhancements so Restore can re-emit them.
       if has_keyboard
@@ -450,6 +455,11 @@ module Ultraviolet
 
       if (pb = @progress_bar) && !pb.state.none?
         seq = String.build { |io| Ultraviolet.encode_progress_bar(io, pb) }
+        @renderer.write_string(seq)
+      end
+
+      if ps = @program_status
+        seq = String.build { |io| Ultraviolet.encode_program_status(io, ps) }
         @renderer.write_string(seq)
       end
 

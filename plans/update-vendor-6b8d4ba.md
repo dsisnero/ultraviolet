@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation still tracks:** `7cc6674`
+**Crystal implementation tracks:** `7cc6674` plus the program status follow-ups from `6b8d4ba`
 
-The vendored Go snapshot has been refreshed. The Crystal port has **not** yet
-been updated for this delta; the gates still pass because only the reference
-source changed.
+The vendored Go snapshot has been refreshed. Porting has started: the program
+status reset/restore follow-ups are complete. The remaining delta is still
+outstanding.
 
 ```text
 67 commits
@@ -18,10 +18,11 @@ source changed.
 ## Where we are
 
 - `vendor/ultraviolet/` is now at `6b8d4ba`.
-- The Crystal implementation and specs match the previous `7cc6674` behavior.
-- Program Status Protocol (OSC 7501) support is already ported through the
-  `ansi` shard, but the reset/restore behavior below still needs checking.
-- Next step: work through the porting checklist in the order shown.
+- The Crystal implementation and specs match the previous `7cc6674` behavior
+  plus the completed program status reset/restore follow-ups.
+- Program Status Protocol (OSC 7501) support is fully ported, including
+  reset/restore behavior.
+- Next step: section 2, styled strings and buffers.
 
 ## Porting checklist
 
@@ -33,12 +34,13 @@ Upstream files: `event.go`, `decoder.go`, `terminal_screen.go`, `uv.go`,
 - [x] Program status types and encoding (`ansi` shard)
 - [x] `ProgramStatusSupportEvent` and OSC 7501 decoding
 - [x] `TerminalScreen#set_program_status` / `#program_status`
-- [ ] `reset` must deliberately leave the program status record in place
-- [ ] `restore` must re-emit the stored program status
-- [ ] Add parity coverage for the reset/restore behavior
+- [x] `reset` deliberately leaves the program status record in place
+- [x] `restore` re-emits the stored program status
+- [x] Add parity coverage for the reset/restore behavior
 
-The current Crystal `restore` does not re-encode `@program_status`. Upstream
-does so in `terminal_screen.go`.
+**Completed 2026-10-19.** `restore` now re-encodes `@program_status`, and
+`spec/program_status_spec.cr` covers the upstream
+`TestTerminalScreenProgramStatus` behavior.
 
 ### 2. Styled strings and buffers
 

@@ -123,4 +123,27 @@ describe "Program Status Protocol (OSC 7501)" do
     screen.flush
     output.to_s.should contain(Ansi::ClearProgramStatus)
   end
+
+  it "leaves the program status in place on reset and re-emits it on restore" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+    status = Ultraviolet::ProgramStatus.new(state: Ultraviolet::ProgramStateDone, app: "uv")
+    expected = Ansi.set_program_status(status)
+
+    screen.set_program_status(status)
+    screen.flush
+    output.to_s.should contain(expected)
+
+    output.clear
+    screen.reset
+    screen.program_status.should eq(status)
+    screen.flush
+    output.to_s.should_not contain("7501")
+
+    output.clear
+    screen.restore
+    screen.program_status.should eq(status)
+    screen.flush
+    output.to_s.should contain(expected)
+  end
 end

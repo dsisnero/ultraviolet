@@ -260,6 +260,7 @@ event.go::struct::ModifyOtherKeysEvent	struct	ported	src/ultraviolet/event.cr		a
 event.go::struct::PasteEndEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
 event.go::struct::PasteEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
 event.go::struct::PasteStartEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
+event.go::struct::ProgramStatusSupportEvent	struct	ported	src/ultraviolet/program_status.cr	OSC 7501 support reply
 event.go::struct::Size	struct	ported	src/ultraviolet/event.cr		auto-generated
 event.go::struct::TerminalVersionEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
 event.go::struct::WindowOpEvent	struct	ported	src/ultraviolet/event.cr		auto-generated
@@ -730,11 +731,12 @@ terminal_screen.go::method::TerminalScreen.HideCursor	method	ported	src/ultravio
 terminal_screen.go::method::TerminalScreen.InsertAbove	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.KeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.MouseMode	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
+terminal_screen.go::method::TerminalScreen.ProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:328	program status accessor; reset preserves, restore re-emits
 terminal_screen.go::method::TerminalScreen.ProgressBar	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.Render	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Reset	method	ported	src/ultraviolet/terminal_screen.cr:276-324	KittyKeyboard(0,1) before alt screen exit; golden spec at spec/terminal_screen_spec.cr:69
+terminal_screen.go::method::TerminalScreen.Reset	method	ported	src/ultraviolet/terminal_screen.cr:332-402	KittyKeyboard(0,1) before alt screen exit; leaves program status in place; golden spec at spec/terminal_screen_spec.cr:69
 terminal_screen.go::method::TerminalScreen.Resize	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
-terminal_screen.go::method::TerminalScreen.Restore	method	ported	src/ultraviolet/terminal_screen.cr:326-374	raw ANSI emission (no state mutation), golden spec at spec/terminal_screen_spec.cr:91
+terminal_screen.go::method::TerminalScreen.Restore	method	ported	src/ultraviolet/terminal_screen.cr:404-468	raw ANSI emission (no state mutation), re-emits program status; golden spec at spec/terminal_screen_spec.cr:91 and spec/program_status_spec.cr
 terminal_screen.go::method::TerminalScreen.SetBackgroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetCell	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetColorProfile	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
@@ -744,6 +746,7 @@ terminal_screen.go::method::TerminalScreen.SetCursorStyle	method	ported	src/ultr
 terminal_screen.go::method::TerminalScreen.SetForegroundColor	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetKeyboardEnhancements	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetMouseMode	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
+terminal_screen.go::method::TerminalScreen.SetProgramStatus	method	ported	src/ultraviolet/terminal_screen.cr:322	OSC 7501 encoding via ansi shard
 terminal_screen.go::method::TerminalScreen.SetProgressBar	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetWidthMethod	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
 terminal_screen.go::method::TerminalScreen.SetWindowTitle	method	ported	src/ultraviolet/terminal_screen.cr		auto-generated
@@ -789,6 +792,7 @@ uv.go::func::EncodeCursorStyle	func	ported	src/ultraviolet/uv_api.cr		auto-gener
 uv.go::func::EncodeForegroundColor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
 uv.go::func::EncodeKeyboardEnhancements	func	ported	src/ultraviolet/uv_api.cr		auto-generated
 uv.go::func::EncodeMouseMode	func	ported	src/ultraviolet/uv_api.cr		auto-generated
+uv.go::func::EncodeProgramStatus	func	ported	src/ultraviolet/program_status.cr	nil clears all program status records
 uv.go::func::EncodeProgressBar	func	ported	src/ultraviolet/uv_api.cr		auto-generated
 uv.go::func::EncodeWindowTitle	func	ported	src/ultraviolet/uv_api.cr		auto-generated
 uv.go::func::NewCursor	func	ported	src/ultraviolet/uv_api.cr		auto-generated
