@@ -136,6 +136,7 @@ and `TerminalScreen#set_program_status` / `#program_status`.
 `src/ultraviolet/decoder.cr`, `src/ultraviolet/event.cr`,
 `src/ultraviolet/terminal_screen.cr`
 **Specs:** `spec/program_status_spec.cr` (9 examples)
+**Tracking:** [`plans/ultraviolet.1.md`](ultraviolet.1.md)
 **Divergence:** none. Upstream `6b8d4ba` provides the types through
 `charmbracelet/x/ansi`; the Crystal port uses the `ansi` shard for the same
 types. `reset` leaves the program status record in place and `restore` re-emits
