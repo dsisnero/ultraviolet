@@ -7,24 +7,24 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 - **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
   — use its checklist as the working order.
 - **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. Program
-  status and styled/buffer fixes are complete; the renderer damage/resize model
-  is next.
+  status, styled/buffer, and renderer damage/resize fixes are complete; the
+  terminal input loop is next.
 - **Next up:**
-  1. [Renderer damage/resize model and regression tests](update-vendor-6b8d4ba.md#3-renderer-damage-and-resize-model).
-  2. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
-  3. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
-  4. Regenerate the parity inventories after the remaining API-affecting chunks.
+  1. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
+  2. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
+  3. Regenerate the parity inventories after the remaining API-affecting chunks.
 - **Chunk status:**
   - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
-    OSC 7501, program status reset/restore, and styled-string/buffer fixes.
-  - **In progress:** the `6b8d4ba` vendor delta (renderer damage/resize).
-  - **Remaining:** the four next-up items above, plus the optional conformance
+    OSC 7501, program status reset/restore, styled-string/buffer fixes, and the
+    renderer damage/resize model.
+  - **In progress:** the `6b8d4ba` vendor delta (terminal input loop).
+  - **Remaining:** the three next-up items above, plus the optional conformance
     harness work in the active plan.
-- **Last commit:** `28371aa` (`port: complete program status reset/restore`).
-- **Gates:** `make lint` and `make test` pass (`354` examples).
+- **Last commit:** `bcdf389` (`port: vendor styled string and buffer fixes`).
+- **Gates:** `make lint` and `make test` pass (`375` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the program status and styled/buffer follow-ups)
+> `7cc6674` plus the program status, styled/buffer, and renderer follow-ups)
 
 ## Status Overview
 
@@ -42,7 +42,7 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 122 Go tests | 354 Crystal specs |
+| **Test coverage** | 122 Go tests | 375 Crystal specs |
 | **Source API parity** | 704 Go APIs | 703 ported, 1 skipped |
 | **Port inventory** | 826 items | 825 ported, 1 skipped |
 
@@ -56,6 +56,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | +21 specs | Renderer damage/resize: inline/fullscreen resize, repaint latching, drift/autowrap, corner clusters, scroll repaint, short touch lists |
 | 2026-10-19 | +14 specs | Styled strings and buffers: pass-through sequences, combining marks, hyperlink URLs, trailing spaces, wide clusters, RenderBuffer resize/touched |
 | 2026-10-19 | +1 spec | Program status reset/restore parity (`TestTerminalScreenProgramStatus`) |
 | 2026-10-19 | Vendor refreshed | `vendor/ultraviolet` `7cc6674` → `6b8d4ba`; Crystal port unchanged, work tracked in the active plan |
@@ -145,6 +146,20 @@ hyperlink URLs, clusters wider than four columns, trailing-space preservation in
 `src/ultraviolet/buffer.cr`, `src/ultraviolet/terminal_screen.cr`
 **Specs:** `spec/styled_spec.cr`, `spec/buffer_spec.cr`,
 `spec/ultraviolet_spec.cr`
+
+### F9. Renderer damage and resize model (vendor `6b8d4ba`) ✅
+
+Ported the renderer's damage record and resize reconciliation: latching real
+terminal size changes, repainting after fullscreen/inline resizes, erasing only
+the rows an inline frame gives up, keeping drift-prone rows from wrapping, and
+marking rows moved by hardware scrolls.
+
+**Files changed:** `src/ultraviolet/terminal_renderer.cr`,
+`src/ultraviolet/terminal_renderer_hardscroll.cr`,
+`src/ultraviolet/terminal_renderer_hashmap.cr`,
+`src/ultraviolet/buffer.cr`
+**Specs:** `spec/terminal_renderer_resize_spec.cr`,
+`spec/terminal_renderer_spec.cr`, `spec/terminal_renderer_output_spec.cr`
 
 ## Remaining Work (Upstream-Limited)
 

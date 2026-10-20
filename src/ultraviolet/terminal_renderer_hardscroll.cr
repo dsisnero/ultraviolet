@@ -87,6 +87,7 @@ module Ultraviolet
       curbuf = @curbuf
       return false unless curbuf
       scroll_buffer(curbuf, n, top, bot, blank)
+      damage(top, bot - top + 1)
       scroll_oldhash(n, top, bot)
       true
     end

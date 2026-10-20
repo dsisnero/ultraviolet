@@ -42,7 +42,7 @@ module Ultraviolet
       if @oldhash.size >= height && @newhash.size >= height
         i = 0
         while i < height
-          if newbuf.touched.empty? || newbuf.touched[i]?
+          if newbuf.touched[i]?
             @oldhash[i] = hash_line(curbuf.line_at(i))
             @newhash[i] = hash_line(newbuf.line_at(i))
           end

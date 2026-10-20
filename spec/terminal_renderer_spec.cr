@@ -57,7 +57,7 @@ module Ultraviolet
       renderer.render(cellbuf)
       renderer.flush
 
-      buf.to_s.should eq("\rHello, World!\r\n\n")
+      buf.to_s.should eq("\rHello, World!")
     end
 
     it "sets color profile" do
@@ -367,7 +367,7 @@ module Ultraviolet
       renderer.render(large)
       renderer.flush
 
-      buf.to_s.should eq("\e[HX\r\n\n\e[J\e[H\e[K\nX\e[K\r\n\e[K\n\n\n")
+      buf.to_s.should eq("\e[HX\r\e[K\nX\r\n\n\n\n")
     end
 
     it "handles relative cursor" do
@@ -687,12 +687,12 @@ module Ultraviolet
         {
           "simple style change",
           ["A", "\e[1mA"],
-          ["\rA\r\n\n", "\e[2A\e[1mA\e[m"],
+          ["\rA", "\r\e[1mA\e[m"],
         },
         {
           "style and link change",
           ["A", "\e[31m\e]8;;https://example.com\e\\A\e]8;;\e\\"],
-          ["\rA\r\n\n", "\e[2A\e[31m\e]8;;https://example.com\aA\e[m\e]8;;\a"],
+          ["\rA", "\r\e[31m\e]8;;https://example.com\aA\e[m\e]8;;\a"],
         },
         {
           "the same true color style frames",
@@ -702,7 +702,7 @@ module Ultraviolet
             " \e[38;2;255;128;0mABC\n DEF",
           ],
           [
-            "\r \e[38;5;208mABC\e[m\r\n\e[38;5;208m DEF\e[m\r\n",
+            "\r \e[38;5;208mABC\e[m\r\n\e[38;5;208m DEF\e[m",
             "",
             "",
           ],

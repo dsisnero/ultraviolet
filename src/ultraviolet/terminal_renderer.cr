@@ -103,6 +103,12 @@ module Ultraviolet
     @newhash : Array(UInt64)
     @hashtab : Array(HashMapEntry)
     @oldnum : Array(Int32)
+    @no_wrap_line : Bool
+    @drift_rows : Array(Bool)
+    @term_w : Int32
+    @term_h : Int32
+    @term_resized : Bool
+    @damaged : Array(Bool)
 
     getter caps : Capabilities
     getter flags : TerminalFlags
@@ -124,7 +130,15 @@ module Ultraviolet
       @newhash = [] of UInt64
       @hashtab = [] of HashMapEntry
       @oldnum = [] of Int32
+      @no_wrap_line = false
+      @drift_rows = [] of Bool
+      @term_w = 0
+      @term_h = 0
+      @term_resized = false
+      @damaged = [] of Bool
     end
+
+    getter damaged : Array(Bool)
 
     def logger=(logger : Logger?) : Nil
       @logger = logger
@@ -316,7 +330,9 @@ module Ultraviolet
       #     @cur.x = 0
 
       if height > 0
-        @cur.y = height - 1 if @cur.y > height - 1
+        if (@flags & TerminalFlags::RelativeCursor) != TerminalFlags::RelativeCursor
+          @cur.y = height - 1 if @cur.y > height - 1
+        end
         y = height - 1 if y > height - 1
       end
 
@@ -330,7 +346,22 @@ module Ultraviolet
     def put_cell(newbuf : RenderBuffer, cell : Cell?) : Nil
       width = newbuf.width
       height = newbuf.height
-      if fullscreen? && @cur.x == width - 1 && @cur.y == height - 1
+      at_margin = @cur.x == width - 1 && !@no_wrap_line
+      lower_right = at_margin && fullscreen? && @cur.y == height - 1
+
+      # A multi-codepoint cluster at the corner keeps autowrap on so the
+      # terminal takes it whole. Cancel the pending wrap afterwards.
+      if lower_right && cell && cell.content.size > 1
+        put_attr_cell(newbuf, cell)
+        if @at_phantom
+          @buf << '\r'
+          @cur.x = 0
+          @at_phantom = false
+        end
+        return
+      end
+
+      if lower_right
         put_cell_lr(newbuf, cell)
       else
         put_attr_cell(newbuf, cell)
@@ -384,16 +415,7 @@ module Ultraviolet
     end
 
     def update_pen(cell : Cell?) : Nil
-      if cell.nil?
-        unless @cur.cell.style.zero?
-          @buf << Ansi::ResetStyle
-          @cur.cell = Cell.new(@cur.cell.content, @cur.cell.width, Style.new, @cur.cell.link)
-        end
-        unless @cur.cell.link.empty?
-          @buf << Ansi.reset_hyperlink
-        end
-        return
-      end
+      cell = EMPTY_CELL if cell.nil?
 
       new_style = Ultraviolet.convert_style(cell.style, @profile)
       new_link = Ultraviolet.convert_link(cell.link, @profile)
@@ -591,6 +613,127 @@ module Ultraviolet
     def el0_cost : Int32
       return 0 if @caps != Capabilities::None
       Ansi::EraseLineRight.bytesize
+    end
+
+    # A line is drift-prone when it holds a wide cell or a cell whose width
+    # the terminal may measure differently than the model.
+    def self.line_has_drift(method : Ansi::Method, line : Line) : Bool
+      line.cells.each do |cell|
+        next if cell.width == 0 || cell.content.empty?
+        return true if cell.width > 1
+
+        if cell.content.bytesize == 1
+          byte = cell.content.byte_at(0)
+          next if byte >= 0x20 && byte < 0x7f
+        end
+
+        if method.string_width(cell.content) != Ansi.string_width(cell.content)
+          return true
+        end
+      end
+      false
+    end
+
+    private def paint_line(newbuf : RenderBuffer, y : Int32, force : Bool) : Nil
+      old_line = @curbuf.try &.line(y)
+      new_line = newbuf.line_at(y)
+      drift = (old_line ? TerminalRenderer.line_has_drift(@method, old_line) : false) ||
+              TerminalRenderer.line_has_drift(@method, new_line)
+      mark_drift(y, newbuf.height, drift)
+
+      if drift && (@flags & TerminalFlags::GraphemeWidth) != TerminalFlags::GraphemeWidth
+        @no_wrap_line = true
+        @buf << Ansi::ResetAutoWrapMode
+        repaint_line(newbuf, y)
+        @no_wrap_line = false
+        @buf << Ansi::SetAutoWrapMode
+        reanchor_wide_line(newbuf)
+      elsif drift || force
+        repaint_line(newbuf, y)
+      else
+        transform_line(newbuf, y)
+      end
+    end
+
+    # ameba:disable Metrics/CyclomaticComplexity
+    private def repaint_line(newbuf : RenderBuffer, y : Int32) : Nil
+      old_line = @curbuf.try &.line(y)
+      new_line = newbuf.line_at(y)
+
+      move(newbuf, 0, y)
+      blank = clear_blank
+      update_pen(blank)
+      @buf << Ansi::EraseLineRight
+      @cur.x = 0
+
+      width = newbuf.width
+      clipped = width
+      x = 0
+      while x < width
+        cell = new_line.at(x)
+        if cell && cell.width != 0 && x + cell.width > width
+          clipped = x
+          break
+        end
+        x += 1
+      end
+
+      last = -1
+      x = 0
+      while x < clipped
+        cell = new_line.at(x)
+        if cell && cell.width != 0 && !Ultraviolet.cell_equal?(cell, blank)
+          last = x
+        end
+        x += 1
+      end
+
+      x = 0
+      while x <= last
+        put_cell(newbuf, new_line.at(x))
+        x += 1
+      end
+
+      if old_line && old_line.width == new_line.width
+        x = 0
+        while x < new_line.width
+          old_line.cells[x] = new_line.cells[x]
+          x += 1
+        end
+        x = clipped
+        while x < width && x < old_line.width
+          old_line.cells[x] = Cell.new
+          x += 1
+        end
+      end
+    end
+
+    # ameba:enable Metrics/CyclomaticComplexity
+
+    private def mark_drift(y : Int32, height : Int32, drift : Bool) : Nil
+      return if y < 0
+
+      size = Math.max(height, y + 1)
+      if @drift_rows.size < size
+        @drift_rows.concat(Array(Bool).new(size - @drift_rows.size, false))
+      end
+      @drift_rows[y] = drift
+    end
+
+    private def reanchor_wide_line(newbuf : RenderBuffer) : Nil
+      if (@flags & TerminalFlags::RelativeCursor) == TerminalFlags::RelativeCursor
+        return if @at_phantom || @cur.x < 0 || @cur.x >= newbuf.width
+
+        @buf << Ansi.cursor_horizontal_absolute(@cur.x + 1)
+        return
+      end
+
+      return if @cur.x < 0 || @cur.y < 0
+
+      x = Math.min(@cur.x, newbuf.width - 1)
+      @buf << Ansi.cursor_position(x + 1, @cur.y + 1)
+      @cur.x = x
+      @at_phantom = false
     end
 
     # ameba:disable Metrics/CyclomaticComplexity
@@ -824,7 +967,7 @@ module Ultraviolet
         end
 
         if top < total
-          move(newbuf, 0, Math.max(0, top - 1))
+          move(newbuf, 0, top)
           clear_to_bottom(blank)
           if !@oldhash.empty? && !@newhash.empty?
             row = top
@@ -870,7 +1013,7 @@ module Ultraviolet
       non_empty = clear_bottom(newbuf, non_empty)
       i = 0
       while i < non_empty && i < newbuf.height
-        transform_line(newbuf, i)
+        paint_line(newbuf, i, false)
         i += 1
       end
     end
@@ -907,108 +1050,88 @@ module Ultraviolet
     # ameba:disable Metrics/CyclomaticComplexity
     def render(newbuf : RenderBuffer) : Nil
       touched_lines = newbuf.touched_lines
-      return if !@clear && touched_lines == 0
+      return if !@clear && !@term_resized && touched_lines == 0
+
+      newbuf.grow_touched
 
       curbuf = @curbuf
       if curbuf.nil? || curbuf.bounds.empty?
-        @curbuf = RenderBuffer.new(newbuf.width, newbuf.height)
+        curbuf = RenderBuffer.new(newbuf.width, newbuf.height)
+        @curbuf = curbuf
       end
 
       new_width = newbuf.width
       new_height = newbuf.height
-      curbuf = @curbuf
-      return unless curbuf
-      cur_width = curbuf.width
-      cur_height = curbuf.height
+      begin_damage(new_height)
+      size = reconcile_size(newbuf, curbuf)
 
-      if cur_width != new_width || cur_height != new_height
-        @oldhash.clear
-        @newhash.clear
-      end
+      non_empty = 0
 
-      # TODO: Investigate whether this is necessary. Theoretically, terminals
-      # can add/remove tab stops and we should be able to handle that. We could
-      # use [ansi.DECTABSR] to read the tab stops, but that's not implemented in
-      # most terminals :/
-      # // Are we using hard tabs? If so, ensure tabs are using the
-      # // default interval using [ansi.DECST8C].
-      # if s.opts.HardTabs && !s.initTabs {
-      #   s.buf.WriteString(ansi.SetTabEvery8Columns)
-      #   s.initTabs = true
-      # }
-
+      # An inline frame that gives up rows has to erase what it no longer
+      # covers, starting at the first row it gave up.
       partial_clear = !fullscreen? && @cur.x != -1 && @cur.y != -1 &&
-                      cur_width == new_width && cur_height > 0 && cur_height > new_height
+                      curbuf.height > 0 && curbuf.height > new_height
 
       if !@clear && partial_clear
-        clear_below(newbuf, nil, new_height - 1)
+        clear_below(newbuf, nil, new_height)
+      end
+
+      # Resize the model before diffing so the loop walks every new row.
+      if size[:frame_resized]
+        curbuf.resize(new_width, new_height)
       end
 
       if @clear
         clear_update(newbuf)
         @clear = false
-      elsif touched_lines > 0
+      elsif touched_lines > 0 || size[:repaint_all]
         if (@flags & TerminalFlags::ScrollOptim) == TerminalFlags::ScrollOptim && fullscreen?
-          # Optimize scrolling for the alternate screen buffer.
-          # TODO: Should we optimize for inline mode as well? If so, we need
-          # to know the actual cursor position to use [ansi.DECSTBM].
           scroll_optimize(newbuf)
         end
 
-        non_empty = fullscreen? ? Math.min(cur_height, new_height) : new_height
+        non_empty = new_height
         non_empty = clear_bottom(newbuf, non_empty)
 
         i = 0
-        while i < non_empty && i < new_height
+        while i < non_empty
           touched_line = newbuf.touched[i]?
-          if touched_line.nil? || touched_line.first_cell != -1 || touched_line.last_cell != -1
-            transform_line(newbuf, i)
-          end
-
-          if i < newbuf.touched.size
-            newbuf.touched[i] = LineData.new(-1, -1)
-          end
-          if current = @curbuf
-            if i < current.height - 1
-              current.touched[i] = LineData.new(-1, -1)
-            end
+          if size[:repaint_all] || @damaged[i]? ||
+             (touched_line && (touched_line.first_cell != -1 || touched_line.last_cell != -1))
+            paint_line(newbuf, i, size[:repaint_all])
           end
           i += 1
         end
       end
 
-      if !fullscreen? && @scroll_height < new_height - 1
-        move(newbuf, 0, new_height - 1)
+      if !fullscreen? && size[:frame_resized]
+        move(newbuf, 0, Math.max(new_height - 1, 0))
       end
 
-      newbuf.touched = Array(LineData?).new(new_height) { LineData.new(-1, -1) }
-      if current = @curbuf
-        current.touched = Array(LineData?).new(current.height) { LineData.new(-1, -1) }
-      end
-
-      if cur_width != new_width || cur_height != new_height
-        curbuf.resize(new_width, new_height)
-        i = cur_height - 1
-        while i < new_height
-          line = curbuf.line_at(i)
-          new_line = newbuf.line_at(i)
-          copy_line(line, new_line, 0)
-          i += 1
-        end
-      end
-
+      newbuf.grow_touched
+      reset_touched(newbuf.touched)
       update_pen(nil)
     end
 
+    # ameba:enable Metrics/CyclomaticComplexity
     # ameba:enable Metrics/CyclomaticComplexity
 
     def erase : Nil
       @clear = true
     end
 
-    def resize(width : Int32, _height : Int32) : Nil
+    def resize(width : Int32, height : Int32) : Nil
       @tabs.try &.resize(width)
-      @scroll_height = 0
+
+      if width > 0 && height > 0
+        @term_resized = @term_resized || (@term_w > 0 && (width != @term_w || height != @term_h))
+        @term_w = width
+        @term_h = height
+      end
+
+      if (@flags & TerminalFlags::RelativeCursor) != TerminalFlags::RelativeCursor
+        @cur.x = -1
+        @cur.y = -1
+      end
     end
 
     def position : {Int32, Int32}
@@ -1032,6 +1155,69 @@ module Ultraviolet
 
     def move_to(x : Int32, y : Int32) : Nil
       move(nil, x, y)
+    end
+
+    private def reconcile_size(newbuf : RenderBuffer, curbuf : RenderBuffer) : NamedTuple(frame_resized: Bool, repaint_all: Bool)
+      new_width = newbuf.width
+      new_height = newbuf.height
+      cur_width = curbuf.width
+      cur_height = curbuf.height
+      fullscreen = fullscreen?
+      frame_resized = cur_width != new_width || cur_height != new_height
+      repaint_all = false
+
+      if @term_resized
+        if fullscreen
+          @clear = true
+        else
+          repaint_all = true
+        end
+        @term_resized = false
+      end
+
+      if frame_resized
+        @oldhash.clear
+        @newhash.clear
+        @clear = true if fullscreen
+        damage(0, new_height)
+      end
+
+      if !fullscreen && cur_width != new_width
+        @drift_rows.each_with_index do |drift, y|
+          damage(y, 1) if drift
+        end
+      end
+
+      {frame_resized: frame_resized, repaint_all: repaint_all}
+    end
+
+    def damage(y : Int32, n : Int32) : Nil
+      i = Math.max(y, 0)
+      limit = Math.min(y + n, @damaged.size)
+      while i < limit
+        @damaged[i] = true
+        i += 1
+      end
+    end
+
+    private def begin_damage(height : Int32) : Nil
+      if @damaged.size != height
+        @damaged = Array(Bool).new(height, false)
+      else
+        @damaged.fill(false)
+      end
+    end
+
+    private def reset_touched(touched : Array(LineData?)) : Nil
+      touched.each_with_index do |line, index|
+        if line
+          line.first_cell = -1
+          line.last_cell = -1
+          touched[index] = line
+        else
+          touched[index] = LineData.new(-1, -1)
+        end
+      end
     end
 
     private def can_clear_with(cell : Cell?) : Bool

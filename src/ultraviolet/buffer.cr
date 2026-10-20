@@ -622,7 +622,7 @@ module Ultraviolet
     # Restores the one-entry-per-row invariant after an application shortens or
     # drops the touched list. Only ever grows: truncating would make a frame
     # that collapsed look untouched and skip the erase of rows it gave up.
-    private def grow_touched : Nil
+    def grow_touched : Nil
       return if @touched.size >= @lines.size
 
       touched = Array(LineData?).new(@lines.size, nil)

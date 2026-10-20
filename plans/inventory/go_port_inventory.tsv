@@ -691,8 +691,8 @@ terminal_renderer.go::method::TerminalRenderer.MoveTo	method	ported	src/ultravio
 terminal_renderer.go::method::TerminalRenderer.Position	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.PrependString	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.Redraw	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Render	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
-terminal_renderer.go::method::TerminalRenderer.Resize	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
+terminal_renderer.go::method::TerminalRenderer.Render	method	ported	src/ultraviolet/terminal_renderer.cr	damage record, resize reconciliation, repaint/paint-line routing; upstream 6b8d4ba
+terminal_renderer.go::method::TerminalRenderer.Resize	method	ported	src/ultraviolet/terminal_renderer.cr	latches real size changes and invalidates the cursor model; upstream 6b8d4ba
 terminal_renderer.go::method::TerminalRenderer.RestoreCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.SaveCursor	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated
 terminal_renderer.go::method::TerminalRenderer.SetBackspace	method	ported	src/ultraviolet/terminal_renderer.cr		auto-generated

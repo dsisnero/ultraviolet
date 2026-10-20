@@ -3,11 +3,11 @@
 **Date:** 2026-10-19
 **Previous vendor:** `7cc6674` (2026-07-20)
 **Current vendor:** `6b8d4ba` (2026-10-08, upstream `main`)
-**Crystal implementation tracks:** `7cc6674` plus the program status and styled/buffer follow-ups from `6b8d4ba`
+**Crystal implementation tracks:** `7cc6674` plus the program status, styled/buffer, and renderer follow-ups from `6b8d4ba`
 
 The vendored Go snapshot has been refreshed. Porting has started: the program
-status reset/restore and styled-string/buffer follow-ups are complete. The
-remaining delta is still outstanding.
+status reset/restore, styled-string/buffer, and renderer damage/resize
+follow-ups are complete. The remaining delta is still outstanding.
 
 ```text
 67 commits
@@ -19,11 +19,12 @@ remaining delta is still outstanding.
 
 - `vendor/ultraviolet/` is now at `6b8d4ba`.
 - The Crystal implementation and specs match the previous `7cc6674` behavior
-  plus the completed program status and styled/buffer follow-ups.
+  plus the completed program status, styled/buffer, and renderer follow-ups.
 - Program Status Protocol (OSC 7501) support is fully ported, including
   reset/restore behavior.
 - Styled strings and buffers now include the `6b8d4ba` fixes.
-- Next step: section 3, the renderer damage and resize model.
+- The renderer now uses the damage/resize model from `6b8d4ba`.
+- Next step: section 4, the terminal input loop.
 
 ## Porting checklist
 
@@ -81,11 +82,19 @@ Key commits: `7c6028e`, `2e490d9`, `13b333e`, `815bedb`, `4117f7c`, `6d7982b`,
 `0de425e`, `c0d8ed2`, `af6533f`, `48eaef2`, `3c072e9`, `8b38db3`, `243ea4b`,
 `2c536ce`).
 
-- [ ] Port the damage/touch record used by the renderer
-- [ ] Port resize repaint and erase behavior
-- [ ] Match autowrap and cursor-row handling
-- [ ] Port the new renderer regression tests
-- [ ] Run the upstream conformance corpus where it applies
+- [x] Port the damage/touch record used by the renderer
+- [x] Port resize repaint and erase behavior
+- [x] Match autowrap and cursor-row handling
+- [x] Port the new renderer regression tests
+- [x] Run the upstream conformance corpus where it applies
+
+**Completed 2026-10-19.** The renderer now sizes its damage record to the
+screen, latches real resizes, repaints after terminal/screen resizes, keeps
+inline shrinks from erasing their own rows, handles drift-prone rows with
+autowrap off, re-anchors the cursor after a corner cluster, and marks rows moved
+by hardware scrolls. The resize/damage regression suite lives in
+`spec/terminal_renderer_resize_spec.cr`; the Go conformance harness remains
+optional tooling rather than a runtime port.
 
 ### 4. Terminal input loop
 

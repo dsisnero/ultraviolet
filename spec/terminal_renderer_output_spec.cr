@@ -10,7 +10,7 @@ module Ultraviolet
           [] of Bool,
           true,
           false,
-          ["\rABC\r\n\n\n\n", "\e[4AXXX"],
+          ["\rABC", "\rXXX"],
         },
         {
           "scroll one line",
@@ -73,8 +73,8 @@ module Ultraviolet
           false,
           false,
           [
-            "\e[2;1HABCEFGHIJK\r\n\n\n",
-            "\e[2;5H\e[K",
+            "\e[2;1HABCEFGHIJK",
+            "\r\e[5G\e[K",
           ],
         },
       ]
