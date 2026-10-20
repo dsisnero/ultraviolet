@@ -4,18 +4,24 @@ Ultraviolet is a Crystal port of the Go [ultraviolet](https://github.com/charmbr
 
 ## Where we are
 
+- **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md)
+  — use its checklist as the working order.
 - **Current focus:** port the `7cc6674` → `6b8d4ba` upstream delta. The vendor
   tree is refreshed; the Crystal implementation still tracks `7cc6674`.
 - **Next up:**
-  1. Finish the program status reset/restore follow-ups.
-  2. Port the styled-string and buffer fixes.
-  3. Port the renderer damage/resize model and its regression tests.
-  4. Port the terminal input-loop and width fixes.
-  5. Regenerate the parity inventories after the API-affecting chunks.
-- **Chunk status:** core types, layout, reader/decoder, and OSC 7501 are ported;
-  the remaining work is the vendor delta in
-  [`plans/update-vendor-6b8d4ba.md`](update-vendor-6b8d4ba.md).
-- **Last commit:** the vendor refresh commit containing this plan.
+  1. [Program status reset/restore follow-ups](update-vendor-6b8d4ba.md#1-program-status-follow-ups).
+  2. [Styled-string and buffer fixes](update-vendor-6b8d4ba.md#2-styled-strings-and-buffers).
+  3. [Renderer damage/resize model and regression tests](update-vendor-6b8d4ba.md#3-renderer-damage-and-resize-model).
+  4. [Terminal input-loop fixes](update-vendor-6b8d4ba.md#4-terminal-input-loop).
+  5. [Width handling for clusters wider than 4 columns](update-vendor-6b8d4ba.md#5-width-handling).
+  6. Regenerate the parity inventories after the API-affecting chunks (2–4).
+- **Chunk status:**
+  - **Ported:** core types, layout, console/TTY, poll, winch, encode helpers,
+    and OSC 7501.
+  - **In progress:** the `6b8d4ba` vendor delta.
+  - **Remaining:** the six next-up items above, plus the optional conformance
+    harness work in the active plan.
+- **Last commit:** `a425791` (`chore: update vendored ultraviolet to 6b8d4ba`).
 - **Gates:** `make lint` and `make test` pass (`339` examples).
 
 > **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
@@ -51,6 +57,7 @@ no behavioral impact.
 
 | Session | Tests Added | Areas |
 |---------|------------|-------|
+| 2026-10-19 | Vendor refreshed | `vendor/ultraviolet` `7cc6674` → `6b8d4ba`; Crystal port unchanged, work tracked in the active plan |
 | 2026-10-19 | +8 specs | Program Status Protocol (OSC 7501): encoding, support event, screen accessors |
 | 2025-05-26 | +42 specs | terminal_screen reset/restore (5), X10 mouse (8), SGR mouse (9), helpers (3), scan_events (3), grapheme buf (2), TerminalReader stream (14) |
 | Manifest | Updated | Source parity (703/704), Port inventory (825/826), Options struct (F1), EventScanner extraction (F2) |
