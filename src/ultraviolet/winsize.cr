@@ -19,7 +19,11 @@ lib LibC
     ws_ypixel : UInt16
   end
 
-  fun ioctl(fd : Int32, request : LibC::ULong, argp : Void*) : Int32
+  # ioctl is variadic in C. Declaring the third argument as a fixed `Void*`
+  # passes it in a register, but a variadic callee reads variadic arguments
+  # from the stack (mandatory on AArch64), so the kernel's winsize write
+  # landed at a garbage address and corrupted the caller's stack frame.
+  fun ioctl(fd : Int32, request : LibC::ULong, ...) : Int32
 end
 
 module Ultraviolet

@@ -1,11 +1,5 @@
 require "./spec_helper"
 
-{% unless flag?(:win32) %}
-  lib LibUtil
-    fun openpty(amaster : Int32*, aslave : Int32*, name : UInt8*, termp : LibC::Termios*, winp : Void*) : Int32
-  end
-{% end %}
-
 describe Ultraviolet::Console do
   it "uses last matching environment value" do
     con = Ultraviolet::Console.new_console(
@@ -61,12 +55,7 @@ describe Ultraviolet::Console do
 
   {% unless flag?(:win32) %}
     it "restores raw mode on a pseudo tty" do
-      master_fd = uninitialized Int32
-      slave_fd = uninitialized Int32
-      LibUtil.openpty(pointerof(master_fd), pointerof(slave_fd), Pointer(UInt8).null, Pointer(LibC::Termios).null, Pointer(Void).null).should eq(0)
-
-      master = IO::FileDescriptor.new(master_fd)
-      slave = IO::FileDescriptor.new(slave_fd)
+      master, slave = pty_pair
       con = Ultraviolet::Console.new_console(slave, slave, [] of String)
 
       begin
