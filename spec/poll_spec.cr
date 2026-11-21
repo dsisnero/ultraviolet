@@ -37,6 +37,61 @@ module Ultraviolet
         read_end.try &.close
       end
 
+      it "does not stall other fibers while polling" do
+        read_end, write_end = IO.pipe
+        poll_reader = Ultraviolet.new_poll_reader(read_end)
+
+        ticks = 0
+        stop = Channel(Nil).new(0)
+        spawn do
+          until stop.closed?
+            ticks += 1
+            sleep 5.milliseconds
+          end
+        end
+
+        begin
+          poll_reader.poll(300.milliseconds).should be_false
+          # A raw select/epoll_wait in the calling fiber would freeze the
+          # scheduler, leaving the ticker at zero.
+          ticks.should be > 10
+        ensure
+          stop.close
+          write_end.try &.close
+          read_end.try &.close
+          poll_reader.close
+        end
+      end
+
+      it "lets another fiber cancel a poll that is waiting" do
+        read_end, write_end = IO.pipe
+        poll_reader = Ultraviolet.new_poll_reader(read_end)
+
+        result = Channel(Bool?).new(1)
+        spawn do
+          begin
+            poll_reader.poll(5.seconds).should be_true
+            result.send(false)
+          rescue PollCanceledError
+            result.send(true)
+          end
+        end
+
+        # Let the spawned poll reach the underlying wait.
+        sleep 50.milliseconds
+        poll_reader.cancel.should be_true
+
+        select
+        when canceled = result.receive
+          canceled.should be_true
+        when timeout(2.seconds)
+          fail("expected cancellation to unblock poll")
+        end
+      ensure
+        write_end.try &.close
+        read_end.try &.close
+      end
+
       it "cancels a blocking read" do
         read_end, write_end = IO.pipe
         poll_reader = Ultraviolet.new_poll_reader(read_end)

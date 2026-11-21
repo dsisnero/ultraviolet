@@ -23,6 +23,7 @@
       @kqueue_events : StaticArray(LibC::Kevent, 2)
       @mutex : Mutex
       @canceled : Bool
+      @closed : Bool
 
       # Creates a new KqueueReader for the given IO.
       def initialize(reader : IO)
@@ -30,6 +31,7 @@
         @file = reader.is_a?(IO::FileDescriptor) ? reader.as(IO::FileDescriptor) : nil
         @mutex = Mutex.new
         @canceled = false
+        @closed = false
         @kqueue_events = uninitialized StaticArray(LibC::Kevent, 2)
 
         # Create kqueue
@@ -62,7 +64,7 @@
         end
       end
 
-      def poll(timeout : Time::Span) : Bool
+      protected def poll_now(timeout : Time::Span) : Bool
         raise PollCanceledError.new("poll canceled") if canceled?
 
         events = uninitialized LibC::Kevent[1]
@@ -125,6 +127,11 @@
       end
 
       def close : Nil
+        # Idempotent, like the stdlib decorators; a second close would report
+        # EBADF for the descriptors the first one released.
+        return if @closed
+        @closed = true
+
         error_msgs = [] of String
 
         # close kqueue
@@ -157,10 +164,13 @@
 
     # Use select-based polling on BSD/macOS for stability across terminal
     # devices and Crystal runtime versions.
+    #
+    # fd_set only has room for FD_SETSIZE descriptors; SelectReader would write
+    # past the end of its set for a higher fd, so anything above that uses the
+    # fallback reader.
     def self.new_poll_reader(reader : IO) : PollReader
-      if reader.is_a?(IO::FileDescriptor)
-        file = reader.as(IO::FileDescriptor)
-        return SelectReader.new(file)
+      if reader.is_a?(IO::FileDescriptor) && reader.fd < FD_SETSIZE
+        return SelectReader.new(reader.as(IO::FileDescriptor))
       else
         return FallbackReader.new(reader)
       end

@@ -11,33 +11,6 @@ module Ultraviolet
   # Default FD_SETSIZE value (commonly 1024 on most systems)
   FD_SETSIZE = 1024
 
-  private class BufferedReader < IO
-    include IO::Buffered
-
-    def initialize(@io : IO)
-    end
-
-    def unbuffered_read(slice : Bytes)
-      @io.read(slice)
-    end
-
-    def unbuffered_write(slice : Bytes)
-      @io.write(slice)
-    end
-
-    def unbuffered_flush
-      @io.flush
-    end
-
-    def unbuffered_close
-      @io.close
-    end
-
-    def unbuffered_rewind
-      @io.rewind
-    end
-  end
-
   class PollCanceledError < Exception
   end
 
@@ -50,14 +23,38 @@ module Ultraviolet
   # the input; Crystal's event loop suspends the fiber on EAGAIN, and
   # cancel/close wake it by closing that dup.
   #
-  # `poll` below still waits in a raw select()/epoll_wait() call, so do not
-  # call it from a fiber that must stay responsive, and move it to a Thread
-  # before wiring PollReader into the runtime.
+  # `poll` runs the platform wait (select/epoll_wait/kevent/
+  # WaitForMultipleObjects) on a Thread, because those calls block the whole
+  # scheduler thread. The calling fiber suspends on a channel instead, so a
+  # poll with a long timeout no longer freezes the rest of the program.
   abstract class PollReader < IO
     abstract def read(slice : Bytes) : Int32
-    abstract def poll(timeout : Time::Span) : Bool
     abstract def cancel : Bool
     abstract def close : Nil
+
+    # poll reports whether data is ready, waiting up to *timeout* (a negative
+    # timeout waits indefinitely) and raising [PollCanceledError] if the reader
+    # is canceled.
+    def poll(timeout : Time::Span) : Bool
+      result = Channel(Bool | Exception).new(1)
+      waiter = Thread.new do
+        result.send(poll_now(timeout))
+      rescue ex
+        result.send(ex)
+      end
+
+      outcome = result.receive
+      waiter.join
+      raise outcome if outcome.is_a?(Exception)
+      outcome
+    end
+
+    # poll_now performs the platform wait on the calling OS thread. It stalls
+    # the scheduler for as long as it waits, so call [poll] unless the caller
+    # is already on a thread it may block.
+    protected def poll_now(timeout : Time::Span) : Bool
+      raise NotImplementedError.new("#{self.class}#poll_now")
+    end
 
     def write(slice : Bytes) : Nil
       raise IO::Error.new("poll reader is read-only")
@@ -96,12 +93,14 @@ module Ultraviolet
       @cancel_signal_writer : IO
       @mutex : Mutex
       @canceled : Bool
+      @closed : Bool
 
       def initialize(io : IO::FileDescriptor)
         @reader = io
         @file = io
         @mutex = Mutex.new
         @canceled = false
+        @closed = false
 
         # Reads go through a nonblocking dup: Crystal's event loop suspends the
         # reading fiber instead of blocking the thread, and cancel/close can
@@ -109,7 +108,7 @@ module Ultraviolet
         fd = LibC.dup(@file.fd)
         raise IO::Error.from_errno("dup") if fd < 0
         @read_io = IO::FileDescriptor.new(fd)
-        @read_io.blocking = false
+        IO::FileDescriptor.set_blocking(fd, false)
 
         # Create pipe for cancel signal
         pipe_reader, pipe_writer = IO.pipe
@@ -131,7 +130,7 @@ module Ultraviolet
         end
       end
 
-      def poll(timeout : Time::Span) : Bool
+      protected def poll_now(timeout : Time::Span) : Bool
         raise PollCanceledError.new("poll canceled") if canceled?
 
         rfds = uninitialized LibC::FdSet
@@ -202,6 +201,12 @@ module Ultraviolet
       end
 
       def close : Nil
+        # Stdlib decorators (IO::Delimited, IO::Sized, IO::Stapled) make close
+        # idempotent; without this the second close reports EBADF from the
+        # already-closed descriptors.
+        return if @closed
+        @closed = true
+
         error_msgs = [] of String
 
         begin
@@ -259,29 +264,61 @@ module Ultraviolet
     # FallbackReader uses buffered IO with a background peek loop for polling.
   {% end %}
 
+  # FallbackReader is a poll reader for readers that cannot be polled directly:
+  # anything that is not a file descriptor, plus descriptors at or above
+  # FD_SETSIZE.
+  #
+  # Buffering comes from IO::Buffered, the stdlib mixin Go's bufio.Reader
+  # supplies for its own fallbackReader, so peek/skip/read_byte behave like the
+  # other IO decorators instead of a hand-rolled buffer.
   class FallbackReader < PollReader
-    @reader : BufferedReader
+    include IO::Buffered
+
+    @reader : IO
     @data_chan = Channel(Nil).new(1)
     @cancel_chan = Channel(Nil).new
     @lock = Mutex.new
     @canceled = false
     @started = false
+    @closed = false
 
-    def initialize(reader : IO)
-      @reader = BufferedReader.new(reader)
+    def initialize(@reader : IO)
+    end
+
+    def unbuffered_read(slice : Bytes) : Int32
+      @reader.read(slice)
+    end
+
+    def unbuffered_write(slice : Bytes) : Nil
+      raise IO::Error.new("poll reader is read-only")
+    end
+
+    def unbuffered_flush : Nil
+    end
+
+    def unbuffered_close : Nil
+      @reader.close
+    end
+
+    def unbuffered_rewind : Nil
+      @reader.rewind
+    end
+
+    # Poll readers are read-only. Say so directly instead of letting
+    # IO::Buffered accept writes it can never flush.
+    def write(slice : Bytes) : Nil
+      raise IO::Error.new("poll reader is read-only")
     end
 
     def read(slice : Bytes) : Int32
       raise PollCanceledError.new("poll canceled") if canceled?
       begin
-        n = @reader.read(slice)
+        n = super
       rescue ex
         raise PollCanceledError.new("poll canceled") if canceled?
         raise ex
       end
-      if canceled?
-        raise PollCanceledError.new("poll canceled")
-      end
+      raise PollCanceledError.new("poll canceled") if canceled?
       n
     end
 
@@ -325,6 +362,8 @@ module Ultraviolet
     end
 
     def close : Nil
+      return if @closed
+      @closed = true
       cancel
     end
 
@@ -336,7 +375,7 @@ module Ultraviolet
       loop do
         return if canceled?
         begin
-          data = @reader.peek
+          data = peek
           return if data.empty?
         rescue
           return

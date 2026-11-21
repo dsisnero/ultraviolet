@@ -14,6 +14,7 @@
       @epoll : Int32
       @mutex : Mutex
       @canceled : Bool
+      @closed : Bool
 
       # Creates a new EpollReader for the given IO.
       def initialize(reader : IO)
@@ -21,6 +22,7 @@
         @file = reader.as(IO::FileDescriptor)
         @mutex = Mutex.new
         @canceled = false
+        @closed = false
 
         # Create epoll
         @epoll = LibC.epoll_create1(0)
@@ -34,7 +36,7 @@
         read_fd = LibC.dup(@file.fd)
         raise IO::Error.from_errno("dup") if read_fd < 0
         @read_io = IO::FileDescriptor.new(read_fd)
-        @read_io.blocking = false
+        IO::FileDescriptor.set_blocking(read_fd, false)
 
         # Create pipe for cancel signal
         pipe_reader, pipe_writer = IO.pipe
@@ -77,7 +79,7 @@
         end
       end
 
-      def poll(timeout : Time::Span) : Bool
+      protected def poll_now(timeout : Time::Span) : Bool
         raise PollCanceledError.new("poll canceled") if canceled?
 
         events = uninitialized LibC::EpollEvent[1]
@@ -143,6 +145,11 @@
       end
 
       def close : Nil
+        # Idempotent, like the stdlib decorators; a second close would report
+        # EBADF for the descriptors the first one released.
+        return if @closed
+        @closed = true
+
         error_msgs = [] of String
 
         begin

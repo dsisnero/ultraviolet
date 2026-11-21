@@ -12,10 +12,12 @@
       @reset_console : -> Nil
       @mutex : Mutex
       @canceled : Bool
+      @closed : Bool
 
       def initialize(@reader : IO)
         @mutex = Mutex.new
         @canceled = false
+        @closed = false
         @blocking_read_signal = Channel(Nil).new(1)
         @conin = LibC::HANDLE.null
         @cancel_event = LibC::HANDLE.null
@@ -69,7 +71,7 @@
         end
       end
 
-      def poll(timeout : Time::Span) : Bool
+      protected def poll_now(timeout : Time::Span) : Bool
         raise PollCanceledError.new("poll canceled") if canceled?
 
         timeout_ms = timeout < 0.seconds ? LibC::INFINITE : timeout.total_milliseconds.to_u32
@@ -122,6 +124,11 @@
       end
 
       def close : Nil
+        # Idempotent, like the stdlib decorators; the handles below are nulled
+        # out as they close, so callers can close more than once.
+        return if @closed
+        @closed = true
+
         if !@cancel_event.null?
           LibC.CloseHandle(@cancel_event)
           @cancel_event = LibC::HANDLE.null

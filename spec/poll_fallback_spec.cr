@@ -67,5 +67,39 @@ module Ultraviolet
         IO.copy(pr, IO::Memory.new)
       end
     end
+
+    it "buffers through IO::Buffered" do
+      io = IO::Memory.new("hello")
+      pr = Ultraviolet.new_fallback_reader(io)
+
+      # The first read pulls everything the wrapped IO has into the buffer.
+      pr.read(Bytes.new(3)).should eq(3)
+      io.pos.should eq(5)
+
+      # peek and read_byte are served from that buffer, and skip leaves the
+      # wrapped IO where it was.
+      String.new(pr.peek).should eq("lo")
+      pr.read_byte.should eq('l'.ord)
+      pr.skip(1)
+      io.pos.should eq(5)
+    end
+
+    it "rejects writes instead of buffering them" do
+      io = IO::Memory.new("hello")
+      pr = Ultraviolet.new_fallback_reader(io)
+
+      expect_raises(IO::Error, "read-only") do
+        pr.write("nope".to_slice)
+      end
+      io.to_s.should eq("hello")
+    end
+
+    it "closes idempotently" do
+      io = IO::Memory.new("hello")
+      pr = Ultraviolet.new_fallback_reader(io)
+
+      pr.close
+      pr.close
+    end
   end
 end
