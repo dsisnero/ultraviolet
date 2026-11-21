@@ -3,7 +3,7 @@ require "./buffer"
 require "./event"
 require "./environ"
 require "./colorprofile"
-require "./cancelreader"
+require "./poll"
 
 module Ultraviolet
   ErrNotTerminal          = Exception.new("not a terminal")
@@ -49,7 +49,7 @@ module Ultraviolet
     @reader : TerminalReader?
     @reader_stop : Channel(Nil)?
     @reader_done : Channel(Nil)?
-    @cancel_reader : CancelReader?
+    @poll_reader : PollReader?
     @logger : Logger?
     @opts : Options
 
@@ -102,7 +102,7 @@ module Ultraviolet
       @reader = nil
       @reader_stop = nil
       @reader_done = nil
-      @cancel_reader = nil
+      @poll_reader = nil
       @owned_tty = nil.as(IO::FileDescriptor?)
       @running = false
       @size = Size.new(0, 0)
@@ -664,15 +664,20 @@ module Ultraviolet
     private def start_input : Nil
       return if @reader
 
-      cancel_reader = CancelReader.new(@in)
-      reader = TerminalReader.new(cancel_reader, @termtype, @opts.legacy_key_encoding, @opts.use_terminfo_keys)
+      # Go's Terminal.start builds a poll reader (terminal.go: `t.pr, err =
+      # newPollReader(...)`). CancelReader's POSIX read wakes from EAGAIN with
+      # `sleep 5.milliseconds`, so input latency and idle CPU are quantized by
+      # that sleep; the poll readers suspend the fiber in Crystal's event loop
+      # instead and still wake on cancel/close.
+      poll_reader = Ultraviolet.new_poll_reader(@in)
+      reader = TerminalReader.new(poll_reader, @termtype, @opts.legacy_key_encoding, @opts.use_terminfo_keys)
       reader.esc_timeout = @opts.event_timeout
       reader.buffer_size = @opts.buffer_size
       reader.lookup = @opts.lookup_keys
       reader.logger = @opts.logger if @opts.logger
       reader.logger = @logger
       @reader = reader
-      @cancel_reader = cancel_reader
+      @poll_reader = poll_reader
 
       stop = Channel(Nil).new(1)
       done = Channel(Nil).new(1)
@@ -685,21 +690,32 @@ module Ultraviolet
     private def stop_input : Nil
       stop = @reader_stop
       done = @reader_done
-      cancel_reader = @cancel_reader
+      poll_reader = @poll_reader
       @reader_stop = nil
       @reader_done = nil
       @reader = nil
-      @cancel_reader = nil
-      return unless stop && done
+      @poll_reader = nil
 
-      cancel_reader.try &.cancel
-      begin
-        stop.send(nil)
-      rescue Channel::ClosedError
+      # Cancel wakes a read blocked in the poll reader; the wait below lets the
+      # reader fiber leave its loop before close releases the dup and the
+      # cancel pipe.
+      poll_reader.try &.cancel
+      if stop && done
+        begin
+          stop.send(nil)
+        rescue Channel::ClosedError
+        end
+        select
+        when done.receive
+        when timeout(500.milliseconds)
+        end
       end
-      select
-      when done.receive
-      when timeout(500.milliseconds)
+
+      # Go's Stop cancels and then closes its poll reader (terminal.go). The
+      # readers make close idempotent, so repeated restore/teardown is safe.
+      begin
+        poll_reader.try &.close
+      rescue
       end
     end
 

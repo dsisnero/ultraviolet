@@ -1,6 +1,7 @@
 require "./decoder"
 require "./key_table"
 require "./cancelreader"
+require "./poll"
 require "./event_scanner"
 
 module Ultraviolet
@@ -92,7 +93,7 @@ module Ultraviolet
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
               send_events(buffer, true, eventc)
-              raise err if err && !err.is_a?(CancelError)
+              raise err if err && !canceled_error?(err)
               break
             when _ = stop.receive?
               send_events(buffer, true, eventc)
@@ -107,7 +108,7 @@ module Ultraviolet
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
               send_events(buffer, true, eventc)
-              raise err if err && !err.is_a?(CancelError)
+              raise err if err && !canceled_error?(err)
               break
             end
           end
@@ -123,7 +124,7 @@ module Ultraviolet
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
               send_events(buffer, true, eventc)
-              raise err if err && !err.is_a?(CancelError)
+              raise err if err && !canceled_error?(err)
               break
             when timeout(wait)
               logf("timeout expired, processing buffer")
@@ -144,7 +145,7 @@ module Ultraviolet
               buffer = buffer[processed, buffer.size - processed] if processed > 0
             when err = errc.receive
               send_events(buffer, true, eventc)
-              raise err if err && !err.is_a?(CancelError)
+              raise err if err && !canceled_error?(err)
               break
             when timeout(wait)
               logf("timeout expired, processing buffer")
@@ -207,6 +208,14 @@ module Ultraviolet
     private def logf(format : String, *args) : Nil
       return unless l = @logger
       l.printf(format, *args)
+    end
+
+    # Cancellation is not a failure: a cancel reader raises CancelError and a
+    # poll reader raises PollCanceledError when cancel closes its read handle.
+    # Terminal streams a poll reader, so both mean "the input loop was asked
+    # to stop".
+    private def canceled_error?(err : Exception) : Bool
+      err.is_a?(CancelError) || err.is_a?(PollCanceledError)
     end
 
     private def append_bytes(buffer : Bytes, data : Bytes) : Bytes

@@ -61,6 +61,99 @@ describe "Terminal stop" do
   end
 end
 
+{% unless flag?(:win32) %}
+  # Terminal#start needs a tty, so these drive a pseudo terminal: the master
+  # end is what a user's typing looks like to the process.
+  describe "Terminal input" do
+    it "delivers input through the poll reader" do
+      master, slave = pty_pair
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+
+      begin
+        term.start
+        term.running?.should be_true
+
+        master.write("a".to_slice)
+        master.flush
+
+        key = read_key(term, 5.seconds)
+        key.should_not be_nil
+        key.as(Ultraviolet::Key).text.should eq("a")
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+
+      term.running?.should be_false
+    end
+
+    # Upstream's TestStopWithInputInFlightDoesNotPanic: Stop used to clear the
+    # reader while the input loop could still evaluate it.
+    it "stops while input is in flight" do
+      5.times do
+        master, slave = pty_pair
+        term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+        begin
+          term.start
+          master.write("x".to_slice)
+          master.flush
+          term.stop
+        ensure
+          master.close
+          slave.close
+        end
+        term.running?.should be_false
+      end
+    end
+
+    # A second start after a stop must get a fresh poll reader: the first one
+    # is canceled and closed, and a canceled reader rejects every read.
+    it "restarts input after stop" do
+      master, slave = pty_pair
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+
+      begin
+        2.times do |round|
+          term.start
+          master.write("b".to_slice)
+          master.flush
+
+          key = read_key(term, 5.seconds)
+          key.should_not be_nil, "round #{round}: expected input after start"
+          term.stop
+        end
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+    end
+  end
+
+  # read_key waits for the next key event, skipping the window-size events a
+  # start reports on its own.
+  private def read_key(term : Ultraviolet::Terminal, budget : Time::Span) : Ultraviolet::Key?
+    deadline = Time.instant + budget
+    loop do
+      remaining = deadline - Time.instant
+      return nil if remaining <= Time::Span.zero
+
+      select
+      when event = term.events.receive
+        key = key_in(event)
+        return key if key
+      when timeout(remaining)
+        return nil
+      end
+    end
+  end
+
+  private def key_in(event : Ultraviolet::Event) : Ultraviolet::Key?
+    event.is_a?(Array) ? event.find(&.is_a?(Ultraviolet::Key)).as?(Ultraviolet::Key) : event.as?(Ultraviolet::Key)
+  end
+{% end %}
+
 private class TestSizeNotifier < Ultraviolet::SizeNotifier
   def initialize(@cells : Ultraviolet::Size, @pixels : Ultraviolet::Size)
     super(nil)

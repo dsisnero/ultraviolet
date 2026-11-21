@@ -10,37 +10,35 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   and there is no open porting feature.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags; refreshes are commit-based.
-- **Current focus:** none. Post-refresh hardening is done (see **Recent work
-  outside plan phases**); what remains is a decision plus the next upstream
-  refresh.
+- **Current focus:** none. The `PollReader` decision is made and implemented
+  (see below); next is the upstream refresh.
 - **Next up, in priority order:**
   1. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
-     — still `8ecbcf0` as of `9932661`. If it moved, run a refresh: clone, diff
+     — still `8ecbcf0` as of `d9728b6`. If it moved, run a refresh: clone, diff
      `<old>..<new>`, write `plans/commit_<new>.md`, bump `vendor/`, then port
      the delta in feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Decide: wire `PollReader` into `Terminal`?** Go builds a poll reader in
-     `Terminal.start` (`vendor/ultraviolet/terminal.go:188`); Crystal's
-     `Terminal` uses `CancelReader` (`src/ultraviolet/terminal.cr:667`) and
-     `TerminalReader` does its own channel timeouts, so the `PollReader` family
-     is currently exercised only by specs. Wiring it means first moving
-     `PollReader#poll`'s raw `select`/`epoll_wait` onto a `Thread` or the event
-     loop (a blocking syscall in a fiber stalls the scheduler — see
-     `src/ultraviolet/poll.cr`). Acceptance: `make test` +
-     `make test-linux` + the Windows CI job green, and no raw wait reachable
-     from a fiber. If the answer is "no", record the decision here and leave
-     the family as ported API.
-  3. **Optional: re-run adversarial parity signoff** with
+  2. **Optional: re-run adversarial parity signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
      refresh (it re-derives the ledgers and proves the gates can fail).
+- **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
+  poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
+  Crystal's `Terminal` now does the same in `start_input` instead of wrapping
+  `@in` in `CancelReader`, which woke from `EAGAIN` with `sleep 5.milliseconds`
+  (input latency and idle wakeups quantized by that sleep). `stop_input`
+  cancels and then closes the reader, as Go's `Stop` does. `Poll` is a
+  different matter: **Go's `Terminal` never calls it**, so the input path never
+  touches the raw wait, and `poll` runs the platform wait on a `Thread` for API
+  callers. Acceptance held: `make test`, `make test-linux`, `check-win32` green
+  and no raw wait reachable from a fiber.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `9932661` (`port: make select-based poll
-  report readiness`).
-- **Gates:** `make format-check`, `make lint`, `make test` (420 examples),
-  `make check-win32`, `make test-linux` (420 examples on Linux) pass;
-  `make inventory` (819 items) and `make parity` (819 APIs / 196 tests) pass;
-  CI is green on ubuntu-latest, macos-latest, windows-latest plus the lint job.
+- **Last code feature commit:** `d9728b6` (`fix: pass ioctl's pointer argument
+  as a variadic argument`).
+- **Gates:** `make format-check`, `make lint`, `make test` (430 examples),
+  `make check-win32`, `make test-linux` pass; `make inventory` (819 items) and
+  `make parity` (819 APIs / 196 tests) pass; CI is green on ubuntu-latest,
+  macos-latest, windows-latest plus the lint job.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
@@ -66,6 +64,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   freezes the scheduler for the timeout. Crystal 1.22 exposes no public
   fd-readiness wait, so the raw syscall still decides readiness; it just no
   longer decides it on the scheduler thread.
+- `Terminal` input goes through the poll readers, and `CancelReader` is ported
+  API only — the same position it holds upstream, where nothing constructs one
+  (`terminal_reader.go` mentions it in a comment). `Terminal.stop` cancels and
+  then closes its reader, so a canceled reader is never reused across a
+  restart.
 - `FallbackReader#read` is not interruptible. Upstream behaves the same way
   (`poll_fallback.go`), and its test unblocks the reader manually, so this is a
   ported behavior rather than a gap.
@@ -78,7 +81,8 @@ listed here to keep a fresh session from re-deriving them from git.
 | Commit | What changed |
 |--------|--------------|
 | `9932661` | `SelectReader#poll` reported no data for every fd: `fd_set` wrote into a by-value `StaticArray` copy of `LibC::FdSet`. Fixed; readiness specs added. |
-| `513427e` | PollReader hardening for runtime use: `poll` runs the platform wait on a `Thread` (a fiber no longer freezes the scheduler), `FallbackReader` buffers through stdlib `IO::Buffered` instead of a hand-rolled copy, `close` is idempotent like `IO::Delimited`/`IO::Sized`, and the BSD `new_poll_reader` honors `FD_SETSIZE`. |
+| `cbdfc0c` | PollReader hardening for runtime use: `poll` runs the platform wait on a `Thread` (a fiber no longer freezes the scheduler), `FallbackReader` buffers through stdlib `IO::Buffered` instead of a hand-rolled copy, `close` is idempotent like `IO::Delimited`/`IO::Sized`, and the BSD `new_poll_reader` honors `FD_SETSIZE`. |
+| `d9728b6` | `ioctl` was declared with a fixed `Void*` third argument although C declares it variadic, so on AArch64 the winsize write went to a garbage stack address and corrupted the caller's frame (it zeroed `Terminal`'s `@in_tty`/`@out_tty`). Declaration is variadic now; pty-based specs added. |
 | `22fc910` | `Ultraviolet::ConsoleWait` classifies `WaitForMultipleObjects`; a failed wait now raises instead of looking like a quiet wake. Strengthened `check-win32`, which found three real Windows compile blockers (splat over an `Array`, mixed `Int32`/`UInt32` modes, module-level `private def`). |
 | `f01d432` | Poll readers read through a nonblocking dup and cancel/close wake a blocked read by closing it — no `read_timeout` churn. |
 | `6ccc7d9` | `EpollReader#read` was a bare blocking read, so cancel could never unblock it (found by CI on Linux). |
