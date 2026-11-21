@@ -7,7 +7,13 @@ make test           # crystal spec
 make test-file FILE=spec/decoder_spec.cr
 make format-check   # crystal tool format --check src spec
 make lint           # ameba src spec
+make check-win32    # cross-type-check the Win32 console readers
 ```
+
+The `{% if flag?(:win32) %}` files never compile on macOS/Linux, so
+`make check-win32` type-checks them for `x86_64-windows-msvc` with
+`--no-codegen`. It catches duplicate `LibC` constants, conflicting signatures,
+and broken require paths; it does not execute anything.
 
 Run the full suite before committing. Specs must pass without network access or
 a real interactive terminal.

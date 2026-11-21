@@ -1,4 +1,4 @@
-.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 
 # Crystal cache for faster builds
 export CRYSTAL_CACHE_DIR := $(PWD)/.crystal-cache
@@ -73,6 +73,11 @@ check-examples:
 		crystal build --no-codegen "$$f" || exit $$?; \
 	done
 
+# Type-check the Win32 console readers for the Windows target; the win32 files
+# are flag-gated, so the normal gates never see them.
+check-win32:
+	./scripts/check_win32.sh
+
 examples/%: examples/%.cr
 	crystal build $< -o $@
 
@@ -108,6 +113,7 @@ help:
 	@echo "  build              - Build the library"
 	@echo "  build-examples     - Build all examples (output in examples/)"
 	@echo "  check-examples     - Type-check every example without building binaries"
+	@echo "  check-win32        - Type-check the Win32 console readers (cross-target)"
 	@echo "  install            - Install dependencies"
 	@echo "  test/spec          - Run tests (excluding interactive)"
 	@echo "  test-file          - Run one spec file (FILE=spec/foo_spec.cr)"

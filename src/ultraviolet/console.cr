@@ -1,32 +1,8 @@
+{% if flag?(:win32) %}
+  require "./win32_api"
+{% end %}
+
 module Ultraviolet
-  {% if flag?(:win32) %}
-    require "c/consoleapi"
-
-    lib LibC
-      struct Coord
-        x : Int16
-        y : Int16
-      end
-
-      struct SmallRect
-        left : Int16
-        top : Int16
-        right : Int16
-        bottom : Int16
-      end
-
-      struct ConsoleScreenBufferInfo
-        dwSize : Coord
-        dwCursorPosition : Coord
-        wAttributes : UInt16
-        srWindow : SmallRect
-        dwMaximumWindowSize : Coord
-      end
-
-      fun GetConsoleScreenBufferInfo(hConsoleOutput : HANDLE, lpConsoleScreenBufferInfo : ConsoleScreenBufferInfo*) : BOOL
-    end
-  {% end %}
-
   class Console
     getter input : IO
     getter output : IO

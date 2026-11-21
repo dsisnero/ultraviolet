@@ -1,5 +1,5 @@
 {% if flag?(:win32) %}
-  require "c/consoleapi"
+  require "./win32_api"
 
   module Ultraviolet
     # ConReader implements pollReader using Windows Console API and

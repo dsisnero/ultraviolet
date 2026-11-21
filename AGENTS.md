@@ -18,9 +18,10 @@ make update     # shards update
 make format     # crystal tool format src spec
 make lint       # ameba src spec
 make test       # crystal spec
-make inventory  # curated parity ledger gate (installed skill scripts)
-make parity     # inventory + both generated parity manifests
-make clean      # remove temp/, .crystal-cache/, examples, and build artifacts
+make inventory   # curated parity ledger gate (installed skill scripts)
+make parity      # inventory + both generated parity manifests
+make check-win32 # type-check the Win32 console readers (cross-target)
+make clean       # remove temp/, .crystal-cache/, examples, and build artifacts
 ```
 
 Run gates on project code only: never format or lint `lib/`, `vendor/`, or
@@ -118,7 +119,8 @@ must be committed as **one** atomic commit before starting the next feature:
 
 1. the API surface is implemented;
 2. upstream tests (or equivalent characterization specs) exist and pass;
-3. gates pass: `make lint`, `make test`, and `make inventory`;
+3. gates pass: `make lint`, `make test`, and `make inventory` — plus
+   `make check-win32` when the feature touches `{% if flag?(:win32) %}` files;
 4. parity inventory rows for the feature are updated
    (`plans/inventory/go_port_inventory.tsv`) and `make inventory` passes — it
    checks every row against the pinned tree *and* that each `crystal_refs` file

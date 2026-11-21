@@ -6,7 +6,7 @@
   (2026-11-19, `fix: use layout's own key (#238)`)
 - **Upstream delta:** 3 commits, 8 files, +129/−19 lines
 - **Symbol delta:** none — 819 source APIs and 196 tests before and after
-- **Status:** phase 1 ✅ (`port: prefer layout key in Keystroke`); snapshot bumped; phases 2–3 open
+- **Status:** phases 1–2 ✅; phase 3 open (`send_bytes_windows` wait loop)
 
 This file is the plan for one commit range. Per-release history lives in
 `plans/commit_<sha>.md`; `plans/parity.md` links each file and tracks the
@@ -172,7 +172,7 @@ Each phase is one atomic `port:` commit that satisfies the definition of done in
 
 ### Phase 1 — `Key.Keystroke` base-code rule (all platforms) ✅
 
-Commit: `port: prefer layout key in Keystroke`.
+Commit: `5d41995` (`port: prefer layout key in Keystroke`).
 
 - `Key#key_label` now picks the PC-101 `@base_code` only when `@code` is above
   `0x7F` (Go's `unicode.MaxASCII`) or is not printable, via the new
@@ -188,26 +188,37 @@ Commit: `port: prefer layout key in Keystroke`.
 - Gates: `make format-check`, `make lint`, `make test` (394 examples),
   `make inventory` (819 items).
 
-### Phase 2 — Windows cancel reader event lifecycle
+### Phase 2 — Windows cancel reader event lifecycle ✅
 
-- Bind `CreateEventW`, `SetEvent`, and `WaitForMultipleObjects` alongside the
-  existing console bindings in `cancelreader_windows.cr`; reuse
-  `INFINITE`/`WAIT_*` from `terminal_reader_windows.cr` instead of redeclaring.
-- Add `@event_mutex : Mutex`, `@cancel_event`, `@waiters`, `@closed`,
-  `@event_freed` to `ConInputReader`; create the event in `initialize` and
-  clean up the console mode if creation fails.
-- Make `cancel` signal the event before `CancelIoEx`/`CancelIo`; make `close`
-  idempotent, wake a waiting reader, free the event only when the last waiter
-  leaves, and reset the console mode.
-- Add `wait_for_input` mirroring `waitForInput` (waiter accounting + event
-  free-on-exit).
-- Crystal has no `errors.Join`: aggregate failure messages and raise one
-  `IO::Error` (or log both) — document the divergence in the commit message.
-- Decide the `CloseHandle(@conin)` question above and record the outcome.
-- Verification on macOS: win32 code is not executed here. Keep the file
-  `flag?(:win32)`-gated, run `make format-check`/`make lint` (Ameba parses the
-  whole file), and re-read the diff against Go line by line. If a Linux CI with
-  a Windows runner appears later, add the compile check there.
+Commit: `port: windows cancel reader event lifecycle` (hash recorded by the
+next phase).
+
+- `CancelEventLifetime` (`src/ultraviolet/cancel_event_lifetime.cr`): the
+  `waiters`/`closed`/`freed` accounting Go keeps inline in `conInputReader`.
+  `close` returns `nil` (already closed), `true` (free now) or `false` (a
+  waiter frees it), so the caller never has to guess. Extracted so the
+  decisions are testable without Win32.
+- `ConInputReader` now creates a manual-reset event
+  (`CreateEventW(nil, 1, 0, nil)`), restores the console mode if creation
+  fails, signals the event from `cancel` (guarded, never touching a freed
+  handle), makes `close` idempotent, and hands the event to the last waiter
+  instead of freeing it under them. `wait_for_input` mirrors `waitForInput`.
+- `close` no longer closes the console input handle — Go never did, so this
+  removes a divergence rather than adding one.
+- Crystal has no `errors.Join`: mode-reset and handle-close failures are
+  collected and raised as one `IO::Error`.
+- New gate `make check-win32` (`scripts/check_win32.sh`): cross-target
+  `--no-codegen` type-check of the Win32 reader layer for
+  `x86_64-windows-msvc`. It found that this layer **could not compile for
+  Windows at all**: a duplicated `LibC::STD_INPUT_HANDLE`, `ReadFile`/
+  `CancelIoEx`/`CreateFileW` redeclared with conflicting signatures, console
+  structs copied into four files, and `require "../cancelreader"` pointing
+  outside `src/`. Those are fixed by the shared `src/ultraviolet/win32_api.cr`
+  block.
+- Red → green: `spec/cancel_event_lifetime_spec.cr` (8 cases) failed to
+  compile first, then passed.
+- Gates: `make format-check`, `make lint`, `make test` (402 examples),
+  `make check-win32`, `make inventory` (819 items).
 
 ### Phase 3 — Windows terminal reader wait loop
 
@@ -216,7 +227,8 @@ Commit: `port: prefer layout key in Keystroke`.
   `conin.wait_for_input` + backoff when the previous iteration woke without
   records; keep the `conin.canceled?` checks and the generic fallback for a
   plain `IO::FileDescriptor` handle.
-- Same verification constraints as phase 2 (win32-gated, macOS cannot execute).
+- Verified by `make check-win32` (type-checks this file's `send_bytes_windows`
+  path) plus structural review against Go; execution needs a Windows host.
 
 ### Phase 4 — Re-baseline bookkeeping
 
@@ -231,22 +243,26 @@ Commit: `port: prefer layout key in Keystroke`.
 
 - Phase 1 is fully testable on macOS/Linux: port the upstream cases verbatim
   (red first, then green) and keep every other keystroke expectation.
-- Phases 2–3 are Windows-only. Coverage comes from (a) structural parity with
-  Go, (b) `ameba`/format parsing of the gated file, and (c) specs that remain
-  `flag?(:win32)`-gated (`spec/cancelreader_spec.cr`, `spec/terminal_reader_spec.cr`).
-  Never claim a Windows behavior as verified without a Windows run; say
-  "compiled-gated, not executed" in the commit message.
+- Phase 2 covers the event-lifetime decisions with
+  `spec/cancel_event_lifetime_spec.cr`, which runs on every platform because
+  the decisions were extracted out of the flag-gated file.
+- Phases 2–3 also compile for the Windows target via `make check-win32`
+  (`--target x86_64-windows-msvc --no-codegen`), which type-checks the gated
+  files against the Windows stdlib. This is a compile gate, not an execution
+  gate: say "compiled-gated, not executed" in the commit message and never
+  claim a Windows behavior as verified without a Windows run.
 - Do not weaken `cancelreader_spec.cr` or `terminal_reader_spec.cr` to make the
   gate pass.
 
 ## Divergences to record
 
 - `errors.Join` → aggregated single `IO::Error` (Crystal stdlib has no join).
-- `Mutex` usage: Crystal's `Mutex` guards the event lifetime exactly like
-  `sync.Mutex`; no re-entrancy, keep `Close`/`Cancel`/`waitForInput` lock-free
-  inside the critical sections.
-- `CloseHandle(@conin)` removal (if taken) is observable on Windows only; note
-  it in `plans/parity.md`.
+- `CancelEventLifetime` extraction: Go keeps the `waiters`/`closed`/
+  `eventFreed` bookkeeping inline in `conInputReader`. Crystal moves the
+  decisions into a platform-independent class so they are testable off
+  Windows; the Win32 calls stay in `cancelreader_windows.cr`.
+- `CloseHandle(@conin)` removal (phase 2) is observable on Windows only, and
+  it restores Go's behavior rather than introducing a divergence.
 - `emptyWakeBackoff` / 10 ms backoff: same value as Go; no divergence.
 
 ## Gate state after the snapshot bump
@@ -254,10 +270,14 @@ Commit: `port: prefer layout key in Keystroke`.
 The snapshot bump itself changes no symbols, so the repository stays green:
 
 - `make lint` — pass
-- `make test` — 394 examples, 0 failures
+- `make test` — 402 examples, 0 failures
+- `make check-win32` — Win32 reader layer type-checks
 - `make inventory` — 819 items tracked
 - `make parity` — 819 APIs, 196 tests
 
 Phase 1 opened with a red spec (the Dvorak case failed against the old
-`key_label`) and closed it in `port: prefer layout key in Keystroke`. Phases 2–3 change Windows-only
-code, so `make test` stays green on macOS while parity comes from review.
+`key_label`) and closed it in `port: prefer layout key in Keystroke`. Phase 2
+opened with a spec that did not compile (`CancelEventLifetime` absent) and
+closed with 8 passing lifetime cases plus a Win32 compile gate. Phase 3
+changes Windows-only code, so `make test` stays green on macOS while
+`make check-win32` guards the file.
