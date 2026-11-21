@@ -28,7 +28,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (input latency and idle wakeups quantized by that sleep). `stop_input`
   cancels and then closes the reader, as Go's `Stop` does. `Poll` is a
   different matter: **Go's `Terminal` never calls it**, so the input path never
-  touches the raw wait, and `poll` runs the platform wait on a `Thread` for API
+  touches the raw wait, and `poll` keeps Go's blocking behavior for API
   callers. Acceptance held: `make test`, `make test-linux`, `check-win32` green
   and no raw wait reachable from a fiber.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
@@ -59,11 +59,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   lazily, so bodies reached only through `spawn` (the Windows reader loop) are
   compiled by the `windows-latest` CI job instead. Deliberate-typo probes
   confirmed the gap; see `docs/testing.md`.
-- `PollReader#poll` runs the platform wait (`select`/`epoll_wait`/`kevent`/
-  `WaitForMultipleObjects`) on a `Thread`, so a fiber that polls no longer
-  freezes the scheduler for the timeout. Crystal 1.22 exposes no public
-  fd-readiness wait, so the raw syscall still decides readiness; it just no
-  longer decides it on the scheduler thread.
+- `PollReader#poll` waits in a raw `select`/`epoll_wait`/`kevent`/
+  `WaitForMultipleObjects` on the calling fiber, so do not call it from a fiber
+  that must stay responsive. This matches Go, where `Poll` blocks the calling
+  goroutine. Moving the wait to a `Thread` was tried and reverted: a channel
+  send from that thread cannot wake a scheduler-blocked fiber without
+  `-Dpreview_mt`, and the receiver deadlocks (reproduced on Crystal 1.20.1,
+  which `shard.yml` still supports). Nothing on the runtime input path calls
+  `poll`; only `FallbackReader#poll` is fiber-safe, and it is channel-based.
 - `Terminal` input goes through the poll readers, and `CancelReader` is ported
   API only — the same position it holds upstream, where nothing constructs one
   (`terminal_reader.go` mentions it in a comment). `Terminal.stop` cancels and
@@ -81,9 +84,11 @@ listed here to keep a fresh session from re-deriving them from git.
 | Commit | What changed |
 |--------|--------------|
 | `9932661` | `SelectReader#poll` reported no data for every fd: `fd_set` wrote into a by-value `StaticArray` copy of `LibC::FdSet`. Fixed; readiness specs added. |
-| `cbdfc0c` | PollReader hardening for runtime use: `poll` runs the platform wait on a `Thread` (a fiber no longer freezes the scheduler), `FallbackReader` buffers through stdlib `IO::Buffered` instead of a hand-rolled copy, `close` is idempotent like `IO::Delimited`/`IO::Sized`, and the BSD `new_poll_reader` honors `FD_SETSIZE`. |
+| `cbdfc0c` | PollReader hardening for runtime use: `FallbackReader` buffers through stdlib `IO::Buffered` instead of a hand-rolled copy, `close` is idempotent like `IO::Delimited`/`IO::Sized`, and the BSD `new_poll_reader` honors `FD_SETSIZE`. |
 | `d9728b6` | `ioctl` was declared with a fixed `Void*` third argument although C declares it variadic, so on AArch64 the winsize write went to a garbage stack address and corrupted the caller's frame (it zeroed `Terminal`'s `@in_tty`/`@out_tty`). Declaration is variadic now; pty-based specs added. |
 | `7d36e33` | `Terminal` input uses the poll reader like Go's `Terminal.start`, not `CancelReader`'s 5ms `EAGAIN` sleep; `stop_input` cancels then closes. `TerminalReader` treats `PollCanceledError` as a cancel. pty specs cover input delivery, restart, and stop with input in flight. |
+| `pending` | The `poll`-on-a-`Thread` wrapper from `cbdfc0c` is gone: it deadlocked on Crystal 1.20.1 (`Thread` + `Channel` cannot wake a scheduler-blocked fiber without `-Dpreview_mt`), which `shard.yml` still supports. `poll` blocks on the calling fiber like Go. |
+| `5e790de` | Removed definitions a later one silently shadowed: `Terminal#display`/`#flush`/`#buffered`, `TerminalReader#lookup=`, ten duplicated `Ultraviolet.*_border` functions, and a repeated `@opts` declaration. The `display` duplicate had dropped prepends and terminal state. |
 | `22fc910` | `Ultraviolet::ConsoleWait` classifies `WaitForMultipleObjects`; a failed wait now raises instead of looking like a quiet wake. Strengthened `check-win32`, which found three real Windows compile blockers (splat over an `Array`, mixed `Int32`/`UInt32` modes, module-level `private def`). |
 | `f01d432` | Poll readers read through a nonblocking dup and cancel/close wake a blocked read by closing it — no `read_timeout` churn. |
 | `6ccc7d9` | `EpollReader#read` was a bare blocking read, so cancel could never unblock it (found by CI on Linux). |

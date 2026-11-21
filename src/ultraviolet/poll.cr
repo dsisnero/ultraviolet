@@ -23,10 +23,19 @@ module Ultraviolet
   # the input; Crystal's event loop suspends the fiber on EAGAIN, and
   # cancel/close wake it by closing that dup.
   #
-  # `poll` runs the platform wait (select/epoll_wait/kevent/
-  # WaitForMultipleObjects) on a Thread, because those calls block the whole
-  # scheduler thread. The calling fiber suspends on a channel instead, so a
-  # poll with a long timeout no longer freezes the rest of the program.
+  # `poll` performs the platform wait (select/epoll_wait/kevent/
+  # WaitForMultipleObjects) on the calling fiber, exactly as Go's `Poll` blocks
+  # its goroutine.
+  #
+  # Crystal's scheduler is cooperative, so that wait cannot be interrupted by
+  # another fiber: call `poll` from the main fiber, not from a fiber that has to
+  # stay responsive. Running the wait on a `Thread` does not help — a channel
+  # send from that thread cannot wake a scheduler-blocked fiber without
+  # `-Dpreview_mt`, and the receiver deadlocks (reproduced on Crystal 1.20.1,
+  # which `shard.yml` still supports). Nothing on the runtime input path calls
+  # `poll`: Go's `Terminal` uses `Read`, `Cancel`, and `Close` only, and so does
+  # Crystal's. `FallbackReader` is the exception — its `poll` is channel-based
+  # and therefore fiber-safe.
   abstract class PollReader < IO
     abstract def read(slice : Bytes) : Int32
     abstract def cancel : Bool
@@ -36,22 +45,10 @@ module Ultraviolet
     # timeout waits indefinitely) and raising [PollCanceledError] if the reader
     # is canceled.
     def poll(timeout : Time::Span) : Bool
-      result = Channel(Bool | Exception).new(1)
-      waiter = Thread.new do
-        result.send(poll_now(timeout))
-      rescue ex
-        result.send(ex)
-      end
-
-      outcome = result.receive
-      waiter.join
-      raise outcome if outcome.is_a?(Exception)
-      outcome
+      poll_now(timeout)
     end
 
-    # poll_now performs the platform wait on the calling OS thread. It stalls
-    # the scheduler for as long as it waits, so call [poll] unless the caller
-    # is already on a thread it may block.
+    # poll_now performs the platform wait on the calling fiber. See [poll].
     protected def poll_now(timeout : Time::Span) : Bool
       raise NotImplementedError.new("#{self.class}#poll_now")
     end
