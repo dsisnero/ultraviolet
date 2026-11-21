@@ -251,6 +251,11 @@ next phase).
   files against the Windows stdlib. This is a compile gate, not an execution
   gate: say "compiled-gated, not executed" in the commit message and never
   claim a Windows behavior as verified without a Windows run.
+- Known gap: the whole library still cannot cross-compile for Windows because
+  `src/ultraviolet/poll.cr` requires `c/sys/select` and `c/unistd`
+  unconditionally. `make check-win32` covers the Win32 console reader layer,
+  which is the scope of this delta; making the whole tree Windows-compilable is
+  a separate feature.
 - Do not weaken `cancelreader_spec.cr` or `terminal_reader_spec.cr` to make the
   gate pass.
 
