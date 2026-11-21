@@ -56,12 +56,22 @@
 
       def read(slice : Bytes) : Int32
         raise PollCanceledError.new("poll canceled") if canceled?
-        begin
-          @reader.read(slice)
+
+        # A blocking read cannot be interrupted, so read in short slices and
+        # check the cancel flag between attempts. This mirrors SelectReader;
+        # without it a cancel never unblocks a reader blocked in read().
+        previous_timeout = @file.read_timeout
+        @file.read_timeout = 10.milliseconds
+        loop do
+          return @reader.read(slice)
+        rescue ex : IO::TimeoutError
+          raise PollCanceledError.new("poll canceled") if canceled?
         rescue ex
           raise PollCanceledError.new("poll canceled") if canceled?
           raise ex
         end
+      ensure
+        @file.read_timeout = previous_timeout
       end
 
       def poll(timeout : Time::Span) : Bool
