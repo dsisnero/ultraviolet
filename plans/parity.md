@@ -6,27 +6,30 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** [Vendor refresh `6b8d4ba` → `8ecbcf0`](commit_8ecbcf0.md).
-- **Current focus:** Phase 4 — re-baseline bookkeeping: refresh this plan,
-  confirm the manifests, and close the refresh. Phases 1–3 are complete.
-- **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 4:** re-baseline bookkeeping and mark
-     [the refresh plan](commit_8ecbcf0.md) complete.
-  2. Next upstream refresh once `charmbracelet/ultraviolet` moves past
-     `8ecbcf0` (commit-based; the upstream publishes no tags).
-- **Chunk status:** snapshot bumped to `8ecbcf0`; symbol inventory unchanged
-  (819 APIs / 196 tests, no ledger row changes). All behavioral phases of the
-  delta (1–3) are done; only bookkeeping remains. Phases 1–9 of the previous
-  refresh are complete.
-- **Last code feature commit:** `e01962d` (`port: windows cancel reader event
-  lifecycle`).
-- **Gates:** `make lint`, `make test`, `make check-win32`, and `make inventory`
-  pass (`410` examples; 819-item ledger). `make parity` passes (819 APIs, 196
-  tests).
+- **Active plan:** none — [the `8ecbcf0` refresh](commit_8ecbcf0.md) is
+  complete, so there is no open porting feature.
+- **Current focus:** none. The 3-commit `8ecbcf0` delta (key layout rule,
+  Windows cancel-event lifetime, Windows wait loop) is fully ported.
+- **Next up:**
+  1. **Next upstream refresh** when `charmbracelet/ultraviolet` moves past
+     `8ecbcf0` (commit-based; the upstream publishes no tags). Reuse the
+     comparison recipe and phase template in
+     [commit_8ecbcf0.md](commit_8ecbcf0.md).
+  2. **Optional follow-ups** recorded as known gaps in that plan: surface
+     `WAIT_FAILED` from `wait_for_input` (needs an error channel in
+     `TerminalReader`), and decide whether to wire the `PollReader` family into
+     `Terminal` the way Go does.
+- **Chunk status:** `8ecbcf0` refresh complete (phases 1–4). Symbol inventory
+  unchanged across the delta: 819 APIs, 196 tests, no ledger row changes.
+- **Last code feature commit:** `f01d432` (`fix: cancel poll readers through a
+  nonblocking dup, not a read timeout`).
+- **Gates:** `make format-check`, `make lint`, `make test` (410 examples),
+  `make check-win32`, `make test-linux` (410 examples on Linux), `make
+  inventory` (819 items) and `make parity` (819 APIs / 196 tests) all pass. CI
+  is green on ubuntu-latest, macos-latest and windows-latest, plus the lint job.
 
-> **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks
-> `6b8d4ba` plus the completed `7cc6674` follow-ups until
-> [the refresh plan](commit_8ecbcf0.md) closes).
+> **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
+> full).
 
 ## Commit plans
 
@@ -35,12 +38,14 @@ One file per upstream commit range; the current one is also the active plan.
 | Plan | Range | Status |
 |------|-------|--------|
 | [update-vendor-6b8d4ba.md](update-vendor-6b8d4ba.md) | `7cc6674` → `6b8d4ba` | ✅ complete |
-| [commit_8ecbcf0.md](commit_8ecbcf0.md) | `6b8d4ba` → `8ecbcf0` | 🚧 active |
+| [commit_8ecbcf0.md](commit_8ecbcf0.md) | `6b8d4ba` → `8ecbcf0` | ✅ complete |
 
 ## Feature phases
 
-Each phase is sized for one branch or commit and is tracked in detail in
-[the vendor-update plan](update-vendor-6b8d4ba.md).
+Each phase is sized for one branch or commit. Phases 1–9 are the
+`7cc6674` → `6b8d4ba` refresh, tracked in
+[update-vendor-6b8d4ba.md](update-vendor-6b8d4ba.md); phase 10 is the current
+refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 
 | Phase | Feature-sized scope | Status | Evidence |
 |-------|---------------------|--------|----------|
@@ -53,7 +58,7 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
 | 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
 | 9 | Conformance harness assessment | ✅ | [Decision: not ported](conformance-assessment.md) |
-| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) — phases 1–3 ✅, phase 4 open |
+| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | ✅ | [Plan](commit_8ecbcf0.md) — `5d41995`, `e01962d`, `c9f8872`, `f01d432` |
 
 ## Status overview
 
@@ -71,7 +76,7 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 394 Crystal specs |
+| **Test coverage** | 196 Go tests | 410 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
@@ -136,6 +141,7 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
 | Renderer | `terminal_renderer_spec.cr`, `terminal_renderer_output_spec.cr`, `terminal_renderer_resize_spec.cr` |
 | Styled strings and width | `styled_spec.cr`, `width_spec.cr`, `program_status_spec.cr` |
 | I/O and platform | `poll_spec.cr`, `poll_fallback_spec.cr`, `cancelreader_spec.cr`, `tty_spec.cr`, `console_spec.cr`, `mouse_spec.cr` |
+| Windows reader logic | `cancel_event_lifetime_spec.cr`, `console_wake_loop_spec.cr` (platform-independent, drive the win32 code paths) |
 | Compatibility aliases | `go_compat_aliases_spec.cr`, `go_method_aliases_spec.cr` |
 
 ## Guardrails

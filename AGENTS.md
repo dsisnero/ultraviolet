@@ -7,8 +7,8 @@
 
 Crystal port of Charm's ultraviolet (Go) from
 [charmbracelet/ultraviolet](https://github.com/charmbracelet/ultraviolet),
-vendored at `vendor/ultraviolet/` (commit `8ecbcf0`; Crystal behavior tracks
-`6b8d4ba` until [the refresh plan](plans/commit_8ecbcf0.md) closes).
+vendored at `vendor/ultraviolet/` (commit `8ecbcf0`, behavior fully ported;
+refresh record in [plans/commit_8ecbcf0.md](plans/commit_8ecbcf0.md)).
 
 ## Commands
 

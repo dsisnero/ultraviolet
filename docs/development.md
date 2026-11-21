@@ -76,8 +76,8 @@ compiler is otherwise OOM-killed (`exit 137`); override with
 ## Updating the vendored Go source
 
 This upstream publishes no tags or releases, so snapshots are pinned by commit.
-The current snapshot is `8ecbcf0` (2026-11-19); the Crystal port tracks behavior
-through `6b8d4ba`. The remaining work is listed in `plans/commit_8ecbcf0.md`.
+The current snapshot is `8ecbcf0` (2026-11-19) and the port tracks it in full;
+`plans/commit_8ecbcf0.md` is the record of that refresh.
 
 To move to a newer upstream commit:
 

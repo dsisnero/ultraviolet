@@ -6,7 +6,7 @@
   (2026-11-19, `fix: use layout's own key (#238)`)
 - **Upstream delta:** 3 commits, 8 files, +129/−19 lines
 - **Symbol delta:** none — 819 source APIs and 196 tests before and after
-- **Status:** phases 1–3 ✅; phase 4 open (re-baseline bookkeeping)
+- **Status:** ✅ complete — phases 1–4 done, `8ecbcf0` fully ported
 
 This file is the plan for one commit range. Per-release history lives in
 `plans/commit_<sha>.md`; `plans/parity.md` links each file and tracks the
@@ -221,8 +221,7 @@ Commit: `e01962d` (`port: windows cancel reader event lifecycle`).
 
 ### Phase 3 — Windows terminal reader wait loop ✅
 
-Commit: `port: wait on the console handle in the Windows reader` (hash
-recorded by the next phase).
+Commit: `c9f8872` (`port: wait on the console handle in the Windows reader`).
 
 - `ConsoleWakeLoop(T)` (`src/ultraviolet/console_wake_loop.cr`) is the inner
   loop of Go's `streamData`: peek, return a non-empty batch, otherwise wait on
@@ -240,14 +239,21 @@ recorded by the next phase).
 - Gates: `make format-check`, `make lint`, `make test` (410 examples),
   `make check-win32`, `make inventory` (819 items).
 
-### Phase 4 — Re-baseline bookkeeping
+### Phase 4 — Re-baseline bookkeeping ✅
 
-- Confirm manifests/ledger still match: `make inventory`, `make parity` (no row
-  changes expected — see "Symbol delta").
-- Refresh `plans/parity.md` (**Where we are**, counts, phase table) and mark
-  this file complete.
-- Update the pinned commit in `AGENTS.md`, `README.md`, and
-  `docs/development.md`, then delete the completed plan's "status: open" note.
+Commit: `docs: close out the 8ecbcf0 refresh`.
+
+Verification-only phase (no new behavior, so no new spec): the gates are the
+evidence that the repository matches the pinned snapshot.
+
+- `make inventory` — 819 ledger items tracked; no row changes were needed.
+- `make parity` — 819 source APIs and 196 tests match the tail of `8ecbcf0`.
+- `make format-check`, `make lint`, `make test` — 410 examples.
+- `make check-win32` — Win32 reader layer type-checks for
+  `x86_64-windows-msvc`.
+- `make test-linux` — 410 examples pass in the Linux container (epoll path).
+- Pins updated in `AGENTS.md`, `README.md` and `docs/development.md`; this plan
+  and `plans/parity.md` marked complete.
 
 ## Testing strategy
 
@@ -293,13 +299,15 @@ recorded by the next phase).
 
 ## Gate state after the snapshot bump
 
-The snapshot bump itself changes no symbols, so the repository stays green:
+The snapshot bump changed no symbols, and the refresh closed green:
 
 - `make lint` — pass
-- `make test` — 410 examples, 0 failures
+- `make test` — 410 examples, 0 failures (394 before the refresh)
 - `make check-win32` — Win32 reader layer type-checks
+- `make test-linux` — 410 examples, 0 failures (epoll path)
 - `make inventory` — 819 items tracked
 - `make parity` — 819 APIs, 196 tests
+- CI — ubuntu-latest, macos-latest, windows-latest and lint all green
 
 Phase 1 opened with a red spec (the Dvorak case failed against the old
 `key_label`) and closed it in `port: prefer layout key in Keystroke`. Phase 2

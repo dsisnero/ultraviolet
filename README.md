@@ -2,9 +2,9 @@
 
 Crystal port of Charm's [Ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library. The upstream Go implementation is vendored at `vendor/ultraviolet/` for behavioral reference.
 
-Vendored Go source: `8ecbcf0`. The Crystal port tracks behavior through
-`6b8d4ba`; the remaining delta is tracked in
-[the refresh plan](plans/commit_8ecbcf0.md). [See parity plan](plans/parity.md).
+Vendored Go source: `8ecbcf0`, which the port tracks in full; the refresh
+record is [plans/commit_8ecbcf0.md](plans/commit_8ecbcf0.md).
+[See parity plan](plans/parity.md).
 
 ## Installation
 
@@ -156,7 +156,7 @@ Platform-optimized poll readers in [`poll.cr`](src/ultraviolet/poll.cr):
 - [Testing](docs/testing.md) — spec layout and how to port Go tests
 - [PR Workflow](docs/pr-workflow.md) — branch, gates, and review checklist
 - [Parity Plan](plans/parity.md) — feature status, resume point, and remaining work
-- [Vendor Refresh 8ecbcf0](plans/commit_8ecbcf0.md) — plan for the current upstream delta (`6b8d4ba` → `8ecbcf0`)
+- [Vendor Refresh 8ecbcf0](plans/commit_8ecbcf0.md) — completed record of the `6b8d4ba` → `8ecbcf0` refresh
 - [Vendor Update 6b8d4ba](plans/update-vendor-6b8d4ba.md) — completed checklist for the previous delta
 - [Conformance Assessment](plans/conformance-assessment.md) — decision on the optional Go conformance harness
 - [Tutorial](docs/TUTORIAL.md) — building a terminal application with Ultraviolet
