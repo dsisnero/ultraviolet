@@ -1,7 +1,5 @@
 /docs/*
 !/docs/*.md
-!/docs/go_test_parity.tsv
-!/docs/go_source_parity.tsv
 /lib/*
 !/lib/ansi/
 !/lib/ansi/**
@@ -9,13 +7,12 @@
 !/lib/colorful/**
 !/lib/mosaic/
 !/lib/mosaic/**
-/bin/*
-!/bin/check_go_test_parity.sh
-!/bin/check_go_source_parity.sh
 /.shards/
 .crystal-cache/
 temp/
+tmp/
 log/
+node_modules/
 *.dwarf
 
 # Libraries don't need dependency lock

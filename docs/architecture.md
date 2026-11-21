@@ -14,7 +14,7 @@ of truth.
 | `vendor/ultraviolet/` | Vendored Go source of truth |
 | `plans/parity.md` | Feature status and resume point |
 | `plans/inventory/` | Per-symbol port ledgers |
-| `scripts/` | Parity manifest generators and verifiers |
+| `scripts/` | Thin wrappers over the installed cross-language parity skill |
 | `docs/` | Project documentation |
 | `examples/` | Runnable Crystal examples |
 | `lib/` | Installed Crystal shards (not project source) |

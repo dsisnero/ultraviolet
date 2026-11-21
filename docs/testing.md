@@ -37,9 +37,12 @@ The manifest scripts compare source and test inventories against the vendored
 Go tree:
 
 ```bash
-./scripts/check_source_parity.sh . plans/inventory/go_source_parity.tsv vendor/ultraviolet go
-./scripts/check_test_parity.sh . plans/inventory/go_test_parity.tsv vendor/ultraviolet go
+make parity   # inventory + source + test parity gates
 ```
+
+They forward to the installed `cross-language-crystal-parity` skill (`regex`
+parser mode) through the wrappers in `scripts/`; see `AGENTS.md` for the
+**Parity tooling** rules.
 
 The current status and remaining upstream-limited gaps are tracked in
 `plans/parity.md`.

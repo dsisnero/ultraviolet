@@ -3,18 +3,23 @@
 ## Before opening a PR
 
 1. Start from an up-to-date `main`.
+
 2. Create a focused branch: `git checkout -b port/<feature>`.
+
 3. Port the upstream test first, then the implementation.
+
 4. Run the gates:
 
    ```bash
    make format-check
    make lint
    make test
+   make inventory
    ```
 
 5. Update `plans/parity.md` (including the **Where we are** block) and any
    affected inventory rows.
+
 6. Commit atomically using the `port: ...` format described in `AGENTS.md`.
 
 ## PR contents

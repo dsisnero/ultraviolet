@@ -9,8 +9,11 @@ back to a known-good state.
   focus, the ordered "Next up" list, per-area chunk status, and any scoping
   notes or gotchas, plus the last commit and current gate results. Do not
   re-derive state from git history.
-- `plans/inventory/go_port_inventory.tsv` — the per-symbol ledger. Use it to
-  see what is left inside the current chunk:
+
+- `plans/inventory/go_port_inventory.tsv` — the per-symbol ledger for the
+  `6b8d4ba` baseline (status + `crystal_refs`). Run `make inventory` before
+  trusting it: it fails on a stale row and on a `crystal_refs` file that no
+  longer exists. Use it to see what is left inside the current chunk:
 
   ```bash
   tail -n +2 plans/inventory/go_port_inventory.tsv \
@@ -32,9 +35,14 @@ atomically. If the tree is dirty, finish or stash before starting.
 ```bash
 make lint
 make test
+make inventory
 ```
 
-Both must pass before changing anything.
+All three must pass before changing anything. `make inventory` forwards to the
+installed parity skill; confirm its reported `PARITY_DISCOVERY_BACKEND=regex`
+matches the ledger policy in `AGENTS.md`, and inspect the manifests'
+`.metadata.json` files when regenerating. If the command reports the installed
+skill as missing, set `PARITY_SKILL_DIR` before continuing.
 
 ## 4. Pick the next feature
 
@@ -55,3 +63,23 @@ When `plans/parity.md` grows too large it is split into `plans/<area>.md` files.
 In that case every split file is linked from `plans/parity.md`, and
 `plans/parity.md` marks each file complete/in-progress and names the file being
 worked on plus the next file/phase to start.
+
+## Environment notes
+
+This checkout lives on an exFAT volume, so macOS writes AppleDouble `._*`
+sidecars next to real files (thousands of them, including under `src/` and
+`spec/`). They matter here:
+
+- a `._foo_spec.cr` sidecar matches Crystal's `*_spec.cr` discovery glob;
+- a `._foo.cr` sidecar can break require resolution.
+
+`make format`, `make lint`, and `make test` depend on the `strip-sidecars`
+target, which deletes those sidecars first. `._*` is gitignored, so they never
+reach a commit.
+
+If a git operation prints `non-monotonic index .../._pack-*.idx`, clear the
+sidecars inside the object store:
+
+```bash
+find .git -name '._*' -delete
+```
