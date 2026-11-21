@@ -26,6 +26,21 @@ For a non-mutating format check:
 make format-check
 ```
 
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | Runner | Steps |
+|-----|--------|-------|
+| `Test (ubuntu-latest)` | Ubuntu | `shards install`, format check, `check_win32.sh`, `crystal spec` |
+| `Test (macos-latest)` | macOS | same |
+| `Test (windows-latest)` | Windows | `shards install`, format check, `crystal spec` (compiles the win32 files natively) |
+| `Lint` | Ubuntu | `shards install`, `./bin/ameba src spec` |
+
+The parity gates (`make inventory`, `make parity`) are intentionally **not** in
+CI: they forward to the locally installed `cross-language-crystal-parity`
+skill, which is not part of this repository. Run them locally.
+
 ## Porting workflow
 
 1. Find the upstream behavior in `vendor/ultraviolet/`.

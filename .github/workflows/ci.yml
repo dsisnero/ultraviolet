@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Test (${{ matrix.os }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: latest
+
+      - name: Install shard dependencies
+        shell: bash
+        run: shards install
+
+      - name: Format check
+        shell: bash
+        run: crystal tool format --check src spec
+
+      # The win32 files are `{% if flag?(:win32) %}`-gated, so the host gates
+      # never see them. Cross-target type-check them on the non-Windows runners;
+      # the Windows runner covers them natively.
+      - name: Type-check Win32 reader layer
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: ./scripts/check_win32.sh
+
+      - name: Run specs
+        shell: bash
+        run: crystal spec
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: latest
+
+      - name: Install shard dependencies
+        run: shards install
+
+      - name: Run Ameba
+        run: ./bin/ameba src spec
