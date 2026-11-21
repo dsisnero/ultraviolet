@@ -6,30 +6,82 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none — [the `8ecbcf0` refresh](commit_8ecbcf0.md) is
-  complete, so there is no open porting feature.
-- **Current focus:** none. The 3-commit `8ecbcf0` delta (key layout rule,
-  Windows cancel-event lifetime, Windows wait loop) is fully ported.
-- **Next up:**
-  1. **Next upstream refresh** when `charmbracelet/ultraviolet` moves past
-     `8ecbcf0` (commit-based; the upstream publishes no tags). Reuse the
-     comparison recipe and phase template in
+- **Active plan:** none. [The `8ecbcf0` refresh](commit_8ecbcf0.md) is complete
+  and there is no open porting feature.
+- **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
+  fully ported. Upstream publishes no tags; refreshes are commit-based.
+- **Current focus:** none. Post-refresh hardening is done (see **Recent work
+  outside plan phases**); what remains is a decision plus the next upstream
+  refresh.
+- **Next up, in priority order:**
+  1. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
+     — still `8ecbcf0` as of `9932661`. If it moved, run a refresh: clone, diff
+     `<old>..<new>`, write `plans/commit_<new>.md`, bump `vendor/`, then port
+     the delta in feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Optional follow-up:** decide whether to wire the `PollReader` family
-     into `Terminal` the way Go does (see **Architectural divergences**; its
-     `poll` must move off the raw syscall first). The `WAIT_FAILED` gap from
-     the `8ecbcf0` delta is closed.
-- **Chunk status:** `8ecbcf0` refresh complete (phases 1–4). Symbol inventory
-  unchanged across the delta: 819 APIs, 196 tests, no ledger row changes.
-- **Last code feature commit:** `22fc910` (`port: surface a failed console
-  wait`).
-- **Gates:** `make format-check`, `make lint`, `make test` (410 examples),
-  `make check-win32`, `make test-linux` (410 examples on Linux), `make
-  inventory` (819 items) and `make parity` (819 APIs / 196 tests) all pass. CI
-  is green on ubuntu-latest, macos-latest and windows-latest, plus the lint job.
+  2. **Decide: wire `PollReader` into `Terminal`?** Go builds a poll reader in
+     `Terminal.start` (`vendor/ultraviolet/terminal.go:188`); Crystal's
+     `Terminal` uses `CancelReader` (`src/ultraviolet/terminal.cr:667`) and
+     `TerminalReader` does its own channel timeouts, so the `PollReader` family
+     is currently exercised only by specs. Wiring it means first moving
+     `PollReader#poll`'s raw `select`/`epoll_wait` onto a `Thread` or the event
+     loop (a blocking syscall in a fiber stalls the scheduler — see
+     `src/ultraviolet/poll.cr`). Acceptance: `make test` +
+     `make test-linux` + the Windows CI job green, and no raw wait reachable
+     from a fiber. If the answer is "no", record the decision here and leave
+     the family as ported API.
+  3. **Optional: re-run adversarial parity signoff** with
+     `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
+     refresh (it re-derives the ledgers and proves the gates can fail).
+- **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
+  unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
+- **Last code feature commit:** `9932661` (`port: make select-based poll
+  report readiness`).
+- **Gates:** `make format-check`, `make lint`, `make test` (420 examples),
+  `make check-win32`, `make test-linux` (420 examples on Linux) pass;
+  `make inventory` (819 items) and `make parity` (819 APIs / 196 tests) pass;
+  CI is green on ubuntu-latest, macos-latest, windows-latest plus the lint job.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
+
+### Reset checklist
+
+1. Read this block, then `git log --oneline -10` and `git status`.
+2. Run `make lint && make test && make inventory` (add `make check-win32` for
+   win32 files; `make test-linux` needs Apple `container` or docker).
+3. `make inventory` / `make parity` forward to the locally installed
+   `cross-language-crystal-parity` skill — they do **not** run in CI.
+4. Environment quirks (exFAT AppleDouble sidecars, git exec bits) are in
+   [docs/resuming.md](../docs/resuming.md#environment-notes).
+
+### Known limitations
+
+- `make check-win32` is a **partial** type-check: Crystal types method bodies
+  lazily, so bodies reached only through `spawn` (the Windows reader loop) are
+  compiled by the `windows-latest` CI job instead. Deliberate-typo probes
+  confirmed the gap; see `docs/testing.md`.
+- `PollReader#poll` waits in a raw `select`/`epoll_wait`, which stalls the
+  scheduler if called from a fiber. Fixing that is part of the "wire
+  `PollReader`" decision above.
+- `FallbackReader#read` is not interruptible. Upstream behaves the same way
+  (`poll_fallback.go`), and its test unblocks the reader manually, so this is a
+  ported behavior rather than a gap.
+
+## Recent work outside plan phases
+
+These landed after the refresh closed; they are not plan phases, so they are
+listed here to keep a fresh session from re-deriving them from git.
+
+| Commit | What changed |
+|--------|--------------|
+| `9932661` | `SelectReader#poll` reported no data for every fd: `fd_set` wrote into a by-value `StaticArray` copy of `LibC::FdSet`. Fixed; readiness specs added. |
+| `22fc910` | `Ultraviolet::ConsoleWait` classifies `WaitForMultipleObjects`; a failed wait now raises instead of looking like a quiet wake. Strengthened `check-win32`, which found three real Windows compile blockers (splat over an `Array`, mixed `Int32`/`UInt32` modes, module-level `private def`). |
+| `f01d432` | Poll readers read through a nonblocking dup and cancel/close wake a blocked read by closing it — no `read_timeout` churn. |
+| `6ccc7d9` | `EpollReader#read` was a bare blocking read, so cancel could never unblock it (found by CI on Linux). |
+| `cb5a97e` | `Dockerfile.linux` + `make test-linux` (Apple `container` or docker) to run the Linux suite locally. |
+| `fe8a9f2` | Made the library compile for the Windows target (POSIX-only `poll.cr` guard, `CancelReader#read`, `LibC::HANDLE.null`). |
+| `0f50d96`, `2d67fac` | CI matrix (ubuntu/macOS/windows) + lint; exec bits, `.gitattributes` LF, ameba invocation. |
 
 ## Commit plans
 
@@ -76,7 +128,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 410 Crystal specs |
+| **Test coverage** | 196 Go tests | 420 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |

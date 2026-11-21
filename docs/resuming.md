@@ -38,11 +38,13 @@ make test
 make inventory
 ```
 
-All three must pass before changing anything. `make inventory` forwards to the
-installed parity skill; confirm its reported `PARITY_DISCOVERY_BACKEND=regex`
-matches the ledger policy in `AGENTS.md`, and inspect the manifests'
-`.metadata.json` files when regenerating. If the command reports the installed
-skill as missing, set `PARITY_SKILL_DIR` before continuing.
+Add `make check-win32` when the work touches win32-gated files, and
+`make test-linux` (Apple `container` or docker) when it touches the unix IO /
+poll readers — CI runs the same suite on ubuntu, macOS and Windows.
+
+All of these must pass before changing anything. `make inventory` forwards to
+the installed parity skill; confirm its reported `PARITY_DISCOVERY_BACKEND=regex`
+matches the ledger policy in `AGENTS.md`. The parity gates do not run in CI.
 
 ## 4. Pick the next feature
 
