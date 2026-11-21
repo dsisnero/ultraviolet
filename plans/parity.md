@@ -15,14 +15,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
      `8ecbcf0` (commit-based; the upstream publishes no tags). Reuse the
      comparison recipe and phase template in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Optional follow-ups** recorded as known gaps in that plan: surface
-     `WAIT_FAILED` from `wait_for_input` (needs an error channel in
-     `TerminalReader`), and decide whether to wire the `PollReader` family into
-     `Terminal` the way Go does.
+  2. **Optional follow-up:** decide whether to wire the `PollReader` family
+     into `Terminal` the way Go does (see **Architectural divergences**; its
+     `poll` must move off the raw syscall first). The `WAIT_FAILED` gap from
+     the `8ecbcf0` delta is closed.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4). Symbol inventory
   unchanged across the delta: 819 APIs, 196 tests, no ledger row changes.
-- **Last code feature commit:** `f01d432` (`fix: cancel poll readers through a
-  nonblocking dup, not a read timeout`).
+- **Last code feature commit:** `port: surface a failed console wait` (hash
+  recorded by the next commit).
 - **Gates:** `make format-check`, `make lint`, `make test` (410 examples),
   `make check-win32`, `make test-linux` (410 examples on Linux), `make
   inventory` (819 items) and `make parity` (819 APIs / 196 tests) all pass. CI
@@ -141,7 +141,7 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
 | Renderer | `terminal_renderer_spec.cr`, `terminal_renderer_output_spec.cr`, `terminal_renderer_resize_spec.cr` |
 | Styled strings and width | `styled_spec.cr`, `width_spec.cr`, `program_status_spec.cr` |
 | I/O and platform | `poll_spec.cr`, `poll_fallback_spec.cr`, `cancelreader_spec.cr`, `tty_spec.cr`, `console_spec.cr`, `mouse_spec.cr` |
-| Windows reader logic | `cancel_event_lifetime_spec.cr`, `console_wake_loop_spec.cr` (platform-independent, drive the win32 code paths) |
+| Windows reader logic | `cancel_event_lifetime_spec.cr`, `console_wake_loop_spec.cr`, `console_wait_spec.cr` (platform-independent, drive the win32 code paths) |
 | Compatibility aliases | `go_compat_aliases_spec.cr`, `go_method_aliases_spec.cr` |
 
 ## Guardrails

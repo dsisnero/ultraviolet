@@ -2,24 +2,6 @@
   require "./win32_api"
 
   module Ultraviolet
-    private def prepare_console(input : LibC::HANDLE, *modes : UInt32) : Tuple(UInt32, UInt32)
-      original_mode = uninitialized LibC::DWORD
-      if LibC.GetConsoleMode(input, pointerof(original_mode)) == 0
-        raise IO::Error.from_winerror("GetConsoleMode")
-      end
-
-      new_mode = original_mode
-      modes.each do |mode|
-        new_mode |= mode
-      end
-
-      if LibC.SetConsoleMode(input, new_mode) == 0
-        raise IO::Error.from_winerror("SetConsoleMode")
-      end
-
-      {original_mode, new_mode}
-    end
-
     class ConInputReader < CancelReader
       @conin : LibC::HANDLE
       @original_mode : UInt32 = 0
@@ -31,12 +13,13 @@
       def initialize(@conin : LibC::HANDLE)
         super(nil)
         # Store original console mode and set new mode
-        modes = [
-          LibC::ENABLE_VIRTUAL_TERMINAL_INPUT,
+        # prepare_console takes a splat tuple; an Array cannot be splatted.
+        @original_mode, @new_mode = prepare_console(
+          @conin,
+          LibC::ENABLE_VIRTUAL_TERMINAL_INPUT.to_u32,
           LibC::ENABLE_WINDOW_INPUT,
           LibC::ENABLE_EXTENDED_FLAGS,
-        ]
-        @original_mode, @new_mode = prepare_console(@conin, *modes)
+        )
 
         # Manual-reset event: once signaled it stays signaled, so a reader that
         # starts waiting after Cancel/Close still wakes up.
@@ -99,13 +82,18 @@
 
       # Blocks until the console has input or the reader is canceled or closed.
       # Returns immediately (raising CancelError) when the reader is already
-      # closed. Mirrors Go's conInputReader.waitForInput.
+      # closed. Mirrors Go's conInputReader.waitForInput, including surfacing a
+      # failed wait instead of treating it as a quiet wake.
       def wait_for_input : Nil
         raise CancelError.new("read canceled") unless @event_lifetime.acquire
 
         begin
           handles = [@conin, @cancel_event]
-          LibC.WaitForMultipleObjects(2_u32, handles.to_unsafe, 0, LibC::INFINITE)
+          result = LibC.WaitForMultipleObjects(2_u32, handles.to_unsafe, 0, LibC::INFINITE)
+          status = ConsoleWait.classify(result, handles.size)
+          if status.error?
+            raise IO::Error.new("wait for console input: #{status}")
+          end
         ensure
           if @event_lifetime.release
             @handle_mutex.synchronize do
@@ -114,6 +102,25 @@
             end
           end
         end
+      end
+
+      # Applies the console input modes and returns {original, new}.
+      private def prepare_console(input : LibC::HANDLE, *modes : UInt32) : Tuple(UInt32, UInt32)
+        original_mode = uninitialized LibC::DWORD
+        if LibC.GetConsoleMode(input, pointerof(original_mode)) == 0
+          raise IO::Error.from_winerror("GetConsoleMode")
+        end
+
+        new_mode = original_mode
+        modes.each do |mode|
+          new_mode |= mode
+        end
+
+        if LibC.SetConsoleMode(input, new_mode) == 0
+          raise IO::Error.from_winerror("SetConsoleMode")
+        end
+
+        {original_mode, new_mode}
       end
 
       def read(slice : Bytes) : Int32

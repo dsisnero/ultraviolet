@@ -291,11 +291,12 @@ evidence that the repository matches the pinned snapshot.
 - `CloseHandle(@conin)` removal (phase 2) is observable on Windows only, and
   it restores Go's behavior rather than introducing a divergence.
 - `emptyWakeBackoff` / 10 ms backoff: same value as Go; no divergence.
-- Known gap: `wait_for_input` ignores the `WaitForMultipleObjects` result, so a
-  `WAIT_FAILED` does not abort the read loop the way Go's `streamData` error
-  return does. Crystal's reader has no error channel to the caller; wiring that
-  through `TerminalReader` is a separate feature. Recorded here so it is a
-  decision, not an oversight.
+- ~~`wait_for_input` ignored the `WaitForMultipleObjects` result, so a
+  `WAIT_FAILED` did not abort the read loop the way Go's `streamData` error
+  return does.~~ **Resolved in `spec/console_wait_spec.cr` +
+  `Ultraviolet::ConsoleWait`:** the wait status is classified (ready,
+  abandoned, timed out, failed) and a failed wait raises `IO::Error`, which
+  `TerminalReader#stream_events` already re-raises from its error channel.
 
 ## Gate state after the snapshot bump
 

@@ -13,7 +13,14 @@ make check-win32    # cross-type-check the Win32 console readers
 The `{% if flag?(:win32) %}` files never compile on macOS/Linux, so
 `make check-win32` type-checks them for `x86_64-windows-msvc` with
 `--no-codegen`. It catches duplicate `LibC` constants, conflicting signatures,
-and broken require paths; it does not execute anything.
+broken require paths, and the bodies of everything the driver actually calls
+(it has found a splat over an `Array`, a module-level `private def` called from
+an instance, and mixed `Int32`/`UInt32` arrays).
+
+Crystal types method bodies lazily, so this is a *partial* gate: a body reached
+only through `spawn` (for example the Windows reader loop) is not typed by any
+cross-target build. The `windows-latest` CI job is the full gate — it compiles
+and runs the suite natively.
 
 Run the full suite before committing. Specs must pass without network access or
 a real interactive terminal.
