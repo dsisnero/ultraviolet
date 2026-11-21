@@ -181,12 +181,8 @@
         end
       end
 
-      # Use generic poll reader (SelectReader or FallbackReader)
-      if reader.is_a?(IO::FileDescriptor)
-        SelectReader.new(reader)
-      else
-        FallbackReader.new(reader)
-      end
+      # No select() on Windows; use the channel-based fallback reader.
+      FallbackReader.new(reader)
     end
   end
 {% end %}

@@ -66,32 +66,38 @@ module Ultraviolet
 
       loop do
         raise CancelError.new("read canceled") if canceled?
-        if io_fd = @io_fd
-          read_bytes = LibC.read(io_fd.fd, slice.to_unsafe, slice.size)
-          if read_bytes > 0
-            return read_bytes.to_i32
-          elsif read_bytes == 0
-            return 0
+        {% if flag?(:win32) %}
+          # The raw LibC.read/errno path below is POSIX-only; Windows goes
+          # through Crystal's own file descriptor read.
+          return io.read(slice)
+        {% else %}
+          if io_fd = @io_fd
+            read_bytes = LibC.read(io_fd.fd, slice.to_unsafe, slice.size)
+            if read_bytes > 0
+              return read_bytes.to_i32
+            elsif read_bytes == 0
+              return 0
+            else
+              errno = Errno.value
+              if errno == Errno::EAGAIN || errno == Errno::EWOULDBLOCK || errno == Errno::EINTR
+                sleep 5.milliseconds
+                next
+              end
+              raise IO::Error.from_errno("read")
+            end
           else
-            errno = Errno.value
-            if errno == Errno::EAGAIN || errno == Errno::EWOULDBLOCK || errno == Errno::EINTR
-              sleep 5.milliseconds
-              next
+            begin
+              return io.read(slice)
+            rescue ex : IO::Error
+              errno = Errno.value
+              if errno == Errno::EAGAIN || errno == Errno::EWOULDBLOCK
+                sleep 5.milliseconds
+                next
+              end
+              raise ex
             end
-            raise IO::Error.from_errno("read")
           end
-        else
-          begin
-            return io.read(slice)
-          rescue ex : IO::Error
-            errno = Errno.value
-            if errno == Errno::EAGAIN || errno == Errno::EWOULDBLOCK
-              sleep 5.milliseconds
-              next
-            end
-            raise ex
-          end
-        end
+        {% end %}
       end
     end
 

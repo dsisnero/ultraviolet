@@ -41,7 +41,7 @@
         # Manual-reset event: once signaled it stays signaled, so a reader that
         # starts waiting after Cancel/Close still wakes up.
         @cancel_event = LibC.CreateEventW(nil, 1, 0, nil)
-        if @cancel_event == LibC.HANDLE.null
+        if @cancel_event == LibC::HANDLE.null
           LibC.SetConsoleMode(@conin, @original_mode)
           raise IO::Error.new("create cancel event")
         end
@@ -90,7 +90,7 @@
             if LibC.CloseHandle(@cancel_event) == 0
               errors << "close cancel event"
             end
-            @cancel_event = LibC.HANDLE.null
+            @cancel_event = LibC::HANDLE.null
           end
         end
 
@@ -110,7 +110,7 @@
           if @event_lifetime.release
             @handle_mutex.synchronize do
               LibC.CloseHandle(@cancel_event)
-              @cancel_event = LibC.HANDLE.null
+              @cancel_event = LibC::HANDLE.null
             end
           end
         end
