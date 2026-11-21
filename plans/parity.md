@@ -117,8 +117,10 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
   currently exercised only by specs: Go's `Terminal` creates a poll reader
   (`newPollReader`) for its input loop, while Crystal's `Terminal` uses
   `CancelReader` and its own stream loop. If it is wired in, its raw
-  `select`/`epoll_wait` wait must move to a `Thread` or to Crystal's event
-  loop first — a blocking syscall inside a fiber stalls the scheduler.
+  `select`/`epoll_wait` `poll` must move to a `Thread` or to Crystal's event
+  loop first — a blocking syscall inside a fiber stalls the scheduler. Reads
+  already avoid that: they go through a nonblocking dup and Crystal's event
+  loop, and cancel/close wake a blocked read by closing the dup.
 - `src/ultraviolet/win32_api.cr` is the single `LibC` declaration block for the
   Win32 console layer; `make check-win32` cross-type-checks it for the Windows
   target because the `flag?(:win32)` files never compile on macOS.

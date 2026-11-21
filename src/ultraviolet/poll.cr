@@ -1,6 +1,10 @@
 {% unless flag?(:win32) %}
   require "c/sys/select"
   require "c/unistd"
+
+  lib LibC
+    fun dup(fd : Int32) : Int32
+  end
 {% end %}
 
 module Ultraviolet
@@ -37,14 +41,18 @@ module Ultraviolet
   class PollCanceledError < Exception
   end
 
-  # PollReader reads block through Crystal's IO event loop on purpose.
+  # PollReader reads go through Crystal's IO event loop, never a raw wait.
   #
-  # `poll` below waits in a raw select()/epoll_wait() call. Under Crystal's
-  # cooperative scheduler a blocking syscall inside a fiber stalls the whole
-  # thread, so a cancel could never run while a read sat in `poll`. Reads
-  # therefore use IO::FileDescriptor#read_timeout slices, which suspend in
-  # Crystal's event loop and let the canceling fiber run between attempts.
-  # Do not replace that with a raw wait without moving the wait to a Thread.
+  # Under Crystal's cooperative scheduler a blocking syscall inside a fiber
+  # stalls the scheduler thread: a raw select()/epoll_wait()/read() in `read`
+  # makes `cancel` impossible to observe (measured: a fiber parked in a raw
+  # select() freezes the main fiber). Reads therefore use a nonblocking dup of
+  # the input; Crystal's event loop suspends the fiber on EAGAIN, and
+  # cancel/close wake it by closing that dup.
+  #
+  # `poll` below still waits in a raw select()/epoll_wait() call, so do not
+  # call it from a fiber that must stay responsive, and move it to a Thread
+  # before wiring PollReader into the runtime.
   abstract class PollReader < IO
     abstract def read(slice : Bytes) : Int32
     abstract def poll(timeout : Time::Span) : Bool
@@ -83,6 +91,7 @@ module Ultraviolet
     class SelectReader < PollReader
       @reader : IO
       @file : IO::FileDescriptor
+      @read_io : IO::FileDescriptor
       @cancel_signal_reader : IO
       @cancel_signal_writer : IO
       @mutex : Mutex
@@ -94,6 +103,13 @@ module Ultraviolet
         @mutex = Mutex.new
         @canceled = false
 
+        # Reads go through a nonblocking dup: Crystal's event loop suspends the
+        # reading fiber instead of blocking the thread, and cancel/close can
+        # wake it by closing the dup without touching the caller's descriptor.
+        fd = LibC.dup(@file.fd)
+        raise IO::Error.from_errno("dup") if fd < 0
+        @read_io = IO::FileDescriptor.new(fd, blocking: false)
+
         # Create pipe for cancel signal
         pipe_reader, pipe_writer = IO.pipe
         @cancel_signal_reader = pipe_reader
@@ -103,21 +119,15 @@ module Ultraviolet
       def read(slice : Bytes) : Int32
         raise PollCanceledError.new("poll canceled") if canceled?
 
-        # A blocking read cannot be interrupted. Read in short slices so the
-        # canceling fiber gets a chance to run and the timeout path can check the
-        # cancel flag between attempts.
-        previous_timeout = @file.read_timeout
-        @file.read_timeout = 10.milliseconds
-        loop do
-          return @reader.read(slice)
-        rescue ex : IO::TimeoutError
-          raise PollCanceledError.new("poll canceled") if canceled?
+        # Reads go through the nonblocking dup, so the fiber suspends in
+        # Crystal's event loop instead of blocking the scheduler thread, and
+        # cancel/close wakes it by closing the dup.
+        begin
+          @read_io.read(slice)
         rescue ex
           raise PollCanceledError.new("poll canceled") if canceled?
           raise ex
         end
-      ensure
-        @file.read_timeout = previous_timeout if previous_timeout
       end
 
       def poll(timeout : Time::Span) : Bool
@@ -173,6 +183,14 @@ module Ultraviolet
           @canceled = true
         end
 
+        # Wake a fiber blocked in read() by closing its dup; the cancel pipe
+        # wakes a caller blocked in poll().
+        begin
+          @read_io.close
+        rescue
+          return false
+        end
+
         # Send cancel signal
         begin
           @cancel_signal_writer.write_bytes('c'.ord.to_u8)
@@ -184,6 +202,12 @@ module Ultraviolet
 
       def close : Nil
         error_msgs = [] of String
+
+        begin
+          @read_io.close
+        rescue ex
+          error_msgs << "closing read handle: #{ex.message}"
+        end
 
         begin
           @cancel_signal_writer.close
