@@ -61,6 +61,25 @@ describe "Terminal stop" do
   end
 end
 
+describe "Terminal display" do
+  # `display` was defined twice and the later, shorter definition won, dropping
+  # the alt-screen, cursor, and prepend handling. A display that ignores
+  # `@state` writes nothing at all.
+  it "applies the terminal state it was given" do
+    output = IO::Memory.new
+    term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
+
+    term.hide_cursor
+    term.display
+    output.to_s.should contain("\e[?25l")
+
+    # The state is recorded, so a second display has nothing to change.
+    output.clear
+    term.display
+    output.to_s.should_not contain("\e[?25l")
+  end
+end
+
 {% unless flag?(:win32) %}
   # Terminal#start needs a tty, so these drive a pseudo terminal: the master
   # end is what a user's typing looks like to the process.

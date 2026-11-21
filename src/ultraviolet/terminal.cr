@@ -23,9 +23,6 @@ module Ultraviolet
     property profile : ColorProfile
     getter method : WidthMethod
 
-    # opts holds the terminal options (matching Go's t.opts).
-    @opts : Options
-
     @in : IO
     @out : IO
     @in_tty : IO::FileDescriptor?
@@ -445,19 +442,6 @@ module Ultraviolet
       @buf.touched = [] of LineData?
       @scr.erase
       clear
-    end
-
-    def buffered : Int32
-      @scr.buffered
-    end
-
-    def display : Nil
-      @scr.render(@buf)
-      @scr.flush
-    end
-
-    def flush : Nil
-      @scr.flush
     end
 
     def buffered : Int32

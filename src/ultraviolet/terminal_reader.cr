@@ -51,11 +51,6 @@ module Ultraviolet
       @scanner.lookup = value
     end
 
-    def lookup=(value : Bool) : Bool
-      @lookup = value
-      @scanner.lookup = value
-    end
-
     def logger=(logger : Logger?) : Nil
       @logger = logger
       @scanner.logger = logger
