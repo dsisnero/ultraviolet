@@ -33,7 +33,8 @@
         # can wake it by closing the dup without touching the caller's fd.
         read_fd = LibC.dup(@file.fd)
         raise IO::Error.from_errno("dup") if read_fd < 0
-        @read_io = IO::FileDescriptor.new(read_fd, blocking: false)
+        @read_io = IO::FileDescriptor.new(read_fd)
+        @read_io.blocking = false
 
         # Create pipe for cancel signal
         pipe_reader, pipe_writer = IO.pipe

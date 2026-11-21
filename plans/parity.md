@@ -21,8 +21,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
      the `8ecbcf0` delta is closed.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4). Symbol inventory
   unchanged across the delta: 819 APIs, 196 tests, no ledger row changes.
-- **Last code feature commit:** `port: surface a failed console wait` (hash
-  recorded by the next commit).
+- **Last code feature commit:** `22fc910` (`port: surface a failed console
+  wait`).
 - **Gates:** `make format-check`, `make lint`, `make test` (410 examples),
   `make check-win32`, `make test-linux` (410 examples on Linux), `make
   inventory` (819 items) and `make parity` (819 APIs / 196 tests) all pass. CI
@@ -125,7 +125,9 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
   `select`/`epoll_wait` `poll` must move to a `Thread` or to Crystal's event
   loop first — a blocking syscall inside a fiber stalls the scheduler. Reads
   already avoid that: they go through a nonblocking dup and Crystal's event
-  loop, and cancel/close wake a blocked read by closing the dup.
+  loop, and cancel/close wake a blocked read by closing the dup. `poll` now
+  reports readiness correctly too (its `fd_set` wrote into a by-value
+  `StaticArray` copy and was silently dropped).
 - `src/ultraviolet/win32_api.cr` is the single `LibC` declaration block for the
   Win32 console layer; `make check-win32` cross-type-checks it for the Windows
   target because the `flag?(:win32)` files never compile on macOS.

@@ -10,6 +10,33 @@ module Ultraviolet
     end
 
     {% unless flag?(:win32) %}
+      it "reports data availability from poll" do
+        read_end, write_end = IO.pipe
+        poll_reader = Ultraviolet.new_poll_reader(read_end)
+
+        poll_reader.poll(10.milliseconds).should be_false
+
+        write_end.write("hello".to_slice)
+        write_end.flush
+        poll_reader.poll(1.second).should be_true
+      ensure
+        write_end.try &.close
+        read_end.try &.close
+      end
+
+      it "raises when canceled before polling" do
+        read_end, write_end = IO.pipe
+        poll_reader = Ultraviolet.new_poll_reader(read_end)
+
+        poll_reader.cancel.should be_true
+        expect_raises(PollCanceledError) do
+          poll_reader.poll(10.milliseconds)
+        end
+      ensure
+        write_end.try &.close
+        read_end.try &.close
+      end
+
       it "cancels a blocking read" do
         read_end, write_end = IO.pipe
         poll_reader = Ultraviolet.new_poll_reader(read_end)

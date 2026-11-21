@@ -108,7 +108,8 @@ module Ultraviolet
         # wake it by closing the dup without touching the caller's descriptor.
         fd = LibC.dup(@file.fd)
         raise IO::Error.from_errno("dup") if fd < 0
-        @read_io = IO::FileDescriptor.new(fd, blocking: false)
+        @read_io = IO::FileDescriptor.new(fd)
+        @read_io.blocking = false
 
         # Create pipe for cancel signal
         pipe_reader, pipe_writer = IO.pipe
@@ -231,14 +232,20 @@ module Ultraviolet
       end
 
       private def fd_zero(set : LibC::FdSet*) : Nil
-        set.value.fds_bits.fill(0)
+        # The StaticArray lives by value inside the struct: mutate a copy and
+        # assign it back, otherwise the write lands in a temporary.
+        words = set.value.fds_bits
+        words.fill(0)
+        set.value.fds_bits = words
       end
 
       private def fd_set(fd : Int32, set : LibC::FdSet*) : Nil
         bits_per_word = 8 * sizeof(typeof(set.value.fds_bits[0]))
         idx = fd // bits_per_word
         bit = fd % bits_per_word
-        set.value.fds_bits[idx] |= (typeof(set.value.fds_bits[0]).new(1) << bit)
+        words = set.value.fds_bits
+        words[idx] |= (typeof(words[0]).new(1) << bit)
+        set.value.fds_bits = words
       end
 
       private def fd_isset(fd : Int32, set : LibC::FdSet*) : Bool
