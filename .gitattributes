@@ -1,0 +1,13 @@
+# Normalize line endings so every runner (including Windows) checks out LF.
+# Without this, actions/checkout on Windows applies core.autocrlf=true and
+# `crystal tool format --check` reports every file as reformatted.
+* text=auto eol=lf
+
+# Explicit binary types (never normalize).
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ico  binary
+*.exe  binary
+*.dll  binary
+*.dwarf binary

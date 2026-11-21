@@ -63,4 +63,4 @@ jobs:
         run: shards install
 
       - name: Run Ameba
-        run: ./bin/ameba src spec
+        run: crystal run lib/ameba/bin/ameba.cr -- src spec

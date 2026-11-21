@@ -41,6 +41,9 @@ The parity gates (`make inventory`, `make parity`) are intentionally **not** in
 CI: they forward to the locally installed `cross-language-crystal-parity`
 skill, which is not part of this repository. Run them locally.
 
+`.gitattributes` pins `eol=lf` so the Windows runner's format check sees the
+same bytes as the Unix runners.
+
 ## Porting workflow
 
 1. Find the upstream behavior in `vendor/ultraviolet/`.

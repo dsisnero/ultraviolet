@@ -77,6 +77,16 @@ sidecars next to real files (thousands of them, including under `src/` and
 target, which deletes those sidecars first. `._*` is gitignored, so they never
 reach a commit.
 
+The volume also reports `core.fileMode=false`, so `chmod +x` is not recorded by
+git. When you add a shell script, stage the executable bit explicitly:
+
+```bash
+chmod +x scripts/foo.sh
+git update-index --chmod=+x scripts/foo.sh
+```
+
+Without that, a fresh clone and CI both fail with `Permission denied`.
+
 If a git operation prints `non-monotonic index .../._pack-*.idx`, clear the
 sidecars inside the object store:
 
