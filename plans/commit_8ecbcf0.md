@@ -6,7 +6,7 @@
   (2026-11-19, `fix: use layout's own key (#238)`)
 - **Upstream delta:** 3 commits, 8 files, +129/−19 lines
 - **Symbol delta:** none — 819 source APIs and 196 tests before and after
-- **Status:** snapshot bumped; behavioral ports open (phases 1–3 below)
+- **Status:** phase 1 ✅ (`port: prefer layout key in Keystroke`); snapshot bumped; phases 2–3 open
 
 This file is the plan for one commit range. Per-release history lives in
 `plans/commit_<sha>.md`; `plans/parity.md` links each file and tracks the
@@ -170,19 +170,23 @@ Crystal today (`src/ultraviolet/terminal_reader_windows.cr`,
 Each phase is one atomic `port:` commit that satisfies the definition of done in
 `AGENTS.md`.
 
-### Phase 1 — `Key.Keystroke` base-code rule (all platforms)
+### Phase 1 — `Key.Keystroke` base-code rule (all platforms) ✅
 
-- Change the `code` selection in `Key#key_label` to
-  `@base_code != 0 && (@code > 0x7F || !printable(@code))`.
-  Use `Char#printable?` and guard the code-point range so a bogus `@code` cannot
-  raise `ArgumentError`.
-- Update the keystroke table in `spec/key_spec.cr`: replace
-  `"key with base code"` (`'A'`/`'a'` → `a`) with the two upstream cases
-  (`с` + `c` → `ctrl+c`, `s` + `;` → `ctrl+s`), keeping
-  `"unknown key with base code"` (`x`) as the non-ASCII fallback case.
-- Check whether `key.cr`'s `SafeChar`/`safe_char` also needs the printable test
-  for code points > `0x10FFFF`; keep behavior identical for valid inputs.
-- Gates: `make format-check`, `make lint`, `make test`, `make inventory`.
+Commit: `port: prefer layout key in Keystroke`.
+
+- `Key#key_label` now picks the PC-101 `@base_code` only when `@code` is above
+  `0x7F` (Go's `unicode.MaxASCII`) or is not printable, via the new
+  `base_code_preferred?`; ASCII printables keep the layout's own label.
+- `spec/key_spec.cr` keystroke table: `"key with base code"` (`'A'`/`'a'` →
+  `a`) replaced by the two upstream cases — `с`+`c`+ctrl → `ctrl+c` (non-ASCII
+  fallback) and `s`+`;`+ctrl → `ctrl+s` (Dvorak ignores the base code) —
+  with `"unknown key with base code"` (`x`) kept as the fallback case.
+- Red → green: the Dvorak case failed first (`ctrl+;`), then passed; the
+  Cyrillic case already passed and now guards the fallback from regressing.
+- Reuses the existing `Ultraviolet.printable_char?` guard so out-of-range or
+  surrogate `@code` values cannot raise.
+- Gates: `make format-check`, `make lint`, `make test` (394 examples),
+  `make inventory` (819 items).
 
 ### Phase 2 — Windows cancel reader event lifecycle
 
@@ -254,6 +258,6 @@ The snapshot bump itself changes no symbols, so the repository stays green:
 - `make inventory` — 819 items tracked
 - `make parity` — 819 APIs, 196 tests
 
-Phase 1 opens with a red spec (the new upstream expectations fail against the
-current `key_label`), then closes it. Phases 2–3 change Windows-only code, so
-`make test` stays green on macOS while parity comes from review.
+Phase 1 opened with a red spec (the Dvorak case failed against the old
+`key_label`) and closed it in `port: prefer layout key in Keystroke`. Phases 2–3 change Windows-only
+code, so `make test` stays green on macOS while parity comes from review.

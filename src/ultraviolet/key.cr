@@ -235,7 +235,11 @@ module Ultraviolet
         return key_type
       end
 
-      code = @base_code != 0 ? @base_code : @code
+      # Prefer the layout's own key so remapped ASCII layouts (Dvorak, Colemak)
+      # bind by label; fall back to the PC-101 base code only for non-ASCII or
+      # non-printable codes (e.g. Cyrillic) so ctrl+c keeps working. Mirrors Go:
+      # BaseCode != 0 && (Code > unicode.MaxASCII || !unicode.IsPrint(Code)).
+      code = base_code_preferred? ? @base_code : @code
       case code
       when KeySpace
         "space"
@@ -244,6 +248,15 @@ module Ultraviolet
       else
         Ultraviolet.safe_char(code).to_s
       end
+    end
+
+    # Go only falls back to the PC-101 base code when the layout's own code
+    # cannot stand in for a label: non-ASCII (Cyrillic) or non-printable
+    # (control) codes. ASCII printables keep their own label, which is what
+    # makes Dvorak/Colemak bindings work.
+    private def base_code_preferred? : Bool
+      return false if @base_code == 0
+      @code > 0x7F || !Ultraviolet.printable_char?(@code) # 0x7F == Go's unicode.MaxASCII
     end
   end
 

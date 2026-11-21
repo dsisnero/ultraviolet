@@ -7,22 +7,20 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 ## Where we are
 
 - **Active plan:** [Vendor refresh `6b8d4ba` → `8ecbcf0`](commit_8ecbcf0.md).
-- **Current focus:** Phase 1 — `Key.Keystroke` base-code rule (all
-  platforms). Phases 2–3 are Windows-only cancel-reader and terminal-reader
-  ports.
+- **Current focus:** Phase 2 — Windows `ConInputReader` cancel-event lifecycle.
+  Phase 1 (`Key.Keystroke` base-code rule) is complete.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 1:** `Key#key_label` uses `BaseCode` only for non-ASCII /
-     non-printable codes; port the two upstream `TestKeystroke` cases.
-  2. **Phase 2:** Windows `ConInputReader` cancel-event lifecycle
+  1. **Phase 2:** Windows `ConInputReader` cancel-event lifecycle
      (idempotent `close`, waiter accounting, `wait_for_input`).
-  3. **Phase 3:** Windows `send_bytes_windows` blocks on the console handle
+  2. **Phase 3:** Windows `send_bytes_windows` blocks on the console handle
      instead of polling.
-  4. **Phase 4:** re-baseline bookkeeping, refresh this plan, and update the
-     pinned commit in `AGENTS.md`, `README.md`, `docs/development.md`.
+  3. **Phase 4:** re-baseline bookkeeping, refresh this plan, and finalize the
+     pinned commit bookkeeping.
 - **Chunk status:** snapshot bumped to `8ecbcf0`; symbol inventory unchanged
-  (819 APIs / 196 tests, no ledger row changes). Behavioral delta open.
-  Phases 1–9 of the previous refresh are complete.
-- **Last code feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
+  (819 APIs / 196 tests, no ledger row changes). Phase 1 of the behavioral
+  delta is done; phases 2–3 are Windows-only. Phases 1–9 of the previous
+  refresh are complete.
+- **Last code feature commit:** `port: prefer layout key in Keystroke` (hash recorded by the next phase).
 - **Gates:** `make lint`, `make test`, and `make inventory` pass (`394`
   examples; 819-item ledger). `make parity` passes (819 APIs, 196 tests).
 
@@ -55,7 +53,7 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
 | 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
 | 9 | Conformance harness assessment | ✅ | [Decision: not ported](conformance-assessment.md) |
-| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) |
+| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) — Phase 1 ✅, phases 2–3 open |
 
 ## Status overview
 
