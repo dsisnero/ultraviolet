@@ -38,19 +38,43 @@ make format-check
 
 ## Updating the vendored Go source
 
-The current snapshot is commit `6b8d4ba`. The Crystal port still tracks the
-previous `7cc6674` behavior; the remaining work is listed in
-`plans/update-vendor-6b8d4ba.md`. To move to a newer upstream commit, replace
-the `vendor/ultraviolet/` tree, re-run the port audit, then regenerate the
-parity manifests.
+This upstream publishes no tags or releases, so snapshots are pinned by commit.
+The current snapshot is `8ecbcf0` (2026-11-19); the Crystal port tracks behavior
+through `6b8d4ba`. The remaining work is listed in `plans/commit_8ecbcf0.md`.
+
+To move to a newer upstream commit:
+
+```bash
+git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main
+git clone https://github.com/charmbracelet/ultraviolet temp/upstream-ultraviolet
+git -C temp/upstream-ultraviolet log --oneline <current>..<target>
+```
+
+Replace the `vendor/ultraviolet/` tree with the target commit's tree, write a
+`plans/commit_<sha>.md` plan for the delta, regenerate the parity manifests, and
+triage the inventory before porting behavior.
 
 ## Parity scripts
 
+The gates forward to the installed `cross-language-crystal-parity` skill
+(`${HOME}/.agents/skills/crystal_forge/skills/cross-language-crystal-parity`,
+override with `PARITY_SKILL_DIR`). The wrappers in `scripts/` only supply this
+repo's defaults; the parity logic lives in the skill.
+
 ```bash
-./scripts/check_port_inventory.sh . plans/inventory/go_port_inventory.tsv vendor/ultraviolet go
-./scripts/check_source_parity.sh . plans/inventory/go_source_parity.tsv vendor/ultraviolet go
-./scripts/check_test_parity.sh . plans/inventory/go_test_parity.tsv vendor/ultraviolet go
-./scripts/verify_parity_adversarial.sh . vendor/ultraviolet go 'crystal spec' 'go test ./...'
+make inventory    # curated ledger: plans/inventory/go_port_inventory.tsv
+make parity       # inventory + generated source/test parity manifests
+
+# Underlying commands, all pinned to PORT_PARSER=regex
+./scripts/check_go_port_inventory.sh . plans/inventory/go_port_inventory.tsv vendor/ultraviolet
+./scripts/check_go_source_parity.sh  . plans/inventory/go_source_parity.tsv  vendor/ultraviolet
+./scripts/check_go_test_parity.sh    . plans/inventory/go_test_parity.tsv    vendor/ultraviolet
+
+# Adversarial signoff (re-derives ledgers and proves the gates can fail)
+./scripts/verify_parity_adversarial.sh . vendor/ultraviolet
 ```
+
+Never copy parity scripts into this repo; see the **Parity tooling** section in
+`AGENTS.md`.
 
 See `plans/parity.md` for current counts and known upstream-limited gaps.

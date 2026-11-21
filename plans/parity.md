@@ -2,24 +2,42 @@
 
 Ultraviolet is a Crystal port of the Go
 [ultraviolet](https://github.com/charmbracelet/ultraviolet) terminal UI library.
-The Go source is vendored at `vendor/ultraviolet/` (commit `6b8d4ba`).
+The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** [Vendor update `7cc6674` → `6b8d4ba`](update-vendor-6b8d4ba.md).
-- **Current focus:** no active porting feature. The `6b8d4ba` delta, feature
-  follow-ups, inventory triage, and conformance assessment are complete.
+- **Active plan:** [Vendor refresh `6b8d4ba` → `8ecbcf0`](commit_8ecbcf0.md).
+- **Current focus:** Phase 1 — `Key.Keystroke` base-code rule (all
+  platforms). Phases 2–3 are Windows-only cancel-reader and terminal-reader
+  ports.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 10 — Next vendor refresh:** repeat the vendor-update workflow when
-     upstream moves past `6b8d4ba`.
-- **Chunk status:** phases 1–9 complete; phase 10 deferred until upstream
-  advances. The conformance harness is intentionally not ported; see
-  [the assessment](conformance-assessment.md).
+  1. **Phase 1:** `Key#key_label` uses `BaseCode` only for non-ASCII /
+     non-printable codes; port the two upstream `TestKeystroke` cases.
+  2. **Phase 2:** Windows `ConInputReader` cancel-event lifecycle
+     (idempotent `close`, waiter accounting, `wait_for_input`).
+  3. **Phase 3:** Windows `send_bytes_windows` blocks on the console handle
+     instead of polling.
+  4. **Phase 4:** re-baseline bookkeeping, refresh this plan, and update the
+     pinned commit in `AGENTS.md`, `README.md`, `docs/development.md`.
+- **Chunk status:** snapshot bumped to `8ecbcf0`; symbol inventory unchanged
+  (819 APIs / 196 tests, no ledger row changes). Behavioral delta open.
+  Phases 1–9 of the previous refresh are complete.
 - **Last code feature commit:** `2a85b32` (`port: add Go-compatible method aliases`).
-- **Gates:** `make lint` and `make test` pass (`394` examples).
+- **Gates:** `make lint`, `make test`, and `make inventory` pass (`394`
+  examples; 819-item ledger). `make parity` passes (819 APIs, 196 tests).
 
-> **Synced to:** `6b8d4ba` (vendored snapshot; Crystal implementation tracks
-> `7cc6674` plus the completed `6b8d4ba` follow-ups).
+> **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks
+> `6b8d4ba` plus the completed `7cc6674` follow-ups until
+> [the refresh plan](commit_8ecbcf0.md) closes).
+
+## Commit plans
+
+One file per upstream commit range; the current one is also the active plan.
+
+| Plan | Range | Status |
+|------|-------|--------|
+| [update-vendor-6b8d4ba.md](update-vendor-6b8d4ba.md) | `7cc6674` → `6b8d4ba` | ✅ complete |
+| [commit_8ecbcf0.md](commit_8ecbcf0.md) | `6b8d4ba` → `8ecbcf0` | 🚧 active |
 
 ## Feature phases
 
@@ -37,7 +55,7 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
 | 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
 | 9 | Conformance harness assessment | ✅ | [Decision: not ported](conformance-assessment.md) |
-| 10 | Next vendor refresh | Deferred | Awaiting upstream > `6b8d4ba` |
+| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) |
 
 ## Status overview
 
