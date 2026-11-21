@@ -1,0 +1,19 @@
+# Linux test container. Mirrors what the ubuntu-latest CI job does, so a Linux
+# regression (for example the epoll cancel path) can be reproduced locally on
+# macOS.
+FROM crystallang/crystal:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN crystal --version
+
+WORKDIR /workspace
+
+CMD ["crystal", "spec"]

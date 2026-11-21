@@ -44,6 +44,25 @@ skill, which is not part of this repository. Run them locally.
 `.gitattributes` pins `eol=lf` so the Windows runner's format check sees the
 same bytes as the Unix runners.
 
+## Local Linux testing in a container
+
+Linux-only code (for example the epoll poll reader) cannot be exercised on
+macOS. `Dockerfile.linux` plus the container targets run the same suite the
+`ubuntu-latest` CI job runs:
+
+```bash
+make container-info   # shows which runtime was detected
+make container-build  # build the Linux test image
+make test-linux       # shards install once, then run the suite in Linux
+make container-dev    # interactive shell in the image
+make container-clean  # delete the image
+```
+
+Apple `container` is preferred when present (macOS on Apple silicon), then
+`docker`. The run is given 6 GB / 4 CPUs by default because the Crystal
+compiler is otherwise OOM-killed (`exit 137`); override with
+`make test-linux CONTAINER_MEMORY=8G CONTAINER_CPUS=6`.
+
 ## Porting workflow
 
 1. Find the upstream behavior in `vendor/ultraviolet/`.

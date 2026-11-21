@@ -1,0 +1,26 @@
+# Git
+.git/
+.gitignore
+
+# Crystal
+lib/
+.crystal/
+.shards/
+shard.lock
+*.dwarf
+
+# Build artifacts
+bin/
+*.o
+*.a
+
+# Scratch
+temp/
+tmp/
+
+# Vendor snapshot is only needed by the local parity gates
+vendor/
+
+# macOS metadata
+.DS_Store
+._*
