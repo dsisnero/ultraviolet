@@ -37,6 +37,14 @@ module Ultraviolet
   class PollCanceledError < Exception
   end
 
+  # PollReader reads block through Crystal's IO event loop on purpose.
+  #
+  # `poll` below waits in a raw select()/epoll_wait() call. Under Crystal's
+  # cooperative scheduler a blocking syscall inside a fiber stalls the whole
+  # thread, so a cancel could never run while a read sat in `poll`. Reads
+  # therefore use IO::FileDescriptor#read_timeout slices, which suspend in
+  # Crystal's event loop and let the canceling fiber run between attempts.
+  # Do not replace that with a raw wait without moving the wait to a Thread.
   abstract class PollReader < IO
     abstract def read(slice : Bytes) : Int32
     abstract def poll(timeout : Time::Span) : Bool
