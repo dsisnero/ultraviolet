@@ -6,7 +6,7 @@
   (2026-11-19, `fix: use layout's own key (#238)`)
 - **Upstream delta:** 3 commits, 8 files, +129/−19 lines
 - **Symbol delta:** none — 819 source APIs and 196 tests before and after
-- **Status:** phases 1–2 ✅; phase 3 open (`send_bytes_windows` wait loop)
+- **Status:** phases 1–3 ✅; phase 4 open (re-baseline bookkeeping)
 
 This file is the plan for one commit range. Per-release history lives in
 `plans/commit_<sha>.md`; `plans/parity.md` links each file and tracks the
@@ -190,8 +190,7 @@ Commit: `5d41995` (`port: prefer layout key in Keystroke`).
 
 ### Phase 2 — Windows cancel reader event lifecycle ✅
 
-Commit: `port: windows cancel reader event lifecycle` (hash recorded by the
-next phase).
+Commit: `e01962d` (`port: windows cancel reader event lifecycle`).
 
 - `CancelEventLifetime` (`src/ultraviolet/cancel_event_lifetime.cr`): the
   `waiters`/`closed`/`freed` accounting Go keeps inline in `conInputReader`.
@@ -220,15 +219,26 @@ next phase).
 - Gates: `make format-check`, `make lint`, `make test` (402 examples),
   `make check-win32`, `make inventory` (819 items).
 
-### Phase 3 — Windows terminal reader wait loop
+### Phase 3 — Windows terminal reader wait loop ✅
 
-- Add `EMPTY_WAKE_BACKOFF = 10.milliseconds`.
-- In `send_bytes_windows`, replace the `records.empty?` sleep with
-  `conin.wait_for_input` + backoff when the previous iteration woke without
-  records; keep the `conin.canceled?` checks and the generic fallback for a
-  plain `IO::FileDescriptor` handle.
-- Verified by `make check-win32` (type-checks this file's `send_bytes_windows`
-  path) plus structural review against Go; execution needs a Windows host.
+Commit: `port: wait on the console handle in the Windows reader` (hash
+recorded by the next phase).
+
+- `ConsoleWakeLoop(T)` (`src/ultraviolet/console_wake_loop.cr`) is the inner
+  loop of Go's `streamData`: peek, return a non-empty batch, otherwise wait on
+  the console, and back off once when the wake produced nothing. The wake state
+  resets per batch, exactly like Go's `var woke bool`.
+- `Ultraviolet::EMPTY_WAKE_BACKOFF = 10.milliseconds` is the ported
+  `emptyWakeBackoff`.
+- `send_bytes_windows` now builds that loop for a `ConInputReader` (peek →
+  `peek_n_console_inputs`, wait → `wait_for_input`, backoff → `sleep`), keeps
+  polling only for a plain console handle with no cancel event, and treats a
+  `CancelError` from a concurrent `close` as a normal stop.
+- Red → green: `spec/console_wake_loop_spec.cr` (8 cases) failed to compile
+  first, then passed — including "backs off only after a wake that produced
+  nothing" and "does not carry the wake state into the next batch".
+- Gates: `make format-check`, `make lint`, `make test` (410 examples),
+  `make check-win32`, `make inventory` (819 items).
 
 ### Phase 4 — Re-baseline bookkeeping
 
@@ -246,6 +256,8 @@ next phase).
 - Phase 2 covers the event-lifetime decisions with
   `spec/cancel_event_lifetime_spec.cr`, which runs on every platform because
   the decisions were extracted out of the flag-gated file.
+- Phase 3 covers the wait/backoff policy with `spec/console_wake_loop_spec.cr`,
+  for the same reason: the loop is generic and the Win32 calls are injected.
 - Phases 2–3 also compile for the Windows target via `make check-win32`
   (`--target x86_64-windows-msvc --no-codegen`), which type-checks the gated
   files against the Windows stdlib. This is a compile gate, not an execution
@@ -266,16 +278,25 @@ next phase).
   `eventFreed` bookkeeping inline in `conInputReader`. Crystal moves the
   decisions into a platform-independent class so they are testable off
   Windows; the Win32 calls stay in `cancelreader_windows.cr`.
+- `ConsoleWakeLoop` extraction: same trade for `streamData`'s inner loop. Go
+  inlines peek/wait/backoff; Crystal makes the loop generic and injects the
+  console peek, the wait, and the backoff sleep from
+  `terminal_reader_windows.cr`.
 - `CloseHandle(@conin)` removal (phase 2) is observable on Windows only, and
   it restores Go's behavior rather than introducing a divergence.
 - `emptyWakeBackoff` / 10 ms backoff: same value as Go; no divergence.
+- Known gap: `wait_for_input` ignores the `WaitForMultipleObjects` result, so a
+  `WAIT_FAILED` does not abort the read loop the way Go's `streamData` error
+  return does. Crystal's reader has no error channel to the caller; wiring that
+  through `TerminalReader` is a separate feature. Recorded here so it is a
+  decision, not an oversight.
 
 ## Gate state after the snapshot bump
 
 The snapshot bump itself changes no symbols, so the repository stays green:
 
 - `make lint` — pass
-- `make test` — 402 examples, 0 failures
+- `make test` — 410 examples, 0 failures
 - `make check-win32` — Win32 reader layer type-checks
 - `make inventory` — 819 items tracked
 - `make parity` — 819 APIs, 196 tests
@@ -283,6 +304,6 @@ The snapshot bump itself changes no symbols, so the repository stays green:
 Phase 1 opened with a red spec (the Dvorak case failed against the old
 `key_label`) and closed it in `port: prefer layout key in Keystroke`. Phase 2
 opened with a spec that did not compile (`CancelEventLifetime` absent) and
-closed with 8 passing lifetime cases plus a Win32 compile gate. Phase 3
-changes Windows-only code, so `make test` stays green on macOS while
-`make check-win32` guards the file.
+closed with 8 passing lifetime cases plus a Win32 compile gate. Phase 3 opened
+the same way (`ConsoleWakeLoop` absent) and closed with 8 wake-loop cases
+driving the same code path the Windows reader now uses.

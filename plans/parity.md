@@ -7,20 +7,21 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 ## Where we are
 
 - **Active plan:** [Vendor refresh `6b8d4ba` → `8ecbcf0`](commit_8ecbcf0.md).
-- **Current focus:** Phase 3 — Windows `send_bytes_windows` blocks on the
-  console handle instead of polling. Phases 1–2 are complete.
+- **Current focus:** Phase 4 — re-baseline bookkeeping: refresh this plan,
+  confirm the manifests, and close the refresh. Phases 1–3 are complete.
 - **Next up (feature-sized phases, one branch/commit each):**
-  1. **Phase 3:** Windows `send_bytes_windows` waits via `wait_for_input`
-     with a 10 ms empty-wake backoff instead of `sleep 10.ms`.
-  2. **Phase 4:** re-baseline bookkeeping, refresh this plan, and finalize the
-     pinned commit bookkeeping.
+  1. **Phase 4:** re-baseline bookkeeping and mark
+     [the refresh plan](commit_8ecbcf0.md) complete.
+  2. Next upstream refresh once `charmbracelet/ultraviolet` moves past
+     `8ecbcf0` (commit-based; the upstream publishes no tags).
 - **Chunk status:** snapshot bumped to `8ecbcf0`; symbol inventory unchanged
-  (819 APIs / 196 tests, no ledger row changes). Phases 1–2 of the behavioral
-  delta are done; phase 3 is Windows-only. Phases 1–9 of the previous refresh
-  are complete.
-- **Last code feature commit:** `5d41995` (`port: prefer layout key in Keystroke`).
+  (819 APIs / 196 tests, no ledger row changes). All behavioral phases of the
+  delta (1–3) are done; only bookkeeping remains. Phases 1–9 of the previous
+  refresh are complete.
+- **Last code feature commit:** `e01962d` (`port: windows cancel reader event
+  lifecycle`).
 - **Gates:** `make lint`, `make test`, `make check-win32`, and `make inventory`
-  pass (`402` examples; 819-item ledger). `make parity` passes (819 APIs, 196
+  pass (`410` examples; 819-item ledger). `make parity` passes (819 APIs, 196
   tests).
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks
@@ -52,7 +53,7 @@ Each phase is sized for one branch or commit and is tracked in detail in
 | 7 | Parity inventory refresh | ✅ | `plans/inventory/*` refreshed from `6b8d4ba` |
 | 8 | Inventory triage | ✅ | 954 ported, 61 intentional divergences, 0 missing |
 | 9 | Conformance harness assessment | ✅ | [Decision: not ported](conformance-assessment.md) |
-| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) — phases 1–2 ✅, phase 3 open |
+| 10 | Vendor refresh `6b8d4ba` → `8ecbcf0` | 🚧 | [Plan](commit_8ecbcf0.md) — phases 1–3 ✅, phase 4 open |
 
 ## Status overview
 
@@ -110,6 +111,8 @@ Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
 - `CancelEventLifetime` holds the Windows cancel-event ownership decisions
   (`waiters`/`closed`/`freed`) that Go keeps inline in `conInputReader`, so the
   lifecycle is testable off Windows.
+- `ConsoleWakeLoop` holds the peek/wait/backoff loop Go keeps inline in
+  `streamData`, with the console calls injected, for the same reason.
 - `src/ultraviolet/win32_api.cr` is the single `LibC` declaration block for the
   Win32 console layer; `make check-win32` cross-type-checks it for the Windows
   target because the `flag?(:win32)` files never compile on macOS.

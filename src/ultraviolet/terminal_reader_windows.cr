@@ -33,19 +33,38 @@
           @vt_input = (mode & LibC::ENABLE_VIRTUAL_TERMINAL_INPUT) != 0
         end
 
-        loop do
-          break if stop && stop.closed?
+        # Cancellation and stop share one predicate: either ends the loop.
+        stopped = -> { (stop.try(&.closed?) || false) || (conin.try(&.canceled?) || false) }
 
-          # Check for cancellation if using ConInputReader
-          if conin && conin.canceled?
-            break
+        # With a ConInputReader we block on the console handle; a plain console
+        # handle has no cancel event to wait on, so it keeps polling.
+        pump =
+          if reader = conin
+            ConsoleWakeLoop(LibC::InputRecord).new(
+              peek: -> { peek_n_console_inputs(reader.@conin, 4096) },
+              wait: -> { reader.wait_for_input; nil },
+              backoff: -> { sleep EMPTY_WAKE_BACKOFF },
+            )
           end
 
-          # Peek at available console inputs
-          records = peek_n_console_inputs(handle, 4096)
+        loop do
+          break if stopped.call
+
+          records =
+            if pump
+              begin
+                pump.next_batch(stopped) || break
+              rescue CancelError
+                # close() won the race with our stop check
+                break
+              end
+            else
+              peek_n_console_inputs(handle, 4096)
+            end
+
           if records.empty?
-            # Sleep a bit to avoid busy waiting
-            sleep 10.milliseconds
+            # Plain console handle: no cancel event, so sleep instead of waiting.
+            sleep EMPTY_WAKE_BACKOFF
             next
           end
 
