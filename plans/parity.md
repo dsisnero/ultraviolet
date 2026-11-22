@@ -75,7 +75,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (reproduced on Crystal 1.20.1, and `shard.yml` still allows 1.19.1). Current
   compilers run threads under execution contexts and do wake it, but the readers
   must also work on the oldest supported one, and the event-loop design needs no
-  thread at all.
+  thread at all. An `ExecutionContext::Isolated` fiber could host the raw wait
+  too, but that costs a dedicated OS thread per reader and still needs a
+  cross-thread channel to return the result, so it inherits the same version
+  constraint for no gain.
 - The only C binding left in the readers is `LibC.dup` (the stdlib has no
   `dup`, and a reader must not close the caller's descriptor). `poll_windows.cr`
   still waits in `WaitForMultipleObjects`, which the Windows console reader
