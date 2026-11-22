@@ -11,16 +11,20 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags; refreshes are commit-based.
 - **Current focus:** none. The `PollReader` decision is made and implemented
-  (see below); next is the upstream refresh.
+  (see below), and the adversarial signoff is clean at `ab56604`; the only work
+  left is the next upstream refresh.
 - **Next up, in priority order:**
   1. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
-     — still `8ecbcf0` as of `d9728b6`. If it moved, run a refresh: clone, diff
-     `<old>..<new>`, write `plans/commit_<new>.md`, bump `vendor/`, then port
-     the delta in feature-sized phases. The recipe and phase template are in
+     — still `8ecbcf0` as of `ab56604` (two checks, `d9728b6` and `ab56604`).
+     If it moved, run a refresh: clone, diff `<old>..<new>`, write
+     `plans/commit_<new>.md`, bump `vendor/`, then port the delta in
+     feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Optional: re-run adversarial parity signoff** with
+  2. **Optional: re-run the adversarial signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
-     refresh (it re-derives the ledgers and proves the gates can fail).
+     refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
+     432 examples, 0 pending, and upstream `go test ./...` green. It leaves the
+     working tree untouched.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -28,17 +32,18 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (input latency and idle wakeups quantized by that sleep). `stop_input`
   cancels and then closes the reader, as Go's `Stop` does. `Poll` is a
   different matter: **Go's `Terminal` never calls it**, so the input path never
-  touches the raw wait, and `poll` keeps Go's blocking behavior for API
-  callers. Acceptance held: `make test`, `make test-linux`, `check-win32` green
-  and no raw wait reachable from a fiber.
+  waits for readiness at all. The acceptance criterion — no raw wait reachable
+  from a fiber — is met outright: the fd readers poll through the event loop
+  after `b318a4f`, so `poll` is fiber-safe and another fiber can cancel it.
+  `make test`, `make test-linux`, and `check-win32` are green.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `d9728b6` (`fix: pass ioctl's pointer argument
-  as a variadic argument`).
-- **Gates:** `make format-check`, `make lint`, `make test` (430 examples),
-  `make check-win32`, `make test-linux` pass; `make inventory` (819 items) and
-  `make parity` (819 APIs / 196 tests) pass; CI is green on ubuntu-latest,
-  macos-latest, windows-latest plus the lint job.
+- **Last code feature commit:** `b318a4f` (`port: poll the fd readers through
+  Crystal's event loop`).
+- **Gates:** `make format-check`, `make lint`, `make test` (432 examples),
+  `make check-win32`, `make test-linux` (432 examples in the container) pass;
+  `make inventory` (819 items) and `make parity` (819 APIs / 196 tests) pass;
+  CI is green on ubuntu-latest, macos-latest, windows-latest plus the lint job.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
