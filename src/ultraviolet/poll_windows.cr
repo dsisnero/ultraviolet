@@ -71,7 +71,7 @@
         end
       end
 
-      protected def poll_now(timeout : Time::Span) : Bool
+      def poll(timeout : Time::Span) : Bool
         raise PollCanceledError.new("poll canceled") if canceled?
 
         timeout_ms = timeout < 0.seconds ? LibC::INFINITE : timeout.total_milliseconds.to_u32
