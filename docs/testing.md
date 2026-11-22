@@ -44,6 +44,22 @@ Do not delete a failing parity case to make the suite green. If a case is
 blocked by an upstream-limited behavior, document it in `plans/parity.md` and
 mark it explicitly.
 
+## Linux in a container
+
+`make test-linux` runs the suite inside `Dockerfile.linux`, which pins
+`crystallang/crystal:latest` — whatever that means when the image is pulled,
+not the compiler on your machine. The image was on Crystal 1.20.1 while the
+host had 1.22.3, and a `Thread` + `Channel` construct that worked on one
+deadlocked on the other. Treat a green local `make test` as no evidence about
+the container, and read the compiler version before blaming the code:
+
+```bash
+container exec "$(container list -q | tail -1)" crystal --version
+```
+
+`shard.yml` allows Crystal >= 1.19.1, so anything the suite relies on must work
+on the oldest supported compiler.
+
 ## Parity verification
 
 The manifest scripts compare source and test inventories against the vendored
