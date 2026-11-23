@@ -1,0 +1,22 @@
+# Curated decoder inputs, hex encoded, one per line.
+# Kept in sync with regenerating spec/fixtures/decode_golden.tsv via
+# `make decode-golden` (which runs the vendored Go decoder as an oracle).
+1b5b3c303b31303b354d	sgr press left
+1b5b3c303b31303b356d	sgr release left
+1b5b3c33323b31323b364d	sgr motion with left
+1b5b3c33353b31323b364d	sgr motion no button
+1b5b3c34383b31323b364d	sgr motion ctrl
+1b5b3c36343b31323b364d	sgr wheel up
+1b5b3c36353b31323b364d	sgr wheel down
+1b5b3c36363b31323b364d	sgr wheel left
+1b5b3c36373b31323b364d	sgr wheel right
+1b5b4d204131	x10 press left
+1b5b4d404131	x10 motion with left
+1b5b4d434131	x10 motion no button
+1b5b4d604131	x10 wheel up
+1b5b343b32343b383074	window pixels report
+1b5b363b31333b3774	cell size report
+1b5b383b32343b383074	window cells report
+1b5b34383b32343b38303b3331323b35363074	in-band resize report
+1b5b39393974	unknown window op
+1b5b3939393b3174	unknown window op arg

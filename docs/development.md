@@ -34,9 +34,17 @@ example without breaking the suite.
 
 ```bash
 make check-examples            # type-check every example, no binaries
+make smoke-examples            # start each example under a pty for a moment
 make build-examples            # build only the stale example binaries
 make run-example EXAMPLE=mouse # run one example from source
 ```
+
+`check-examples` cannot see a crash on the first frame, so `smoke-examples`
+starts every binary under a pseudo terminal and fails if one dies immediately.
+Both run in CI. Crystal has no `if __FILE__ == $0` idiom: `$0` is the last regex
+match, not the program name, and evaluating it before a match raises
+`NilAssertionError`. Run example code unconditionally; `check-examples` rejects
+that guard.
 
 Each example binary declares `src/**/*.cr` and `shard.yml` as prerequisites, so
 `make build-examples` rebuilds after a library change and does nothing when

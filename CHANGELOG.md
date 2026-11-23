@@ -67,6 +67,20 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 
 ### Internal
 
+- Decoder parity is now checked against the **vendored Go decoder**:
+  `make decode-golden` regenerates `spec/fixtures/decode_golden.tsv` and
+  `spec/decoder_golden_spec.cr` asserts this port matches it. It pinned the
+  mouse families and the terminal size reports that mouse tracking depends on.
+- `examples/mouse.cr` asks the terminal for its pixel size (XTWINOPS 14). Without
+  that reply `mouse_pixel_to_cell` returns `(0, 0)` for every event, which is
+  what made the mouse look like it was not tracking.
+- `examples/` now mirrors every file under `vendor/ultraviolet/examples/`, and
+  CI both type-checks and smoke-runs the examples. Nothing built or ran them
+  before, so four had stopped compiling and `draw.cr` crashed on its first
+  statement: `if __FILE__ == $0`, where Crystal's `$0` is the last regex match
+  rather than the program name.
+- Example binaries rebuild when any `src/` file changes and are left alone
+  otherwise; the built artifacts are gitignored.
 - Specs drive a real pseudo terminal for terminal, input, and winsize coverage;
   `spec/winsize_spec.cr` and the `pty_pair` helper in `spec/spec_helper.cr` are
   new.

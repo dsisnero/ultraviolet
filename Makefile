@@ -1,4 +1,4 @@
-.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples smoke-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 .PHONY: container-info container-build test-linux container-dev container-clean
 
 # Local Linux testing in a container. Apple `container` is preferred on macOS,
@@ -33,8 +33,10 @@ endif
 # Crystal cache for faster builds
 export CRYSTAL_CACHE_DIR := $(PWD)/.crystal-cache
 
-# Example source files and their output binaries
-EXAMPLE_SOURCES := $(shell find examples -name '*.cr')
+# Example source files and their output binaries. AppleDouble sidecars
+# (`._draw.cr`) land next to real files on exFAT volumes and must not become
+# build targets or type-check inputs.
+EXAMPLE_SOURCES := $(filter-out examples/._%,$(shell find examples -name '*.cr'))
 EXAMPLE_BINARIES := $(EXAMPLE_SOURCES:.cr=)
 
 # Every example links the library, so an example binary is stale whenever any
@@ -128,9 +130,39 @@ build-examples: $(EXAMPLE_BINARIES)
 
 # Type-check every example without producing binaries
 check-examples:
-	@for f in examples/*.cr; do \
+	@if grep -rn -- '__FILE__ == $$0' examples/*.cr; then \
+		echo "error: Crystal's \$$0 is the last regex match, not the program name." >&2; \
+		echo "       Run the example unconditionally instead of guarding on __FILE__." >&2; \
+		exit 1; \
+	fi
+	@for f in $$(find examples -maxdepth 1 -name '[^.]*.cr' | sort); do \
 		echo "Checking $$f"; \
 		crystal build --no-codegen "$$f" || exit $$?; \
+	done
+
+# Regenerate the decoder golden with the vendored Go decoder as the oracle.
+# Needs Go; the output is committed, so CI verifies Crystal alone.
+decode-golden:
+	@cd scripts/decode_oracle && go run . ../../spec/fixtures/decode_inputs.txt ../../spec/fixtures/decode_golden.tsv
+	@echo "Regenerated spec/fixtures/decode_golden.tsv"
+
+# Smoke-run every example under a pseudo terminal for a moment. Type-checking
+# cannot see a crash on the first frame (a nil assumption, an unmatchable
+# guard), and that is how examples rot once they stop being run. POSIX only,
+# and needs `timeout` (coreutils).
+smoke-examples: $(EXAMPLE_BINARIES)
+	@for bin in $(EXAMPLE_BINARIES); do \
+		out=$$(cd examples && if [ "$$(uname -s)" = "Darwin" ]; then \
+			timeout 3 script -q /dev/null "../$$bin"; \
+		else \
+			timeout 3 script -qec "../$$bin" /dev/null; \
+		fi 2>&1 || true); \
+		if echo "$$out" | grep -qiE "unhandled exception|nilassertionerror"; then \
+			echo "smoke: $$bin crashed:" >&2; \
+			echo "$$out" | head -6 >&2; \
+			exit 1; \
+		fi; \
+		echo "smoke: $$bin ok"; \
 	done
 
 # Type-check the Win32 console readers for the Windows target; the win32 files
@@ -174,6 +206,8 @@ help:
 	@echo "  build              - Build the library"
 	@echo "  build-examples     - Build all examples (output in examples/)"
 	@echo "  check-examples     - Type-check every example without building binaries"
+	@echo "  smoke-examples     - Run each example under a pty for a moment"
+	@echo "  decode-golden      - Regenerate the decoder golden from the vendored Go decoder"
 	@echo "  check-win32        - Type-check the Win32 console readers (cross-target)"
 	@echo "  test-linux         - Run the spec suite on Linux in a container"
 	@echo "  container-info     - Show the detected container runtime"

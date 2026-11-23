@@ -190,4 +190,4 @@ Press any key to continue...)
   end
 end
 
-DrawExample.run if __FILE__ == $0
+DrawExample.run

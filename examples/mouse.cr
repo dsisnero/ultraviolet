@@ -32,6 +32,18 @@ begin
     when Ultraviolet::WindowSizeEvent
       term.resize(event.width, 1)
       ws = Ultraviolet::Winsize.new(event.height.to_u16, event.width.to_u16, ws.xpixel, ws.ypixel)
+
+      # A terminal does not always report pixel dimensions through the winsize
+      # ioctl, and `mouse_pixel_to_cell` needs them: without Xpixel/Ypixel it
+      # returns (0, 0) for every event, so the position never moves.
+      #
+      # XTWINOPS 14 asks for the text area size in pixels; the reply
+      # (`CSI 4 ; height ; width t`) decodes to a PixelSizeEvent on the next
+      # branch. The Go example sends `ansi.WindowOp(4)`, which xterm reads as a
+      # *resize* request and answers with nothing, so this is deliberately one
+      # number off upstream.
+      term.write_string("\e[14t")
+
       display.call
     when Ultraviolet::PixelSizeEvent
       ws = Ultraviolet::Winsize.new(ws.row, ws.col, event.width.to_u16, event.height.to_u16)

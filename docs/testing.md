@@ -38,6 +38,33 @@ a real interactive terminal.
 1. Find the Go test in `vendor/ultraviolet/` (for example `decoder_test.go`).
 2. Port the cases and assertions as-is, including expected escape sequences.
 3. Add the Crystal-specific setup needed to reproduce the same input.
+
+## Verifying against the vendored decoder
+
+`vendor/ultraviolet` has no checked-in event goldens, but its decoder can be run
+as an oracle. `make decode-golden` decodes
+`spec/fixtures/decode_inputs.txt` with the **vendored Go** decoder and writes
+`spec/fixtures/decode_golden.tsv`; `spec/decoder_golden_spec.cr` asserts this
+port matches it. The golden is committed, so CI checks parity without Go.
+
+This is how the mouse families were pinned: press, release, motion with and
+without a held button, wheel, legacy X10, and the terminal size reports
+(`CSI 4/6/8/48 ; ... t`). Those reports matter for tracking, because
+`mouse_pixel_to_cell` returns `(0, 0)` for every event until the terminal has
+reported its pixel size.
+
+When adding an input:
+
+```bash
+$EDITOR spec/fixtures/decode_inputs.txt   # hex<TAB>label
+make decode-golden
+crystal spec spec/decoder_golden_spec.cr
+```
+
+`spec/decoder_fuzz_seed_spec.cr` separately feeds upstream's
+`internal/conformance/testdata/fuzz` seeds to the decoder as hostile input.
+Those seeds are renderer-program bytes rather than event inputs, so that spec
+asserts termination and determinism, not event parity.
 4. Run `crystal spec spec/<file>_spec.cr` while iterating, then the full suite.
 
 Do not delete a failing parity case to make the suite green. If a case is

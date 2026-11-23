@@ -322,4 +322,6 @@ module Boxes
   end
 end
 
-Boxes.run if __FILE__ == $0
+# Run unconditionally: Crystal has no "is this the main file" idiom, and the
+# Ruby-ish `$0` here is the last regex match, not the program name.
+Boxes.run

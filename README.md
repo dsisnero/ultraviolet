@@ -206,6 +206,7 @@ examples and an unchanged tree rebuilds nothing.
 
 ```bash
 make check-examples            # type-check, no binaries
+make smoke-examples            # start each one under a pty
 make build-examples            # build stale example binaries
 make run-example EXAMPLE=mouse # build nothing, just run it
 ```

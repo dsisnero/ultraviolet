@@ -199,5 +199,53 @@ module Ultraviolet
       events = collect_events(reader)
       events.should eq([MouseWheelEvent.new(Mouse.new(32, 16, MouseButton::WheelUp))])
     end
+
+    # Upstream TestParseSequence, "Xterm report window text area size in
+    # pixels". `CSI 4 ; h ; w t` is how a terminal answers the pixel-size query
+    # (ansi.WindowOp(4)), and that reply is what turns pixel coordinates into
+    # cells for mouse handling.
+    it "handles Xterm window and cell size reports" do
+      input = (
+        "\x1b[4;24;80t" +        # window pixel size
+        "\x1b[6;13;7t" +         # single cell size
+        "\x1b[8;24;80t" +        # window cells area size
+        "\x1b[48;24;80;312;560t" # in-band resize response
+      ).to_slice
+      reader = TerminalReader.new(IO::Memory.new(input), "dumb")
+      events = collect_events(reader)
+
+      events.should eq([
+        PixelSizeEvent.new(80, 24),
+        CellSizeEvent.new(7, 13),
+        WindowSizeEvent.new(80, 24),
+        WindowSizeEvent.new(80, 24),
+        PixelSizeEvent.new(560, 312),
+      ])
+    end
+
+    # Upstream TestParseSequence keeps unknown window operations as events.
+    it "keeps unknown window operations as WindowOpEvents" do
+      input = ("\x1b[t" + "\x1b[999t" + "\x1b[999;1t").to_slice
+      reader = TerminalReader.new(IO::Memory.new(input), "dumb")
+      events = collect_events(reader)
+
+      events.size.should eq(3)
+      events[0].should be_a(UnknownCsiEvent)
+      events[1].should eq(WindowOpEvent.new(999))
+      events[2].should eq(WindowOpEvent.new(999, [1]))
+    end
+
+    # Upstream has no motion case, but mouse tracking is exactly this: SGR
+    # motion with and without a held button.
+    it "decodes mouse motion for drag tracking" do
+      input = ("\x1b[<32;12;6M" + "\x1b[<35;12;6M").to_slice
+      reader = TerminalReader.new(IO::Memory.new(input), "dumb")
+      events = collect_events(reader)
+
+      events.should eq([
+        MouseMotionEvent.new(Mouse.new(11, 5, MouseButton::Left)),
+        MouseMotionEvent.new(Mouse.new(11, 5, MouseButton::None)),
+      ])
+    end
   end
 end

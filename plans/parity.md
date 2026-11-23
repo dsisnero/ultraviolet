@@ -97,6 +97,12 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (`terminal_reader.go` mentions it in a comment). `Terminal.stop` cancels and
   then closes its reader, so a canceled reader is never reused across a
   restart.
+- Mouse tracking needs a pixel-size report. `MousePixelToCell` is an exact port
+  (including returning `(0, 0)` when the terminal reports no pixel size), and
+  `examples/mouse.cr` now asks for the size with XTWINOPS 14
+  (`\e[14t`), whose `CSI 4 ; h ; w t` reply decodes to `PixelSizeEvent`. The Go
+  example sends `ansi.WindowOp(4)` instead, which terminals read as a resize
+  request and do not answer; that one-number divergence is deliberate.
 - Colors are RGB-only. `Ultraviolet::Color` is an RGB struct, so
   `AnsiColor.basic`/`.indexed` resolve palette entries to RGB and the output
   uses `38;2`/`48;2` where Go's `ansi.BasicColor`/`ansi.IndexedColor` emit
