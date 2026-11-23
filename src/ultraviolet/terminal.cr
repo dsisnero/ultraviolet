@@ -373,6 +373,9 @@ module Ultraviolet
       # and produces the `\r\e[A` nudge an inline app's first frame relies on.
       @scr.render(@buf)
       request_grapheme_width
+      # TerminalScreen.Flush nudges the inline cursor *after* the queued writes,
+      # so the query goes out first and this `\r\e[A` follows it.
+      nudge_inline_cursor
       @scr.flush
       @last_state = @state
     end

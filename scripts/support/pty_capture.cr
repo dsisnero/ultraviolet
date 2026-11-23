@@ -16,8 +16,8 @@ module PtyCapture
 
   ROWS     = 24
   COLS     = 80
-  IDLE     = 500.milliseconds
-  DEADLINE = 5.seconds
+  IDLE     = 1.second
+  DEADLINE = 8.seconds
   LIMIT    = 8192
 
   # capture runs *binary* with its stdio on a fresh 80x24 pty and returns what

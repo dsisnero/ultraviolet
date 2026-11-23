@@ -5,6 +5,8 @@ module DrawExample
 
   def run
     t = Ultraviolet::Terminal.default_terminal
+    # Go's draw example enters the alternate screen before Start.
+    t.enter_alt_screen
     begin
       t.start
     rescue ex

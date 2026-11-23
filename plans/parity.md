@@ -171,20 +171,25 @@ scripts/parity_examples.cr -- <name>` checks one example.
 
 | Example | Status | Notes |
 |---------|--------|-------|
+| `altscreen` | ✅ identical | — |
 | `boxes` | ✅ identical | — |
+| `draw` | ✅ identical | needed `enter_alt_screen` before `start`, as Go's example does |
 | `helloworld` | ✅ identical | — |
 | `image` | ✅ identical | needs its data file in cwd; the harness runs each side from its own directory |
-| `mouse` | ✅ identical | inline renderer (needed the TerminalScreen renderer flags) |
-| `prependline` | ⏭ skipped | matched after the start render, but nondeterministic: random colour per frame plus a scheduling-dependent frame count |
+| `mouse` | ⬜ | the two-byte `\r\e[A` inline nudge lands before the example's mouse-mode writes instead of after them |
+| `panic` | ✅ identical | — |
 | `rgbimage` | ✅ identical | the 0x0 image payload case matches Go |
 | `splits` | ✅ identical | — |
 | `tv` | ✅ identical | — |
 | `widths` | ✅ identical | needed the `ansi` shard patch (below) |
-| `altscreen` | ⬜ | first frame differs only by Go's `\e[A` + `\n` cursor nudge around a 0x0-screen flush |
-| `panic` | ⬜ | same as `altscreen` (text matches, Go's typo included) |
-| `draw` | ⬜ | initial clear form (`ESC [ J` vs `ESC [ 2 J`) and it renders tall lines where Go paints a cleared frame |
 | `layout` | ⏭ skipped | Go's example is built on lipgloss, which this port does not depend on |
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
+| `prependline` | ⏭ skipped | random colour per frame and scheduling-dependent frame count |
+
+Ten of the eleven comparable examples are byte-identical. `mouse` differs only
+in where a two-byte inline cursor nudge is written: Go queues its mode writes
+first and nudges during the first display, this port nudges at `start` because
+that is when its 0x0 render happens. Same bytes, different position.
 
 `Terminal#start` renders the still-0x0 buffer before asking about grapheme
 width, matching `TerminalScreen.Restore`; that first render is what an inline
