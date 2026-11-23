@@ -20,22 +20,36 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `1.1.2`; refresh them with `make update_dependents` after each tag push.
   A fresh consumer installing `dsisnero/bubbletea.cr` now resolves
   ultraviolet `1.1.2` instead of `1.1.1`.
-- **Current focus:** none. The `PollReader` decision is made and implemented
-  (see below), the adversarial signoff is clean at `ab56604`, and the release
-  added no source change; the only work left is the next upstream refresh.
+- **Current focus:** **inline-renderer byte parity**, opened by the `v1.1.2`
+  release. `bubbletea.cr`'s Go-fixture spec
+  (`spec/parity/v2_control_sequences_spec.cr`) fails after the bump: on the
+  frame boundary Go emits `<CR><LF><ESC>[A<ESC>[30C`, this renderer emits
+  `<CR><ESC>[30C`. The missing LF+CUU is the inline (`non-fullscreen`,
+  `relative_cursor`) path this repository's own notes already flag as
+  incomplete (see `ff48b22`: "inline frames emit only the startup handshake").
+  Nothing else regressed: the decoder/`ProgramStatusSupportEvent` release is
+  otherwise sound, and a fresh consumer install resolves and builds.
 - **Next up, in priority order:**
-  1. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
+  1. **Fix the inline renderer against the Go oracle.** Compare
+     `TerminalRenderer#move`/`move_cursor_sequence` and the phantom-newline
+     handling with `vendor/ultraviolet/terminal_renderer.go`
+     (`map_newline`, `at_phantom`, the `relative_cursor` branch), until
+     `bubbletea.cr`'s fixture spec passes **without editing the fixture**.
+     `spec/testdata/examples/*.golden` must be re-derived from Go, not accepted
+     as-is: `ff48b22` updated four of them in the same commit that introduced
+     this drift.
+  2. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
      — still `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and
      `ab56604`). If it moved, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port the delta in
      feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Ship it, then tag a patch release.** The procedure (gates, version
+  3. **Ship it, then tag a patch release.** The procedure (gates, version
      bump, tag, `make update_dependents`, consumer check) is
      [Releasing](../AGENTS.md#releasing) in `AGENTS.md`; it is not repeated
      here. Untagged `src/` changes on `main` are invisible to dependents, and
-     `make update_dependents` says so.
-  3. **Optional: re-run the adversarial signoff** with
+     `make update_dependents` says so. The renderer fix above earns `v1.1.3`.
+  4. **Optional: re-run the adversarial signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
      refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
      432 examples, 0 pending, and upstream `go test ./...` green. It leaves the
