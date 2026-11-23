@@ -160,6 +160,63 @@ end
       end
     end
 
+    # Port of grapheme_width_test.go: TestGraphemeWidthGating. Only settable or
+    # active states switch to grapheme measurement; a terminal that does not
+    # recognize the mode (or has it permanently reset) stays on wcwidth.
+    it "gates grapheme width on the mode 2027 report" do
+      warning_sign = "\u26A0\uFE0F"
+      cases = {
+        Ansi::ModeSet.value.to_i32              => 2,
+        Ansi::ModeReset.value.to_i32            => 2,
+        Ansi::ModePermanentlySet.value.to_i32   => 2,
+        Ansi::ModeNotRecognized.value.to_i32    => 1,
+        Ansi::ModePermanentlyReset.value.to_i32 => 1,
+      }
+
+      cases.each do |mode_value, expected|
+        master, slave = pty_pair(24, 80)
+        term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+        begin
+          term.start
+          drain_events(term)
+          term.width_method.call(warning_sign).should eq(1)
+
+          term.send_event(Ultraviolet::ModeReportEvent.new(mode: 2027, value: mode_value))
+          term.events.receive
+
+          term.width_method.call(warning_sign).should eq(expected), "mode value #{mode_value}"
+        ensure
+          term.stop
+          master.close
+          slave.close
+        end
+      end
+    end
+
+    # Port of TestGraphemeWidthGatingPreservesOverride: a late mode-2027 report
+    # must not clobber a width method the application set explicitly.
+    it "keeps an explicit width method when the mode 2027 report arrives" do
+      warning_sign = "\u26A0\uFE0F"
+      master, slave = pty_pair(24, 80)
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+
+      begin
+        term.start
+        drain_events(term)
+        term.width_method = Ultraviolet::DEFAULT_WIDTH_METHOD
+
+        term.send_event(Ultraviolet::ModeReportEvent.new(mode: 2027, value: Ansi::ModeSet.value.to_i32))
+        term.events.receive
+
+        term.width_method.call(warning_sign).should eq(1)
+        captured_output(master).should_not contain("\e[?2027h")
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+    end
+
     # Upstream's TestStopWithInputInFlightDoesNotPanic: Stop used to clear the
     # reader while the input loop could still evaluate it.
     it "stops while input is in flight" do

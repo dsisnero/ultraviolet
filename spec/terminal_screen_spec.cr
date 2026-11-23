@@ -75,6 +75,35 @@ describe Ultraviolet::TerminalScreen do
     output.to_s.includes?(Ansi::RequestModeUnicodeCore).should be_true
   end
 
+  # Ports of grapheme_width_test.go: TestGraphemeWidthNegotiation and
+  # TestGraphemeWidthOverride. U+26A0 followed by VS16 is width 1 under wcwidth
+  # and width 2 under grapheme clustering.
+  warning_sign = "\u26A0\uFE0F"
+
+  it "negotiates grapheme width on the screen" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.string_width(warning_sign).should eq(1)
+
+    screen.enable_grapheme_width
+
+    screen.string_width(warning_sign).should eq(2)
+    screen.width_method.should eq(Ultraviolet::GRAPHEME_WIDTH_METHOD)
+    output.to_s.should contain(Ansi::SetModeUnicodeCore)
+  end
+
+  it "keeps an explicit width method override" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    screen.set_width_method(Ultraviolet::GRAPHEME_WIDTH_METHOD)
+    screen.string_width(warning_sign).should eq(2)
+
+    screen.set_width_method(Ultraviolet::DEFAULT_WIDTH_METHOD)
+    screen.string_width(warning_sign).should eq(1)
+  end
+
   it "wraps flush in synchronized updates when enabled" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])

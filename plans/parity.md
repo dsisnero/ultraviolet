@@ -172,6 +172,15 @@ Remaining work:
 3. **`draw`'s clear form and frame shape.** `ESC [ J` vs `ESC [ 2 J`, plus it
    emits tall `\n`-separated lines where Go paints a cleared frame.
 
+Specs: the grapheme-width negotiation is now covered by faithful ports of
+upstream's `grapheme_width_test.go` — `TestGraphemeWidthNegotiation` and
+`TestGraphemeWidthOverride` in `spec/terminal_screen_spec.cr`, and the five-case
+`TestGraphemeWidthGating` matrix plus `TestGraphemeWidthGatingPreservesOverride`
+in `spec/terminal_spec.cr`. The inventory already listed those rows as ported;
+they were not, and the rows are now true. Upstream has **no** tests for
+`TerminalScreen.InsertAbove`, the flush cursor nudge, or the initial size
+event, so the characterization specs for those live only here.
+
 Shard patch (per the patch-shard workflow):
 
 - `lib/ansi` gained `Ansi.each_grapheme_cluster`, so `StyledString` segments
