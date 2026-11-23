@@ -11,6 +11,11 @@ license: MIT
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
+  # Examples encode images; mosaic only carries this as its own dev dependency,
+  # so declare it here or a fresh `shards install` cannot build examples/image.cr
+  # or examples/rgbimage.cr.
+  stumpy_png:
+    github: stumpycr/stumpy_png
 
 dependencies:
   colorful:

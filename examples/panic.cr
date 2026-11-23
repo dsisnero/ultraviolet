@@ -5,16 +5,16 @@ term.start
 term.exit_alt_screen
 
 counter = 5
-last_tick = Time.monotonic
+last_tick = Time.instant
 running = true
 
 view = ->(value : Int32) { "Panicking after #{value} seconds...\nPress q or ctrl+c to exit." }
 
 begin
   while running
-    if Time.monotonic - last_tick >= 1.second
+    if Time.instant - last_tick >= 1.second
       counter -= 1
-      last_tick = Time.monotonic
+      last_tick = Time.instant
       raise "Time's up!" if counter < 0
     end
 

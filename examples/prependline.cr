@@ -9,8 +9,8 @@ frame_height = 1
 term.resize(width, frame_height)
 
 style = Ultraviolet::Style.new
-style.fg = Ultraviolet::Ansi::Black.to_color
-style.bg = Ultraviolet::Ansi::BasicColor.new(rand(16).to_u8).to_color
+style.fg = Ultraviolet::AnsiColor.basic(0)
+style.bg = Ultraviolet::AnsiColor.indexed(rand(16))
 
 render = -> do
   bg = Ultraviolet::EMPTY_CELL
@@ -31,7 +31,7 @@ begin
     when Ultraviolet::KeyPressEvent
       break if ev.match_string("q", "ctrl+c")
       term.prepend_string("#{ev.class} #{ev}")
-      style.bg = Ultraviolet::Ansi::BasicColor.new(rand(16).to_u8).to_color
+      style.bg = Ultraviolet::AnsiColor.indexed(rand(16))
       render.call
     when Ultraviolet::WindowSizeEvent
       width = ev.width

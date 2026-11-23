@@ -28,7 +28,7 @@ colors = setup_colors(area.dx, area.dy)
 frame = 0
 fps = 60.0
 frames_in_window = 0
-window_start = Time.monotonic
+window_start = Time.instant
 running = true
 
 begin
@@ -69,10 +69,10 @@ begin
     end
     term.display
 
-    elapsed = Time.monotonic - window_start
+    elapsed = Time.instant - window_start
     if elapsed >= 1.second && frames_in_window > 2
       fps = frames_in_window / elapsed.total_seconds
-      window_start = Time.monotonic
+      window_start = Time.instant
       frames_in_window = 0
     end
 

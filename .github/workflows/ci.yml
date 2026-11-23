@@ -64,3 +64,8 @@ jobs:
 
       - name: Run Ameba
         run: crystal run lib/ameba/bin/ameba.cr -- src spec
+
+      # Examples are not part of the suite, so nothing else notices when a
+      # library change breaks them. Type-check each one without codegen.
+      - name: Type-check examples
+        run: make check-examples

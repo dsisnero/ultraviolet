@@ -15,6 +15,7 @@
    make lint
    make test
    make inventory
+   make check-examples   # when the change touches examples or the public API
    ```
 
 5. Update `plans/parity.md` (including the **Where we are** block) and any
@@ -33,7 +34,8 @@
 
 - [ ] Behavior matches `vendor/ultraviolet/`.
 - [ ] Upstream tests or equivalent characterization specs were added.
-- [ ] `make lint` and `make test` pass.
+- [ ] `make lint` and `make test` pass, and `make check-examples` when examples
+      or public APIs changed.
 - [ ] No changes under `lib/` or `vendor/`.
 - [ ] Parity plan and inventory are current.
 - [ ] Divergences are documented.

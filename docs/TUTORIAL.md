@@ -205,6 +205,8 @@ See [examples/helloworld.cr](../examples/helloworld.cr) for a runnable version.
 ## Related
 
 - [Parity Plan](../plans/parity.md) — Go-vs-Crystal feature tracking
-- [Examples](../examples/) — altscreen, draw, layout, splits, image
+- [Examples](../examples/) — helloworld, altscreen, draw, mouse, panic,
+  prependline, widths, and the advanced set (boxes, image, layout,
+  rgbimage, space, splits, tv)
 - [Source code](../src/ultraviolet/) — full Crystal implementation
 - [Upstream Go docs](https://pkg.go.dev/github.com/charmbracelet/ultraviolet)

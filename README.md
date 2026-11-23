@@ -196,6 +196,20 @@ make lint
 make test
 ```
 
+### Examples
+
+Every example in `examples/` is a port of one under
+`vendor/ultraviolet/examples/`. `make check-examples` type-checks them all
+(CI runs it on every push); `make build-examples` builds the ones that are out
+of date. Each binary depends on all of `src/`, so a library change rebuilds the
+examples and an unchanged tree rebuilds nothing.
+
+```bash
+make check-examples            # type-check, no binaries
+make build-examples            # build stale example binaries
+make run-example EXAMPLE=mouse # build nothing, just run it
+```
+
 See [docs/development.md](docs/development.md) for the porting workflow, parity
 scripts, and how to update the vendored Go source.
 

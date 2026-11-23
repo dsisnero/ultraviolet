@@ -40,6 +40,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
 - **Last code feature commit:** `b318a4f` (`port: poll the fd readers through
   Crystal's event loop`).
+- **Examples:** every file under `vendor/ultraviolet/examples/` has a
+  counterpart in `examples/`. `make check-examples` runs in CI and example
+  binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
+  way four of them had (they no longer compiled, and nothing noticed).
 - **Gates:** `make format-check`, `make lint`, `make test` (432 examples),
   `make check-win32`, `make test-linux` (432 examples in the container) pass;
   `make inventory` (819 items) and `make parity` (819 APIs / 196 tests) pass;
@@ -93,6 +97,12 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (`terminal_reader.go` mentions it in a comment). `Terminal.stop` cancels and
   then closes its reader, so a canceled reader is never reused across a
   restart.
+- Colors are RGB-only. `Ultraviolet::Color` is an RGB struct, so
+  `AnsiColor.basic`/`.indexed` resolve palette entries to RGB and the output
+  uses `38;2`/`48;2` where Go's `ansi.BasicColor`/`ansi.IndexedColor` emit
+  `3x`/`4x` or `38;5`/`48;5`. Same pixels on a default palette, different bytes
+  if the user redefines it: captured frames of `examples/splits.cr` differ only
+  in the color escapes.
 - `FallbackReader#read` is not interruptible. Upstream behaves the same way
   (`poll_fallback.go`), and its test unblocks the reader manually, so this is a
   ported behavior rather than a gap.

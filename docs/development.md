@@ -26,6 +26,22 @@ For a non-mutating format check:
 make format-check
 ```
 
+## Examples
+
+`examples/` ports every example under `vendor/ultraviolet/examples/`. CI
+type-checks them (`make check-examples`) because a library change can break an
+example without breaking the suite.
+
+```bash
+make check-examples            # type-check every example, no binaries
+make build-examples            # build only the stale example binaries
+make run-example EXAMPLE=mouse # run one example from source
+```
+
+Each example binary declares `src/**/*.cr` and `shard.yml` as prerequisites, so
+`make build-examples` rebuilds after a library change and does nothing when
+nothing changed. Built binaries sit next to their sources and are gitignored.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push and pull request:

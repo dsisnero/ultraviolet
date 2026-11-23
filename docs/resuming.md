@@ -38,9 +38,11 @@ make test
 make inventory
 ```
 
-Add `make check-win32` when the work touches win32-gated files, and
+Add `make check-win32` when the work touches win32-gated files,
 `make test-linux` (Apple `container` or docker) when it touches the unix IO /
-poll readers — CI runs the same suite on ubuntu, macOS and Windows.
+poll readers, and `make check-examples` when the public API changes — examples
+are not in the suite, so only that target notices when they stop compiling. CI
+runs the same suite on ubuntu, macOS and Windows.
 
 All of these must pass before changing anything. `make inventory` forwards to
 the installed parity skill; confirm its reported `PARITY_DISCOVERY_BACKEND=regex`

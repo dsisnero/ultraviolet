@@ -71,7 +71,9 @@ Legend:
 - [x] `ultraviolet_go/doc.go` → `src/ultraviolet.cr` (package docs)
 
 ### Examples & Docs
-- [x] (partial) `ultraviolet_go/examples/*` → `examples/helloworld.cr` (others pending)
+- [x] `ultraviolet_go/examples/*` → `examples/` — `altscreen`, `draw`, `helloworld`,
+  `mouse`, `panic`, `prependline`, `widths`, plus the `advanced/` set as
+  `boxes`, `image`, `layout`, `rgbimage`, `space`, `splits`, `tv`
 - [x] `ultraviolet_go/TUTORIAL.md` → `TUTORIAL.md`
 
 ## Tests (Parity Required)

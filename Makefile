@@ -37,6 +37,12 @@ export CRYSTAL_CACHE_DIR := $(PWD)/.crystal-cache
 EXAMPLE_SOURCES := $(shell find examples -name '*.cr')
 EXAMPLE_BINARIES := $(EXAMPLE_SOURCES:.cr=)
 
+# Every example links the library, so an example binary is stale whenever any
+# source file or the dependency set changes -- not only when its own file does.
+# Depending on these makes `make build-examples` rebuild exactly what changed
+# and leave the rest of the binaries alone.
+EXAMPLE_DEPS := $(shell find src -name '*.cr') shard.yml $(wildcard shard.lock)
+
 # Build the library (check for errors)
 build:
 	shards build
@@ -132,7 +138,8 @@ check-examples:
 check-win32:
 	./scripts/check_win32.sh
 
-examples/%: examples/%.cr
+examples/%: examples/%.cr $(EXAMPLE_DEPS)
+	@echo "Building $@"
 	crystal build $< -o $@
 
 # Clean temporary files, logs, and build artifacts
@@ -141,7 +148,7 @@ clean:
 	rm -rf temp/*
 	rm -rf log/*
 	rm -rf .crystal-cache
-	rm -f *.dwarf
+	rm -f *.dwarf examples/*.dwarf
 	rm -f $(EXAMPLE_BINARIES)
 	@echo "Cleaned temp/, log/, .crystal-cache/, *.dwarf, and example binaries"
 

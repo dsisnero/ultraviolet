@@ -13,12 +13,12 @@ module DrawExample
     end
 
     modes = {
-      Ultraviolet::Ansi::ModeMouseButtonEvent,
-      Ultraviolet::Ansi::ModeMouseExtSgr,
-      Ultraviolet::Ansi::ModeFocusEvent,
+      Ansi::ModeMouseButtonEvent,
+      Ansi::ModeMouseExtSgr,
+      Ansi::ModeFocusEvent,
     }
 
-    t.write_string(Ultraviolet::Ansi.set_mode(*modes))
+    t.write_string(Ansi.set_mode(*modes))
 
     width, height = t.fetch_size
 
@@ -164,7 +164,7 @@ Press any key to continue...)
             r = text[0]
             rw = UnicodeCharWidth.width(r.to_s)
             if rw == 1 && r.number?
-              pen.style.fg = (Ultraviolet::Ansi::Black + Ultraviolet::Ansi::BasicColor.new((r - '0').to_u8)).to_color
+              pen.style.fg = Ultraviolet::AnsiColor.indexed((r - '0').to_i)
               next
             end
             pen.content = text
@@ -180,7 +180,7 @@ Press any key to continue...)
       end
     end
 
-    t.write_string(Ultraviolet::Ansi.reset_mode(*modes))
+    t.write_string(Ansi.reset_mode(*modes))
 
     # Shutdown the program.
     unless t.shutdown(5.seconds)
