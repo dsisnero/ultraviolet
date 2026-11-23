@@ -1,4 +1,4 @@
-.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update update_dependents spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 .PHONY: container-info container-build test-linux container-dev container-clean
 
 # Local Linux testing in a container. Apple `container` is preferred on macOS,
@@ -54,6 +54,55 @@ install:
 
 update:
 	shards update
+
+# --- Dependents -----------------------------------------------------------
+# Sibling checkouts that declare `dsisnero/ultraviolet` in their shard.yml.
+# Shards resolves a dependency by its highest release tag, so refreshing one is
+# a targeted `shards update ultraviolet` that follows the newest tag. That is
+# why every release needs a tag: an untagged commit on `main` never reaches a
+# consumer or a dependent. See the Versioning section in CHANGELOG.md.
+# Override with: make update_dependents DEPENDENTS="../lipgloss"
+DEPENDENTS ?= ../lipgloss ../bubbletea.cr ../bubbletea.cr/bubbletea-examples ../bubbles-examples
+UV_REMOTE ?= origin
+UV_BRANCH ?= main
+DRY_RUN ?= 0
+
+# Refresh every dependent onto the newest pushed tag. Run it after `git push
+# --tags`: dependents resolve from GitHub, so a local tag is invisible, and a
+# commit on `main` past the newest tag cannot be reached at all. DRY_RUN=1
+# reports without changing anything.
+update_dependents:
+	@newest_tag=$$(git ls-remote --tags --refs $(UV_REMOTE) 'refs/tags/v*' 2>/dev/null | sed 's|.*refs/tags/||' | grep -E '^v[0-9]' | sort -V | tail -1); \
+	tag_sha=$$(git ls-remote --tags --refs $(UV_REMOTE) "refs/tags/$$newest_tag" 2>/dev/null | cut -f1); \
+	remote_sha=$$(git ls-remote $(UV_REMOTE) refs/heads/$(UV_BRANCH) 2>/dev/null | cut -f1); \
+	if [ -z "$$newest_tag" ]; then \
+		echo "note: no tags on $(UV_REMOTE); dependents would resolve $(UV_BRANCH) HEAD instead" >&2; \
+		newest_tag="$(UV_BRANCH) HEAD"; \
+	elif [ -n "$$remote_sha" ] && [ "$$tag_sha" != "$$remote_sha" ]; then \
+		echo "ultraviolet newest tag = $$newest_tag ($$(echo $$tag_sha | cut -c1-7))"; \
+		echo "warning: $(UV_REMOTE)/$(UV_BRANCH) $$(echo $$remote_sha | cut -c1-7) is ahead of $$newest_tag" >&2; \
+		echo "         untagged commits never reach dependents: tag a patch release to ship them" >&2; \
+	else \
+		echo "ultraviolet newest tag = $$newest_tag ($$(echo $$tag_sha | cut -c1-7))"; \
+	fi; \
+	status=0; \
+	for dep in $(DEPENDENTS); do \
+		if [ ! -f "$$dep/shard.yml" ]; then echo "skip   $$dep (no shard.yml)"; continue; fi; \
+		locked_before=$$(awk '/^  ultraviolet:/{f=1;next} f&&/version:/{print $$2;exit}' "$$dep/shard.lock" 2>/dev/null || echo none); \
+		if [ "$(DRY_RUN)" = "1" ]; then \
+			echo "dry    $$dep (locked $${locked_before:-none}, newest tag $$newest_tag)"; \
+			continue; \
+		fi; \
+		echo "update $$dep"; \
+		( cd "$$dep" && shards update ultraviolet ) || { status=1; continue; }; \
+		locked=$$(awk '/^  ultraviolet:/{f=1;next} f&&/version:/{print $$2;exit}' "$$dep/shard.lock"); \
+		case "$$locked" in \
+			"$$newest_tag") echo "       $$dep now at $$newest_tag" ;; \
+			*+git.commit.*) echo "       $$dep now at $$locked (untagged $(UV_BRANCH) HEAD; drop its shard.override.yml to follow tags)" ;; \
+			*) echo "warn   $$dep stayed on $$locked, not $$newest_tag; check its lock or shard.override.yml" >&2 ;; \
+		esac; \
+	done; \
+	exit $$status
 
 # This checkout lives on an exFAT volume, so macOS writes AppleDouble `._*`
 # sidecars next to real files. A `._foo_spec.cr` sidecar matches Crystal's
@@ -230,6 +279,7 @@ help:
 	@echo "  container-dev      - Interactive shell in the Linux image"
 	@echo "  container-clean    - Remove the Linux test image"
 	@echo "  install            - Install dependencies"
+	@echo "  update_dependents  - Refresh sibling repos that depend on ultraviolet (DRY_RUN=1 to preview)"
 	@echo "  test/spec          - Run tests (excluding interactive)"
 	@echo "  test-file          - Run one spec file (FILE=spec/foo_spec.cr)"
 	@echo "  lint               - Run Ameba on src and spec"

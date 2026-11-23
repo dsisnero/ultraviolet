@@ -4,10 +4,35 @@ All notable changes to this Crystal port are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Upstream [charmbracelet/ultraviolet](https://github.com/charmbracelet/ultraviolet)
-publishes no tags, so this port tracks it by commit: every entry names the
-vendored snapshot it was made against. Older history lives in `git log` and in
-[plans/parity.md](plans/parity.md), which also carries the per-symbol ledger
-under `plans/inventory/`.
+publishes no tags, so this port numbers itself and records upstream by commit:
+every entry names the vendored snapshot it was made against. Older history
+lives in `git log` and in [plans/parity.md](plans/parity.md), which also
+carries the per-symbol ledger under `plans/inventory/`.
+
+## Versioning
+
+Shards resolves a dependency by its highest release tag, so a consumer only
+sees work that is tagged. While upstream has no tags of its own, this port
+releases on the `1.1` line with a patch bump per release (`1.1.2`, `1.1.3`, …)
+and tags each one. As soon as upstream cuts a tag at `1.2` or above, this port
+adopts that version number and follows upstream's releases from then on
+(`1.2.0`, `1.2.1`, …). Keep `shard.yml`'s `version:` equal to the newest tag:
+a mismatch lets `shard.lock` record a version that no tag provides, which
+breaks dependents on their next update.
+
+## [1.1.2] - 2026-11-23
+
+Patch release on the self-numbered line. Tagging is what makes the work below
+reachable through `shards`: until now the newest tag was `1.1.1`, so consumers
+resolved ~50 commits behind `main`.
+
+Vendored upstream: `8ecbcf0`.
+
+- Re-verified gates (`format-check`, `lint`, `spec`) before tagging.
+- `ansi` resolves `main` again instead of a feature branch, so a dependent's
+  `ansi (*)` requirement no longer collides with this shard's git-ref
+  requirement during resolution.
+- `make update_dependents` refreshes sibling repos against the newest tag.
 
 ## [Unreleased]
 
