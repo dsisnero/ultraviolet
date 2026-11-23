@@ -20,6 +20,29 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.3] - 2026-11-23
+
+Patch release on the self-numbered line. Delta since `1.1.2`.
+
+Vendored upstream: `8ecbcf0`.
+
+### Fixed
+
+- `Terminal#start` renders the still-0x0 buffer before asking about grapheme
+  width, as `TerminalScreen.Restore` does upstream. Without that render an
+  inline application's first frame was missing the `\r\e[A` cursor nudge, and
+  `examples/prependline` never repainted after inserting above the frame.
+
+### Internal
+
+- `make parity-examples`: 11 examples compared, 8 byte-identical to the vendored
+  Go examples (`boxes`, `helloworld`, `image`, `mouse`, `rgbimage`, `splits`,
+  `tv`, `widths`). `altscreen`, `panic` and `draw` remain, tracked
+  byte-for-byte in `plans/parity.md`; `layout`, `space` and `prependline` are
+  skipped with reasons.
+- `make update_dependents` compares against the peeled tag commit and only warns
+  about untagged *source* changes.
+
 ## [1.1.2] - 2026-11-23
 
 Patch release on the self-numbered line. Tagging is what makes the work below
