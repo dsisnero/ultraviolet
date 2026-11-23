@@ -37,8 +37,9 @@ module ParityExamples
   # Examples this harness cannot compare, with the reason. Kept explicit so a new
   # example cannot quietly drop out of the comparison.
   SKIP = {
-    "layout" => "the Go example is built on lipgloss, which this port does not depend on",
-    "space"  => "animates from the wall clock on both sides",
+    "layout"      => "the Go example is built on lipgloss, which this port does not depend on",
+    "space"       => "animates from the wall clock on both sides",
+    "prependline" => "random colour per frame and scheduling-dependent frame count; matched in some runs",
   }
 
   # Examples whose colours are random per frame on both sides. Their SGR colour

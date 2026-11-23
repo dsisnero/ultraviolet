@@ -368,6 +368,10 @@ module Ultraviolet
       # reaches #handle_event through the event loop.
       set_alt_screen(true) if @state.altscreen?
       @scr.write_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
+      # Go's TerminalScreen.Restore renders the (still 0x0) buffer before asking
+      # about grapheme width; that first render is what moves the inline cursor
+      # and produces the `\r\e[A` nudge an inline app's first frame relies on.
+      @scr.render(@buf)
       request_grapheme_width
       @scr.flush
       @last_state = @state
