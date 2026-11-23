@@ -116,6 +116,23 @@ Replace the `vendor/ultraviolet/` tree with the target commit's tree, write a
 `plans/commit_<sha>.md` plan for the delta, regenerate the parity manifests, and
 triage the inventory before porting behavior.
 
+## Example output parity
+
+Examples are verified at the output level, not just compiled:
+
+```bash
+make check-examples     # type-check every example
+make smoke-examples     # start each one under a pty, fail on a startup crash
+make snapshot-examples  # compare each first frame with spec/testdata/examples/*.golden
+make parity-examples    # diff each first frame against the vendored Go example
+```
+
+`snapshot-examples` is a regression check: `make snapshot-update` rewrites the
+goldens, and `GOLDEN_UPDATE=1 crystal run scripts/snapshot_examples.cr` rewrites
+a single run. `parity-examples` needs a Go toolchain and the modules for
+`vendor/ultraviolet/examples` (it is not part of CI, like the inventory gates);
+one example at a time with `crystal run scripts/parity_examples.cr -- <name>`.
+
 ## Parity scripts
 
 The gates forward to the installed `cross-language-crystal-parity` skill

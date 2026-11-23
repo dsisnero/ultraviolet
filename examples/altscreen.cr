@@ -1,53 +1,68 @@
 require "../src/ultraviolet"
 
+# Port of vendor/ultraviolet/examples/altscreen.
+#
+# Prints which screen mode is active plus a help line: space toggles between
+# inline and alternate screen mode, and any other key exits.
 term = Ultraviolet::Terminal.default_terminal
-term.start
+screen = term
 
-width, height = term.fetch_size
+begin
+  term.start
+rescue ex
+  STDERR.puts "failed to start program: #{ex.message}"
+  exit 1
+end
+
+# Go's TerminalScreen starts in inline mode; this port's Terminal starts in the
+# alternate screen, so leave it inline before the first frame.
+screen.exit_alt_screen
+
+help = "Press space to toggle screen mode or any other key to exit."
 alt_screen = false
-cursor_hidden = false
 
-render = -> do
-  frame_height = alt_screen ? height : 2
-  if alt_screen
-    term.enter_alt_screen
-  else
-    term.exit_alt_screen
-  end
+# Go starts with a zero-sized screen, so its first display paints nothing and
+# the first painted frame is the one the initial WindowSizeEvent triggers. Size
+# the frame here so the startup paint lands on that frame.
+physical_width, physical_height = term.fetch_size
 
-  term.resize(width, frame_height)
-  term.erase
+display = -> do
+  screen.resize(physical_width, alt_screen ? physical_height : 2)
 
-  mode = alt_screen ? "alternate screen" : "inline"
-  text = "This is using #{mode} mode.\nPress space to toggle, q/ctrl+c to exit."
-  Ultraviolet::StyledString.new(text).draw(term, term.bounds)
-  term.display
+  line = alt_screen ? "This is using alternate screen mode." : "This is using inline mode."
+
+  Ultraviolet::Screen.clear(screen)
+  Ultraviolet::Screen::Context.new(screen).print("#{line}\n#{help}")
+  screen.display
 end
 
 begin
-  render.call
+  # initial render
+  display.call
+
   loop do
-    case ev = term.events.receive
+    case event = term.events.receive
     when Ultraviolet::WindowSizeEvent
-      width = ev.width
-      height = ev.height
-      render.call
+      physical_width = event.width
+      physical_height = event.height
+      display.call
     when Ultraviolet::KeyPressEvent
-      if ev.match_string("q", "ctrl+c")
-        break
-      elsif ev.match_string("space")
-        alt_screen = !alt_screen
-        render.call
-      else
-        if cursor_hidden
-          term.show_cursor
+      if event.match_string("space")
+        if alt_screen
+          screen.exit_alt_screen
+          screen.resize(physical_width, 2)
         else
-          term.hide_cursor
+          screen.enter_alt_screen
+          screen.resize(physical_width, physical_height)
         end
-        cursor_hidden = !cursor_hidden
+        alt_screen = !alt_screen
+        display.call
+      else
+        break
       end
     end
   end
 ensure
-  term.shutdown(1.second)
+  # Go defers t.Stop().
+  term.stop
 end

@@ -5,6 +5,21 @@ require "stumpy_png"
 require "base64"
 require "colorful"
 
+# Port of vendor/ultraviolet/examples/advanced/image/main.go
+#
+# Draws an image in the middle of the screen using the best encoding the
+# terminal reports (blocks, sixel, iTerm2, or kitty) and moves it with the mouse
+# or the arrow keys.
+#
+# Divergences from the Go example:
+#   - Go decodes ./charm.jpg, so it only runs from a directory that holds that
+#     file. This port generates a gradient canvas instead (the shards have no
+#     JPEG decoder), so it has no data-file dependency.
+#   - Go base64-encodes the JPEG file itself for the iTerm2 payload; this port
+#     encodes the generated canvas as PNG (see draw_iterm).
+#   - Go detects iTerm2/WezTerm from TERM_PROGRAM/LC_TERMINAL at startup; this
+#     port only upgrades the encoding from the terminal's replies.
+
 module Ultraviolet
   # Helper to convert Ansi::Color to Colorful::Color
   def self.colorful_color(color : Ansi::Color) : Colorful::Color
@@ -62,11 +77,11 @@ class ImageExample
       if arg.starts_with?("--encoding=")
         enc = arg.split("=", 2)[1]
         @desired_encoding = case enc.downcase
-                            when "blocks" then ImageEncoding::Blocks
-                            when "sixel" then ImageEncoding::Sixel
+                            when "blocks"          then ImageEncoding::Blocks
+                            when "sixel"           then ImageEncoding::Sixel
                             when "iterm", "iterm2" then ImageEncoding::Iterm
-                            when "kitty" then ImageEncoding::Kitty
-                            else ImageEncoding::Unknown
+                            when "kitty"           then ImageEncoding::Kitty
+                            else                        ImageEncoding::Unknown
                             end
       end
     end
@@ -108,7 +123,7 @@ class ImageExample
     end
 
     @term.clear
-    fill_style = Ultraviolet::Style.new(fg: Ultraviolet::Color.new(100_u8, 100_u8, 100_u8))
+    fill_style = Ultraviolet::Style.new(fg: Ultraviolet::AnsiColor.indexed(240))
     fill_cell = Ultraviolet::Cell.new("/", 1, fill_style)
     @term.fill_area(fill_cell, @term.bounds)
 
@@ -259,9 +274,12 @@ class ImageExample
   end
 
   def query_capabilities
-    @term.write_string(Ansi::RequestPrimaryDeviceAttributes)   # Query Sixel support
-    @term.write_string(Ansi::RequestNameVersion)               # Query terminal version
-    @term.write_string(Ansi.window_op(14, 0)) # Request window size
+    @term.write_string(Ansi::RequestPrimaryDeviceAttributes) # Query Sixel support
+    @term.write_string(Ansi::RequestNameVersion)             # Query terminal version
+    # Go calls `ansi.WindowOp(ansi.RequestWindowSizeWinOp)`, i.e. XTWINOPS 14 ->
+    # `CSI 14 t`. `Ansi.window_op` cannot be called with a lone op (its typed
+    # splat needs a second argument), so write the sequence out.
+    @term.write_string("\e[14t")
     # Query Kitty Graphics support using random id=31
     @term.write_string(Ansi.kitty_graphics("AAAA".to_slice, ["i=31", "s=1", "v=1", "a=q", "t=d", "f=24"]))
   end
@@ -269,7 +287,9 @@ class ImageExample
   def run
     @term.start
     @term.enter_alt_screen
-    @term.write_string(Ansi.set_mode(Ansi::ModeMouseButtonEvent, Ansi::ModeMouseExtSgr))
+    # Go calls scr.SetMouseMode(uv.MouseModeClick), DEC mode 1000. Crystal's
+    # Terminal has no set_mouse_mode, so encode it with the ANSI helper.
+    @term.write_string(String.build { |io| Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Click) })
 
     size = @term.size
     width = size.width
@@ -278,8 +298,9 @@ class ImageExample
     @term.resize(width, height)
 
     query_capabilities
-    display_img
 
+    # Go paints from the first WindowSizeEvent (Terminal.Start sends one), so
+    # there is no display before the loop.
     loop do
       event = @term.events.receive
       case event
@@ -294,7 +315,6 @@ class ImageExample
         @img_cell_w, @img_cell_h = img_cell_size
         @img_offset_x = @win_size.width // 2 - @img_cell_w // 2
         @img_offset_y = @win_size.height // 2 - @img_cell_h // 2
-        @term.erase
         @term.resize(event.width, event.height)
         display_img
       when Ultraviolet::KeyPressEvent
@@ -314,7 +334,7 @@ class ImageExample
         @img_offset_y = event.y - (@img_cell_h // 2)
         display_img
       when Ultraviolet::PrimaryDeviceAttributesEvent
-        if event.includes?(4)  # Sixel support
+        if event.includes?(4) # Sixel support
           upgrade_encoding(ImageEncoding::Sixel)
           display_img
         end

@@ -331,17 +331,18 @@ module Ultraviolet
       end
 
       if @last_state.nil?
-        enter_alt_screen
+        # Go's TerminalScreen starts inline and hidden-cursor; the example decides
+        # whether to enter the alternate screen before Start. Forcing it here made
+        # inline examples emit an exit-alt-screen sequence they never asked for.
         hide_cursor
         @state.cur = Position.new(-1, -1)
       end
 
       width, height = fetch_size
       @size = Size.new(width, height)
-      if @buf.width == 0 && @buf.height == 0
-        @buf.resize(@size.width, @size.height)
-        @scr.erase
-      end
+      # Go's TerminalScreen owns a 0x0 window until the application resizes it
+      # from its first WindowSizeEvent. Pre-sizing here painted an extra frame
+      # that Go does not paint, and the app's own resize then repainted.
       @scr.resize(@buf.width, @buf.height)
       begin
         make_raw
@@ -358,11 +359,15 @@ module Ultraviolet
       start_input
       start_winch
 
-      # Ask whether the terminal measures cell width by grapheme cluster (DEC
-      # mode 2027) and flush the query, the way Go's Terminal.Start does. The
-      # reply reaches #handle_event through the event loop.
+      # Write the state the screen is in, then ask whether the terminal measures
+      # cell width by grapheme cluster (DEC mode 2027), the way Go's
+      # Terminal.Start does through TerminalScreen.Restore + Flush. The reply
+      # reaches #handle_event through the event loop.
+      set_alt_screen(true) if @state.altscreen?
+      @scr.write_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
       request_grapheme_width
       @scr.flush
+      @last_state = @state
     end
 
     def pause : Nil
@@ -426,6 +431,48 @@ module Ultraviolet
       @evch.send(ev)
     end
 
+    # insert_above writes *content* above the current frame, scrolling the screen
+    # up to make room, and leaves the cursor at the top. It mirrors Go's
+    # TerminalScreen.InsertAbove (terminal_screen.go:817): relative moves from the
+    # renderer's current position, one InsertLine for the whole block, then each
+    # line followed by EraseLineRight.
+    #
+    # This is separate from the renderer's prepend queue: Go's examples call
+    # InsertAbove for immediate output, and the renderer's prependString (with its
+    # own ported specs) is a different path.
+    def insert_above(content : String) : Nil
+      return if content.empty?
+
+      width = @buf.width
+      height = @buf.height
+      _x, y = @scr.position
+
+      builder = String::Builder.new
+      builder << '\r'
+      down = height - y - 1
+      builder << Ansi.cursor_down(down) if down > 0
+
+      lines = content.split('\n')
+      offset = lines.size
+      lines.each do |line|
+        line_width = @method.call(line)
+        offset += line_width // width if width > 0 && line_width > width
+      end
+
+      builder << "\n" * offset
+      builder << Ansi.cursor_up(offset + height - 1)
+      builder << Ansi.insert_line(offset)
+      lines.each do |line|
+        builder << line
+        builder << Ansi::EraseLineRight
+        builder << "\r\n"
+      end
+
+      @scr.set_position(0, 0)
+      @scr.write_string(builder.to_s)
+      @scr.flush
+    end
+
     def prepend_string(value : String) : Nil
       @prepend << value
     end
@@ -452,8 +499,8 @@ module Ultraviolet
         if last.altscreen? != state.altscreen?
           set_alt_screen(state.altscreen?)
         end
-      else
-        set_alt_screen(state.altscreen?)
+      elsif state.altscreen?
+        set_alt_screen(true)
       end
 
       if last = @last_state
@@ -597,10 +644,15 @@ module Ultraviolet
 
     private def start_winch : Nil
       winch = @winch
-      return unless winch
+      unless winch
+        # No size notifier on this platform: still report the size once, the way
+        # Go's Start does, so an app that paints from the first event has one.
+        spawn { send_event(WindowSizeEvent.new(@size.width, @size.height)) }
+        return
+      end
 
       winch.start
-      send_resize_event
+      send_resize_event(force: true)
 
       stop = Channel(Nil).new(1)
       @winch_stop = stop
@@ -632,11 +684,13 @@ module Ultraviolet
       end
     end
 
-    private def send_resize_event : Nil
+    # force reports the size even when it matches @size, which Start wants: Go
+    # reports the initial size unconditionally.
+    private def send_resize_event(force : Bool = false) : Nil
       if winch = @winch
         cells, pixels = window_sizes_from_winch(winch)
         debug_resize_event(cells, pixels)
-        apply_resize_updates(cells, pixels)
+        apply_resize_updates(cells, pixels, force)
         return
       end
 
@@ -666,12 +720,12 @@ module Ultraviolet
       STDERR.puts("uv: winch cells=#{cells.width}x#{cells.height} pixels=#{pixels.width}x#{pixels.height}")
     end
 
-    private def apply_resize_updates(cells : Size, pixels : Size) : Nil
-      if cells != @size
+    private def apply_resize_updates(cells : Size, pixels : Size, force : Bool = false) : Nil
+      if force || cells != @size
         @evch.send(WindowSizeEvent.new(cells.width, cells.height))
         @size = cells
       end
-      if pixels.width > 0 && pixels.height > 0 && pixels != @pixel_size
+      if pixels.width > 0 && pixels.height > 0 && (force || pixels != @pixel_size)
         @evch.send(PixelSizeEvent.new(pixels.width, pixels.height))
         @pixel_size = pixels
       end

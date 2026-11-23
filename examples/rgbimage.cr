@@ -16,10 +16,11 @@ require "base64"
 # - Go writes the encoded PNG into a temp directory before base64-ing it. That
 #   file is a debugging artifact only (an inline iTerm2 image carries its bytes
 #   in the escape sequence), so it is not written here.
-# - Go happily builds a 0x0 PNG before the terminal reports a pixel size. A
-#   zero-sized StumpyPNG canvas produces an unusable image, so cell sizes are
-#   clamped to one pixel per cell until `PixelSizeEvent` arrives; the color
-#   block still shows up instead of a broken image.
+# - Go encodes a 0x0 image until the terminal reports a pixel size. `png.Encode`
+#   rejects that size and returns an error that the example ignores, leaving an
+#   empty base64 payload, so the first frame carries `inline=1` with no image
+#   data. StumpyPNG cannot write a 0x0 canvas either, so the same empty payload
+#   is returned explicitly.
 
 IMG_W = 10
 IMG_H =  5
@@ -44,19 +45,25 @@ img_y_offset = 0
 # Builds a solid-color RGBA image stretched to `w` x `h` cells and returns the
 # base64-encoded PNG, matching the Go `createEncodedImage` helper.
 create_encoded_image = ->(w : Int32, h : Int32, color : Ultraviolet::Color) : String do
-  pixel_w = w * Math.max(1, cell_width)
-  pixel_h = h * Math.max(1, cell_height)
-  rgba = StumpyPNG::RGBA.new(
-    color.r.to_u16 * 257_u16,
-    color.g.to_u16 * 257_u16,
-    color.b.to_u16 * 257_u16,
-    0xffff_u16,
-  )
-  canvas = StumpyPNG::Canvas.new(pixel_w, pixel_h, rgba)
-  io = IO::Memory.new
-  # Go's PNG encoder writes 8-bit channels, so keep the same depth.
-  StumpyPNG.write(canvas, io, bit_depth: 8)
-  Base64.strict_encode(io.to_slice)
+  pixel_w = w * cell_width
+  pixel_h = h * cell_height
+  if pixel_w <= 0 || pixel_h <= 0
+    # Go's png.Encode fails on a 0x0 image and the example ignores the error, so
+    # the payload is empty until a PixelSizeEvent gives the cell size.
+    ""
+  else
+    rgba = StumpyPNG::RGBA.new(
+      color.r.to_u16 * 257_u16,
+      color.g.to_u16 * 257_u16,
+      color.b.to_u16 * 257_u16,
+      0xffff_u16,
+    )
+    canvas = StumpyPNG::Canvas.new(pixel_w, pixel_h, rgba)
+    io = IO::Memory.new
+    # Go's PNG encoder writes 8-bit channels, so keep the same depth.
+    StumpyPNG.write(canvas, io, bit_depth: 8)
+    Base64.strict_encode(io.to_slice)
+  end
 end
 
 display = -> do

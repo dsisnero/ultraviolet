@@ -64,8 +64,8 @@ Press any key to continue...)
       t.display
     end
 
-    # Display first frame.
-    display_help.call(showing_help)
+    # Display first frame; the buffer is 0x0 until the first WindowSizeEvent.
+    display_help.call(showing_help) unless t.bounds.empty?
 
     default_char = "█"
     pen = Ultraviolet::EMPTY_CELL

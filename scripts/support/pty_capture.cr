@@ -27,7 +27,7 @@ module PtyCapture
   # and "everything before the idle gap" for the rest. Taking whichever comes
   # first keeps both classes deterministic: time decides how much of a fixed
   # byte stream has been produced, never what it contains.
-  def capture(binary : String, limit : Int32 = LIMIT) : String
+  def capture(binary : String, limit : Int32 = LIMIT, chdir : String? = nil) : String
     master_fd = uninitialized Int32
     slave_fd = uninitialized Int32
     winsize = uninitialized LibC::Winsize
@@ -43,7 +43,7 @@ module PtyCapture
     master = IO::FileDescriptor.new(master_fd)
     slave = IO::FileDescriptor.new(slave_fd)
     process = Process.new(binary, input: slave, output: slave, error: slave,
-      env: {"TERM" => "xterm-256color"})
+      chdir: chdir, env: {"TERM" => "xterm-256color"})
     slave.close
 
     output = IO::Memory.new

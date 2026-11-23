@@ -228,8 +228,10 @@ render = ->(area : Ultraviolet::Rectangle) do
 end
 
 begin
+  # The buffer is 0x0 until the first WindowSizeEvent (as in Go), so there is
+  # nothing to paint yet.
   area = term.bounds
-  render.call(area)
+  render.call(area) unless area.empty?
 
   loop do
     case event = term.events.receive

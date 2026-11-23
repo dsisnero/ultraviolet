@@ -5,7 +5,10 @@ require "./colorprofile"
 module Ultraviolet
   alias WidthMethod = Proc(String, Int32)
 
-  DEFAULT_WIDTH_METHOD = ->(str : String) { UnicodeCharWidth.width(str) }
+  # DEFAULT_WIDTH_METHOD matches Go's default (`ansi.WcWidth`, see
+  # vendor/ultraviolet/buffer.go:617). A terminal that confirms Unicode core
+  # mode (DEC mode 2027) upgrades to GRAPHEME_WIDTH_METHOD during start.
+  DEFAULT_WIDTH_METHOD = ->(str : String) { Ansi.string_width_wc(str) }
 
   # GRAPHEME_WIDTH_METHOD measures by grapheme cluster, matching a terminal that
   # honors Unicode core mode (DEC mode 2027). It is selected after the terminal

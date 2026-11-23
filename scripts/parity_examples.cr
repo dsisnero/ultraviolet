@@ -41,6 +41,10 @@ module ParityExamples
     "space"  => "animates from the wall clock on both sides",
   }
 
+  # Examples whose colours are random per frame on both sides. Their SGR colour
+  # sequences are masked so the text and layout are still compared.
+  MASK_COLORS = ["prependline"]
+
   # SGR colours differ by construction: Go passes palette entries through as
   # indexed colours (`31`, `41`, `38;5;N`) while this port resolves them to RGB
   # and emits `38;2;r;g;b`. Both describe the same colour, so rewrite every form
@@ -77,7 +81,7 @@ module ParityExamples
   # what each side resets), then indexed/basic colours are rewritten to RGB
   # because Go passes palette entries through while this port resolves them, and
   # inline image payloads are masked (random colour per frame on both sides).
-  def normalize(output : String) : String
+  def normalize(output : String, mask_colors : Bool = false) : String
     frame = output
     if index = output.rindex("\e[H\e[2J")
       frame = output[index..]
@@ -85,11 +89,16 @@ module ParityExamples
       frame = output[index..]
     end
 
-    frame = frame.gsub(SGR) do |match|
-      normalize_sgr($1, match)
+    if mask_colors
+      # Colour values are random on both sides; everything else (text, cursor
+      # moves, clears) is still compared.
+      frame = frame.gsub(SGR, "<sgr>")
+    else
+      frame = frame.gsub(SGR) { |match| normalize_sgr($1, match) }
     end
     frame.gsub(/[A-Za-z0-9+\/]{80,}={0,2}/, "<base64>")
   end
+
 
   # Both sides must negotiate grapheme width, whatever the frame looks like.
   def negotiates_grapheme_width?(output : String) : Bool
@@ -170,11 +179,19 @@ module ParityExamples
     status.success? ? binary : nil
   end
 
-  def run : Int32
+  # Optional argument narrows the comparison to one example:
+  # `crystal run scripts/parity_examples.cr -- widths`.
+  def run(only : String? = nil) : Int32
     failures = 0
     checked = 0
 
-    PAIRS.each do |name, pkg|
+    pairs = PAIRS
+    if only
+      raise "unknown example #{only}; known: #{PAIRS.keys.join(", ")}" unless PAIRS.has_key?(only)
+      pairs = {only => PAIRS[only]}
+    end
+
+    pairs.each do |name, pkg|
       if reason = SKIP[name]?
         puts "skip    #{name} (#{reason})"
         next
@@ -194,10 +211,14 @@ module ParityExamples
         next
       end
 
-      go_raw = PtyCapture.capture(go_binary)
-      crystal_raw = PtyCapture.capture(crystal_binary)
-      expected = normalize(go_raw)
-      actual = normalize(crystal_raw)
+      # Run each side from its own directory: examples that read data files
+      # (image loads charm.jpg) resolve them relative to their source.
+      go_dir = File.expand_path(pkg, GO_EXAMPLES)
+      go_raw = PtyCapture.capture(go_binary, chdir: go_dir)
+      crystal_raw = PtyCapture.capture(crystal_binary, chdir: EXAMPLES_DIR)
+      mask_colors = MASK_COLORS.includes?(name)
+      expected = normalize(go_raw, mask_colors)
+      actual = normalize(crystal_raw, mask_colors)
       checked += 1
 
       unless negotiates_grapheme_width?(go_raw) && negotiates_grapheme_width?(crystal_raw)
@@ -243,4 +264,4 @@ module ParityExamples
   end
 end
 
-exit(ParityExamples.run == 0 ? 0 : 1)
+exit(ParityExamples.run(ARGV.first?) == 0 ? 0 : 1)

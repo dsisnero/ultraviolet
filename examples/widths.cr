@@ -1,10 +1,20 @@
 require "../src/ultraviolet"
 
+# Port of vendor/ultraviolet/examples/widths.
+#
 # Renders scripts and emoji whose column width the two width models disagree
 # about, so drift between what ultraviolet thinks it drew and what the terminal
-# painted is visible on screen.
+# actually painted is visible on screen.
 #
-# Press w to force wcwidth, g to force grapheme width, q to quit.
+# Every sample sits in a box of the same inner width, padded out using
+# ultraviolet's own measurement. If the width model matches the terminal, the
+# right edges form a straight column. Any edge that sits left or right of the
+# rest is the renderer and the terminal disagreeing about that sample, which is
+# the bug this example exists to show.
+#
+# Press w to force wcwidth, g to force grapheme width, q to quit. Terminals
+# that implement DEC mode 2027 line up under grapheme width; everything else
+# lines up under wcwidth.
 
 SAMPLES = [
   {"ascii", "hello world"},
@@ -22,6 +32,7 @@ SAMPLES = [
   {"flags", "🇺🇸 🇯🇵"},
 ]
 
+# BOX_WIDTH is the inner width every sample is padded to.
 BOX_WIDTH = 24
 
 term = Ultraviolet::Terminal.default_terminal
@@ -34,57 +45,65 @@ rescue ex
   exit 1
 end
 
-term.enter_alt_screen
+screen.enter_alt_screen
 
+# forced reports whether the width method was pinned from the keyboard, which
+# is what makes the two models comparable on the same terminal.
 forced = ""
 
 display = -> do
   builder = String::Builder.new
 
-  # The method itself is a Proc, so label the model by how a known-drifting
-  # family measures rather than by introspecting the Proc.
-  model = term.width_method.call("👨‍👩‍👧‍👦") > 4 ? "wcwidth" : "grapheme (DEC mode 2027)"
-  builder << "width method: #{model}"
+  method = "wcwidth"
+  if screen.width_method == Ultraviolet::GRAPHEME_WIDTH_METHOD
+    method = "grapheme (DEC mode 2027)"
+  end
+  builder << "width method: #{method}"
   builder << "  [forced with #{forced.inspect}]" unless forced.empty?
   builder << "\n"
   builder << "the right edges below should form one straight column\n\n"
 
+  # A ruler, so a drifting edge can be read off in columns.
   ruler = "....|....+" * ((BOX_WIDTH + 12) // 10 + 1)
   builder << ruler[0, BOX_WIDTH + 2] << "\n"
 
   SAMPLES.each do |name, text|
-    width = term.width_method.call(text)
-    pad = Math.max(0, BOX_WIDTH - width)
-    builder << "│#{text}#{" " * pad}│ uv=#{width} ansi=#{Ansi.string_width(text)}  #{name}\n"
+    width = screen.width_method.call(text)
+    pad = BOX_WIDTH - width
+    pad = 0 if pad < 0
+    builder << "│#{text}#{" " * pad}│ uv=#{width.to_s.ljust(2)} ansi=#{Ansi.string_width(text).to_s.ljust(2)}  #{name}\n"
   end
 
   builder << "\nw: force wcwidth   g: force grapheme width   q: quit"
 
   Ultraviolet::StyledString.new(builder.to_s).draw(screen, screen.bounds)
-  term.display
+  screen.display
 end
 
-display.call
+# The buffer is 0x0 until the first WindowSizeEvent arrives, as in Go.
+display.call unless screen.bounds.empty?
 
-loop do
-  event = term.events.receive
-  case event
-  when Ultraviolet::WindowSizeEvent
-    term.resize(event.width, event.height)
-    display.call
-  when Ultraviolet::Key
-    if event.match_string("w")
-      term.width_method = ->(value : String) { Ansi.string_width_wc(value) }
-      forced = "w"
+begin
+  loop do
+    event = term.events.receive
+    case event
+    when Ultraviolet::WindowSizeEvent
+      screen.resize(event.width, event.height)
       display.call
-    elsif event.match_string("g")
-      term.width_method = ->(value : String) { Ansi.string_width(value) }
-      forced = "g"
-      display.call
-    elsif event.match_string("q", "ctrl+c", "esc")
-      break
+    when Ultraviolet::KeyPressEvent
+      if event.match_string("w")
+        screen.width_method = Ultraviolet::DEFAULT_WIDTH_METHOD
+        forced = "w"
+        display.call
+      elsif event.match_string("g")
+        screen.width_method = Ultraviolet::GRAPHEME_WIDTH_METHOD
+        forced = "g"
+        display.call
+      else
+        break
+      end
     end
   end
+ensure
+  term.stop
 end
-
-term.stop

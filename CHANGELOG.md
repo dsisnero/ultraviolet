@@ -67,6 +67,18 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 
 ### Internal
 
+- Example output is now compared against the **vendored Go examples**:
+  `make parity-examples` runs both sides on identical pseudo terminals and
+  diffs the first frame. Eight of twelve comparable examples are byte-identical
+  after colour normalisation; the rest are tracked in `plans/parity.md`.
+- The renderer never flushed its writer, so a small frame could sit in the
+  `IO::FileDescriptor` buffer instead of reaching the terminal.
+- `Terminal#start` now negotiates Unicode core mode (DEC 2027) as Go does,
+  always reports the initial window size, and no longer pre-sizes the frame
+  buffer or forces the alternate screen, matching `TerminalScreen`.
+- `Terminal#insert_above` mirrors Go's `InsertAbove`, and `StyledString` now
+  segments with `Ansi.each_grapheme_cluster` so Indic conjuncts are one cell
+  (shard branch `dsisnero/ansi#expose-grapheme-clusters`).
 - Decoder parity is now checked against the **vendored Go decoder**:
   `make decode-golden` regenerates `spec/fixtures/decode_golden.tsv` and
   `spec/decoder_golden_spec.cr` asserts this port matches it. It pinned the

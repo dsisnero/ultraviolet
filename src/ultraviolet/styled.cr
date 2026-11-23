@@ -69,8 +69,10 @@ module Ultraviolet
         end
 
         segment, i = Ultraviolet.read_print_segment(str, i)
-        TextSegment.each_grapheme(segment) do |cluster|
-          grapheme = cluster.str
+        # Ansi.each_grapheme_cluster segments exactly as the width functions
+        # measure (virama-joined conjuncts are one cluster), so the cells built
+        # here agree with what the terminal paints.
+        Ansi.each_grapheme_cluster(segment) do |grapheme, _shard_width|
           width = method.call(grapheme)
           width = UnicodeCharWidth.width(grapheme) if width < 0
 
@@ -305,8 +307,7 @@ module Ultraviolet
   ) : {Int32, Int32, Bool, String, Int32, Int32}
     done = false
 
-    TextSegment.each_grapheme(segment) do |cluster|
-      grapheme = cluster.str
+    Ansi.each_grapheme_cluster(segment) do |grapheme, _shard_width|
       width = method.call(grapheme)
 
       if width <= 0

@@ -120,6 +120,7 @@ end
 
       begin
         term.start
+        drain_events(term)
         term.width_method.call(sample).should eq(2)
 
         term.send_event(Ultraviolet::ModeReportEvent.new(mode: 2027, value: Ansi::ModeSet.value.to_i32))
@@ -142,6 +143,7 @@ end
 
       begin
         term.start
+        drain_events(term)
         before = term.width_method.call(sample)
         before.should eq(2)
 
@@ -197,6 +199,24 @@ end
         term.stop
         master.close
         slave.close
+      end
+    end
+  end
+
+  # drain_events discards whatever the terminal has already queued. Start queues
+  # the initial WindowSizeEvent, and SendEvent blocks while the event loop is
+  # still forwarding it (Go's evc is unbuffered too), so drain before injecting.
+  private def drain_events(term : Ultraviolet::Terminal, budget : Time::Span = 300.milliseconds) : Nil
+    deadline = Time.instant + budget
+    loop do
+      remaining = deadline - Time.instant
+      break if remaining <= Time::Span.zero
+
+      select
+      when term.events.receive
+        # discard
+      when timeout(remaining)
+        break
       end
     end
   end
