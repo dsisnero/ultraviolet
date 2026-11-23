@@ -73,7 +73,9 @@ DRY_RUN ?= 0
 # reports without changing anything.
 update_dependents:
 	@newest_tag=$$(git ls-remote --tags --refs $(UV_REMOTE) 'refs/tags/v*' 2>/dev/null | sed 's|.*refs/tags/||' | grep -E '^v[0-9]' | sort -V | tail -1); \
-	tag_sha=$$(git ls-remote --tags --refs $(UV_REMOTE) "refs/tags/$$newest_tag" 2>/dev/null | cut -f1); \
+	tag_sha=$$(git ls-remote --tags $(UV_REMOTE) "refs/tags/$$newest_tag^{}" 2>/dev/null | cut -f1); \
+	[ -n "$$tag_sha" ] || tag_sha=$$(git ls-remote --tags --refs $(UV_REMOTE) "refs/tags/$$newest_tag" 2>/dev/null | cut -f1); \
+	newest_version=$${newest_tag#v}; \
 	remote_sha=$$(git ls-remote $(UV_REMOTE) refs/heads/$(UV_BRANCH) 2>/dev/null | cut -f1); \
 	if [ -z "$$newest_tag" ]; then \
 		echo "note: no tags on $(UV_REMOTE); dependents would resolve $(UV_BRANCH) HEAD instead" >&2; \
@@ -97,9 +99,9 @@ update_dependents:
 		( cd "$$dep" && shards update ultraviolet ) || { status=1; continue; }; \
 		locked=$$(awk '/^  ultraviolet:/{f=1;next} f&&/version:/{print $$2;exit}' "$$dep/shard.lock"); \
 		case "$$locked" in \
-			"$$newest_tag") echo "       $$dep now at $$newest_tag" ;; \
+			"$$newest_version") echo "       $$dep now at $$newest_tag" ;; \
 			*+git.commit.*) echo "       $$dep now at $$locked (untagged $(UV_BRANCH) HEAD; drop its shard.override.yml to follow tags)" ;; \
-			*) echo "warn   $$dep stayed on $$locked, not $$newest_tag; check its lock or shard.override.yml" >&2 ;; \
+			*) echo "warn   $$dep stayed on $$locked, not $$newest_version; check its lock or shard.override.yml" >&2 ;; \
 		esac; \
 	done; \
 	exit $$status
