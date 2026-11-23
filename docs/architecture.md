@@ -46,7 +46,11 @@ Terminal
 - Unix TTY handling lives in `terminal_unix.cr`, `tty.cr`, and `tty_state.cr`.
 - Windows console handling lives in the `*_windows.cr` files.
 - Poll readers are split by platform (`poll_bsd.cr`, `poll_linux.cr`,
-  `poll_windows.cr`) with a portable fallback in `poll.cr`.
+  `poll_windows.cr`) with a portable fallback in `poll.cr`. The file-descriptor
+  readers (`SelectReader`, `EpollReader`, `KqueueReader`) share `FdPollReader`
+  in `poll.cr`, which waits through Crystal's event loop instead of driving
+  `select`/`epoll`/`kevent` itself; `ConReader` still waits in
+  `WaitForMultipleObjects`.
 
 ## Intentional divergences
 

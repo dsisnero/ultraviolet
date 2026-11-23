@@ -4,7 +4,7 @@ Crystal port of Charm's [Ultraviolet](https://github.com/charmbracelet/ultraviol
 
 Vendored Go source: `8ecbcf0`, which the port tracks in full; the refresh
 record is [plans/commit_8ecbcf0.md](plans/commit_8ecbcf0.md).
-[See parity plan](plans/parity.md).
+[See parity plan](plans/parity.md) and [changelog](CHANGELOG.md).
 
 ## Installation
 
@@ -106,12 +106,25 @@ The [`Buffer`](src/ultraviolet/buffer.cr) / [`RenderBuffer`](src/ultraviolet/buf
 
 ### Poll-Based Event Reading
 
-Platform-optimized poll readers in [`poll.cr`](src/ultraviolet/poll.cr):
+Cancelable readers in [`poll.cr`](src/ultraviolet/poll.cr), named after Go's
+per-platform readers:
 
-- BSD/macOS: `kqueueReader` via Kqueue
-- Linux: `epollReader` via Epoll
-- Windows: `conReader` via Windows Console API
-- Fallback: `fallbackReader` for non-TTY file descriptors
+- `SelectReader`, `EpollReader`, `KqueueReader`: file descriptors
+  (`poll.cr`, `poll_linux.cr`, `poll_bsd.cr`)
+- `ConReader`: Windows console input, via `WaitForMultipleObjects`
+- `FallbackReader`: readers that are not file descriptors
+
+The file-descriptor readers share one implementation and wait through Crystal's
+event loop, which already multiplexes descriptors with epoll/kqueue/IOCP; a
+second multiplexer would only add descriptors and lifetime bugs. Readiness is a
+buffered peek against a temporary read timeout, and `cancel`/`close` close a
+nonblocking dup of the caller's descriptor, so a blocked read wakes without
+touching the descriptor the application owns. `poll` is fiber-safe: another
+fiber can cancel a waiting poll.
+
+Upstream drives `select`/`epoll`/`kevent` plus a cancel pipe per platform. The
+mechanism differs; the ready/timeout/canceled/end-of-input behavior does not.
+See [plans/parity.md](plans/parity.md) for the recorded divergence.
 
 ### Border Drawing
 

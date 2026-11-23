@@ -46,9 +46,10 @@ same bytes as the Unix runners.
 
 ## Local Linux testing in a container
 
-Linux-only code (for example the epoll poll reader) cannot be exercised on
-macOS. `Dockerfile.linux` plus the container targets run the same suite the
-`ubuntu-latest` CI job runs:
+Some code paths only run on Linux (Crystal's epoll event loop and the reader it
+backs) or on Windows (the `*_windows.cr` console layer), so macOS alone cannot
+exercise them. `Dockerfile.linux` plus the container targets run the same suite
+the `ubuntu-latest` CI job runs:
 
 ```bash
 make container-info   # shows which runtime was detected

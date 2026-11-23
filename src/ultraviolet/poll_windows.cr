@@ -188,7 +188,7 @@
         end
       end
 
-      # No select() on Windows; use the channel-based fallback reader.
+      # No descriptor polling on Windows; use the channel-based fallback reader.
       FallbackReader.new(reader)
     end
   end

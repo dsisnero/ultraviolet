@@ -681,8 +681,7 @@ module Ultraviolet
       @poll_reader = nil
 
       # Cancel wakes a read blocked in the poll reader; the wait below lets the
-      # reader fiber leave its loop before close releases the dup and the
-      # cancel pipe.
+      # reader fiber leave its loop before close releases the dup.
       poll_reader.try &.cancel
       if stop && done
         begin

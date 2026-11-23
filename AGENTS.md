@@ -41,6 +41,7 @@ generated example binaries. `lint`, `format`, and `test` strip macOS AppleDouble
 - [Parity inventory](plans/inventory/)
 - [Tutorial](docs/TUTORIAL.md)
 - [API reference](docs/API_REFERENCE.md)
+- [Changelog](CHANGELOG.md)
 - [Examples](examples/)
 
 ## Principles

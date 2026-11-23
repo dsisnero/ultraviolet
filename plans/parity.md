@@ -84,8 +84,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   too, but that costs a dedicated OS thread per reader and still needs a
   cross-thread channel to return the result, so it inherits the same version
   constraint for no gain.
-- The only C binding left in the readers is `LibC.dup` (the stdlib has no
-  `dup`, and a reader must not close the caller's descriptor). `poll_windows.cr`
+- The only C binding left in the file-descriptor readers is `LibC.dup` (the
+  stdlib has no `dup`, and a reader must not close the caller's descriptor). `poll_windows.cr`
   still waits in `WaitForMultipleObjects`, which the Windows console reader
   needs and CI covers.
 - `Terminal` input goes through the poll readers, and `CancelReader` is ported

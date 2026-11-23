@@ -49,14 +49,14 @@ Legend:
 - [x] (partial) `ultraviolet_go/terminal_unix.go` → `src/ultraviolet/terminal_unix.cr`
 - [x] (partial) `ultraviolet_go/terminal_windows.go` → `src/ultraviolet/terminal_windows.cr`
 - [x] (partial) `ultraviolet_go/terminal_other.go` → `src/ultraviolet/terminal.cr` (open `/dev/tty` fallback for input)
-- [x] (partial) `ultraviolet_go/poll.go` → `src/ultraviolet/poll.cr` (interface + default)
-- [x] (partial) `ultraviolet_go/poll_default.go` → `src/ultraviolet/poll.cr` (select-based reader)
-- [x] (partial) `ultraviolet_go/poll_fallback.go` → `src/ultraviolet/poll.cr` (buffered fallback)
-- [ ] `ultraviolet_go/poll_linux.go` → missing
-- [ ] `ultraviolet_go/poll_bsd.go` → missing
-- [ ] `ultraviolet_go/poll_select.go` → missing
+- [x] `ultraviolet_go/poll.go` → `src/ultraviolet/poll.cr` (PollReader interface, FdPollReader, fallback)
+- [x] `ultraviolet_go/poll_default.go` → `src/ultraviolet/poll.cr` (SelectReader; shares FdPollReader)
+- [x] `ultraviolet_go/poll_fallback.go` → `src/ultraviolet/poll.cr` (buffered fallback, channel-based poll)
+- [x] `ultraviolet_go/poll_linux.go` → `src/ultraviolet/poll_linux.cr` (EpollReader; shares FdPollReader)
+- [x] `ultraviolet_go/poll_bsd.go` → `src/ultraviolet/poll_bsd.cr` (KqueueReader; shares FdPollReader)
+- [x] `ultraviolet_go/poll_select.go` → `src/ultraviolet/poll.cr` (SelectReader; shares FdPollReader)
 - [ ] `ultraviolet_go/poll_solaris.go` → missing
-- [ ] `ultraviolet_go/poll_windows.go` → missing
+- [x] `ultraviolet_go/poll_windows.go` → `src/ultraviolet/poll_windows.cr` (ConReader; `WaitForMultipleObjects`)
 - [x] `ultraviolet_go/terminal_tabdly.go` → `src/ultraviolet/terminal_unix.cr` (platform guard)
 - [x] `ultraviolet_go/terminal_tabdly_other.go` → `src/ultraviolet/terminal_unix.cr` (fallback false)
 - [x] `ultraviolet_go/terminal_bsdly.go` → `src/ultraviolet/terminal_unix.cr` (platform guard)
