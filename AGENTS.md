@@ -21,6 +21,7 @@ make test       # crystal spec
 make inventory   # curated parity ledger gate (installed skill scripts)
 make parity      # inventory + both generated parity manifests
 make check-win32 # type-check the Win32 console readers (cross-target)
+make update_dependents # move sibling dependents onto the newest pushed tag
 make clean       # remove temp/, .crystal-cache/, examples, and build artifacts
 ```
 
@@ -52,6 +53,40 @@ generated example binaries. `lint`, `format`, and `test` strip macOS AppleDouble
 3. Port upstream tests early and never weaken assertions.
 4. Track parity in `plans/parity.md` and `plans/inventory/`.
 5. Commit one completed feature at a time.
+
+## Releasing
+
+`shards` resolves a dependency by its highest release tag, so work on `main`
+reaches a consumer only after it is tagged. Upstream publishes no tags, so this
+port numbers itself: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …) until
+upstream cuts a tag at `1.2` or above, after which the port follows upstream's
+numbers. See [Versioning](CHANGELOG.md#versioning).
+
+Every release:
+
+1. `make format-check && make lint && make test && make parity` — green on the
+   commit you are about to tag.
+2. Bump `version:` in `shard.yml` and add a `CHANGELOG.md` section. **Keep it
+   equal to the tag**: a mismatch lets `shard.lock` record a version that no
+   tag provides, which breaks dependents on their next update.
+3. `git commit -m "chore(release): vX.Y.Z"`, then `git tag -a vX.Y.Z -m "…"`
+   and `git push origin main --follow-tags`.
+4. `make update_dependents` — moves the sibling checkouts (`../lipgloss`,
+   `../bubbletea.cr`, `../bubbletea.cr/bubbletea-examples`,
+   `../bubbles-examples`) onto the new tag. It warns when `main` carries
+   untagged `src/` or `shard.yml` changes and stays quiet for tooling/docs-only
+   commits; `DRY_RUN=1` reports without changing anything.
+5. Verify as a consumer, not from the working tree:
+
+   ```bash
+   cd "$(mktemp -d)"
+   printf 'name: app\nversion: 0.1.0\ndependencies:\n  bubbletea:\n    github: dsisnero/bubbletea.cr\n' > shard.yml
+   shards install && grep -A2 '^  ultraviolet:' shard.lock
+   ```
+
+Never move or delete a published tag: locks elsewhere pin it by name, and a
+missing tag fails their `shards install` with "Locked version … was not found
+in git". Tagging is additive — publish a new patch instead.
 
 ## Parity tooling
 

@@ -7,20 +7,35 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 ## Where we are
 
 - **Active plan:** none. [The `8ecbcf0` refresh](commit_8ecbcf0.md) is complete
-  and there is no open porting feature.
+  and there is no open porting feature. `v1.1.2` was released on top of it.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
-  fully ported. Upstream publishes no tags; refreshes are commit-based.
+  fully ported. Upstream publishes no tags, so refreshes are commit-based;
+  this port nonetheless tags its own releases, because that is the only thing
+  `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
+  until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
+  See the Versioning section in `CHANGELOG.md`.
+- **Release state:** `v1.1.2` tagged at `93931e3` and pushed; `shard.yml`
+  version matches the tag. Sibling repos (`../lipgloss`, `../bubbletea.cr`,
+  `../bubbletea.cr/bubbletea-examples`, `../bubbles-examples`) are locked at
+  `1.1.2`; refresh them with `make update_dependents` after each tag push.
+  A fresh consumer installing `dsisnero/bubbletea.cr` now resolves
+  ultraviolet `1.1.2` instead of `1.1.1`.
 - **Current focus:** none. The `PollReader` decision is made and implemented
-  (see below), and the adversarial signoff is clean at `ab56604`; the only work
-  left is the next upstream refresh.
+  (see below), the adversarial signoff is clean at `ab56604`, and the release
+  added no source change; the only work left is the next upstream refresh.
 - **Next up, in priority order:**
   1. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
-     — still `8ecbcf0` as of `ab56604` (two checks, `d9728b6` and `ab56604`).
-     If it moved, run a refresh: clone, diff `<old>..<new>`, write
+     — still `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and
+     `ab56604`). If it moved, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port the delta in
      feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  2. **Optional: re-run the adversarial signoff** with
+  2. **Ship it, then tag a patch release.** The procedure (gates, version
+     bump, tag, `make update_dependents`, consumer check) is
+     [Releasing](../AGENTS.md#releasing) in `AGENTS.md`; it is not repeated
+     here. Untagged `src/` changes on `main` are invisible to dependents, and
+     `make update_dependents` says so.
+  3. **Optional: re-run the adversarial signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
      refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
      432 examples, 0 pending, and upstream `go test ./...` green. It leaves the
@@ -38,16 +53,19 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `make test`, `make test-linux`, and `check-win32` are green.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `b318a4f` (`port: poll the fd readers through
-  Crystal's event loop`).
+- **Last code feature commit:** `df732c6` (`test: port upstream's grapheme
+  width negotiation specs`); `08d57db` (inline-frame renderer) and `f877017`
+  (`ansi` back on `main`) precede it. Last commit overall: `cd607a1`
+  (release tooling).
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates:** `make format-check`, `make lint`, `make test` (432 examples),
-  `make check-win32`, `make test-linux` (432 examples in the container) pass;
-  `make inventory` (819 items) and `make parity` (819 APIs / 196 tests) pass;
-  CI is green on ubuntu-latest, macos-latest, windows-latest plus the lint job.
+- **Gates (last verified 2026-11-23 at `93931e3`):** `make format-check`,
+  `make lint` (58 files), `make test` (451 examples), `make inventory`
+  (819 items) and `make parity` (819 APIs / 196 tests, backend `regex`) pass.
+  `make check-win32` and `make test-linux` were last green at `ab56604` and
+  were not re-run for the release, which changed no source.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
@@ -59,7 +77,9 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
    win32 files; `make test-linux` needs Apple `container` or docker).
 3. `make inventory` / `make parity` forward to the locally installed
    `cross-language-crystal-parity` skill — they do **not** run in CI.
-4. Environment quirks (exFAT AppleDouble sidecars, git exec bits) are in
+4. After tagging, run `make update_dependents` and confirm the sibling locks
+   moved; the release procedure is in [Releasing](../AGENTS.md#releasing).
+5. Environment quirks (exFAT AppleDouble sidecars, git exec bits) are in
    [docs/resuming.md](../docs/resuming.md#environment-notes).
 
 ### Known limitations
