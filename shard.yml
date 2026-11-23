@@ -27,9 +27,6 @@ dependencies:
     github: dsisnero/mosaic
   ansi:
     github: dsisnero/ansi
-    # Exposes Ansi.each_grapheme_cluster so StyledString segments the same way
-    # the width functions measure. Drop the branch once it lands upstream.
-    branch: expose-grapheme-clusters
   terminfo:
     github: dsisnero/terminfo
     version: 0.8.2

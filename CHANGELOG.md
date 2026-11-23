@@ -87,7 +87,7 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
   buffer or forces the alternate screen, matching `TerminalScreen`.
 - `Terminal#insert_above` mirrors Go's `InsertAbove`, and `StyledString` now
   segments with `Ansi.each_grapheme_cluster` so Indic conjuncts are one cell
-  (shard branch `dsisnero/ansi#expose-grapheme-clusters`).
+  (landed upstream on `dsisnero/ansi` main, `5d23aa9`).
 - Decoder parity is now checked against the **vendored Go decoder**:
   `make decode-golden` regenerates `spec/fixtures/decode_golden.tsv` and
   `spec/decoder_golden_spec.cr` asserts this port matches it. It pinned the

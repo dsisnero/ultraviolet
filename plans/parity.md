@@ -182,13 +182,13 @@ Shard patch (per the patch-shard workflow):
 
 - `lib/ansi` gained `Ansi.each_grapheme_cluster`, so `StyledString` segments
   exactly as the width functions measure (virama-joined conjuncts are one
-  cluster). Upstream branch `dsisnero/ansi` `expose-grapheme-clusters`
-  (`063f3ac`), pinned in `shard.yml` until it lands. Specs were written first
-  and fail without it. This is what made `widths` identical.
-- The same branch should also gain a single-argument `Ansi.window_op(p)`
-  overload: its `ps.empty?` branch is dead because Crystal rejects a call that
-  only fills a typed splat, so `Ansi.window_op(4)` does not compile and the
-  examples write `"\e[4t"` literals.
+  cluster). Specs were written first and failed without it, and it is what made
+  `widths` identical. Merged upstream on `dsisnero/ansi` main (`5d23aa9`), so
+  `shard.yml` resolves the plain dependency with no branch pin.
+- `ansi` should also gain a single-argument `Ansi.window_op(p)` overload: its
+  `ps.empty?` branch is dead because Crystal rejects a call that only fills a
+  typed splat, so `Ansi.window_op(4)` does not compile and the examples write
+  `"\e[4t"` literals.
 
 ## Recent work outside plan phases
 
