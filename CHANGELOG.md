@@ -68,10 +68,11 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 ### Internal
 
 - Example output is now compared against the **vendored Go examples**:
-  seven of the twelve comparable examples are byte-identical; the other
-  five need the renderer's inline (non-fullscreen) path, which currently
-  paints nothing when Go's `TerminalScreen` renderer flags are applied
-  (`plans/parity.md` records the reproduction).
+  nine of the twelve comparable examples are byte-identical after colour
+  normalisation. `Terminal` now configures its renderer like Go's
+  `TerminalScreen` (inline, relative cursor), which is what made `mouse` match;
+  `prependline`, `altscreen`, `panic` and `draw` differ only in cursor-nudge,
+  clear-form and post-insert repaint details, tracked in `plans/parity.md`.
 - `Terminal#resize` erases like Go's `TerminalScreen.Resize`, and the
   inline cursor nudge from `TerminalScreen.Flush` is implemented, which is
   what closed the gap on `mouse` and `prependline`.

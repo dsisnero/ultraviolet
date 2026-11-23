@@ -140,43 +140,37 @@ scripts/parity_examples.cr -- <name>` checks one example.
 | `boxes` | ✅ identical | — |
 | `helloworld` | ✅ identical | — |
 | `image` | ✅ identical | needs its data file in cwd; the harness runs each side from its own directory |
-| `rgbimage` | ✅ identical | the 0x0 image payload case now matches Go |
+| `mouse` | ✅ identical | inline renderer (needed the TerminalScreen renderer flags) |
+| `prependline` | ⬜ | after `insert_above`, Go repaints the frame; this port's renderer sees no diff and emits nothing |
+| `rgbimage` | ✅ identical | the 0x0 image payload case matches Go |
 | `splits` | ✅ identical | — |
 | `tv` | ✅ identical | — |
 | `widths` | ✅ identical | needed the `ansi` shard patch (below) |
-| `altscreen` | ⬜ | inline frames |
-| `draw` | ⬜ | initial clear is `ESC [ J` where Go emits `ESC [ 2 J`; same effect from home |
-| `mouse` | ⬜ | inline frames |
-| `panic` | ⬜ | inline frames |
-| `prependline` | ⬜ | inline frames |
+| `altscreen` | ⬜ | first frame differs only by Go's `\e[A` + `\n` cursor nudge around a 0x0-screen flush |
+| `panic` | ⬜ | same as `altscreen` (text matches, Go's typo included) |
+| `draw` | ⬜ | initial clear form (`ESC [ J` vs `ESC [ 2 J`) and it renders tall lines where Go paints a cleared frame |
 | `layout` | ⏭ skipped | Go's example is built on lipgloss, which this port does not depend on |
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
 
-**Root cause for the five remaining, measured:** Go's `TerminalScreen` gives its
-renderer `SetFullscreen(false)` + `SetRelativeCursor(true)`
-(`vendor/ultraviolet/terminal_screen.go:64-65`). Setting the same two flags on
-this port's `Terminal` renderer makes inline frames produce **only the startup
-handshake and then nothing**: `TerminalRenderer#clear_update`
-(`src/ultraviolet/terminal_renderer.cr:1029`) takes the non-fullscreen branch
-(`clear_below` + `clear_bottom` + `paint_line`) and emits no cells, where the
-fullscreen branch does. Reproduced by pointing `examples/splits` (normally
-identical) at the flags: it stopped painting entirely. With the flags on,
-`mouse` and `prependline` did become identical, which confirms they only need
-that path fixed.
+`Terminal` now configures its renderer like Go's `TerminalScreen`
+(`fullscreen = false`, `relative_cursor = true`, terminal_screen.go:64-65);
+that is what made `mouse` identical and kept `splits`/`widths`/`tv` green. My
+earlier note that this path painted nothing was wrong: it was measured before
+the resize-erase and inline-nudge fixes and does not reproduce.
 
-Next step for these five: fix `clear_update`/`clear_below`/`clear_bottom` (and
-the relative `move_cursor` choices) for non-fullscreen frames, with the ported
-renderer specs re-checked — they exercise the fullscreen paths today.
+Remaining work:
 
-Also still open, smaller:
-
-1. `draw`'s initial clear form (`ESC [ J` vs `ESC [ 2 J`).
-2. `Terminal#start` no longer pre-sizes the frame buffer (matching Go's 0x0
-   `TerminalScreen`), so `splits`, `widths` and `draw` guard their first paint
-   until the initial `WindowSizeEvent`, which `start` now always sends.
-3. `Terminal#insert_above` mirrors Go's `InsertAbove`; the renderer's own
-   `prepend_string` keeps its ported behaviour (the ported "prepends one line"
-   spec caught an EraseLineRight I had put in the wrong layer).
+1. **`prependline`'s post-insert repaint.** Go's `InsertAbove` writes directly to
+   the terminal and the following `display()` emits the frame again; this port's
+   renderer still believes its cached model matches the buffer, so it emits
+   nothing. `Terminal#insert_above` sets the position but does not invalidate
+   `@curbuf`; Go relies on the scroll having invalidated its model.
+2. **`altscreen`/`panic` nudge.** Go's first flush happens with a 0x0 screen, so
+   it nudges the cursor up (`\e[A`) and the next frame comes back down (`\n`).
+   This port starts at row 0, so those two bytes are absent; everything after
+   them is identical.
+3. **`draw`'s clear form and frame shape.** `ESC [ J` vs `ESC [ 2 J`, plus it
+   emits tall `\n`-separated lines where Go paints a cleared frame.
 
 Shard patch (per the patch-shard workflow):
 

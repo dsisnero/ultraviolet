@@ -37,9 +37,7 @@ display = -> do
 end
 
 begin
-  # initial render
-  display.call
-
+  # The first frame is painted by the initial WindowSizeEvent, as in Go.
   loop do
     case event = term.events.receive
     when Ultraviolet::WindowSizeEvent

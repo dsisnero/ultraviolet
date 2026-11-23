@@ -41,13 +41,7 @@ end
 running = true
 
 begin
-  # Go paints its first frame when Terminal.Start sends the initial
-  # WindowSizeEvent. This port's start already knows the terminal size and sends
-  # no event, so show that frame here, at the inline height the handler uses.
-  physical_width, _ = term.fetch_size
-  term.resize(physical_width, 2)
-  display.call(view.call(counter))
-
+  # The first frame is painted by the initial WindowSizeEvent, as in Go.
   while running
     select
     when ticks.receive

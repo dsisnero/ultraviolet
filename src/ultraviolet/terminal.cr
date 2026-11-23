@@ -581,6 +581,8 @@ module Ultraviolet
     end
 
     private def configure_renderer : Nil
+      @scr.fullscreen = false
+      @scr.relative_cursor = true
       @scr.color_profile = @profile
       if @use_tabs
         @scr.tab_stops = @size.width
