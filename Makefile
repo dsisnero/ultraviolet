@@ -72,18 +72,25 @@ DRY_RUN ?= 0
 # commit on `main` past the newest tag cannot be reached at all. DRY_RUN=1
 # reports without changing anything.
 update_dependents:
-	@newest_tag=$$(git ls-remote --tags --refs $(UV_REMOTE) 'refs/tags/v*' 2>/dev/null | sed 's|.*refs/tags/||' | grep -E '^v[0-9]' | sort -V | tail -1); \
-	tag_sha=$$(git ls-remote --tags $(UV_REMOTE) "refs/tags/$$newest_tag^{}" 2>/dev/null | cut -f1); \
-	[ -n "$$tag_sha" ] || tag_sha=$$(git ls-remote --tags --refs $(UV_REMOTE) "refs/tags/$$newest_tag" 2>/dev/null | cut -f1); \
+	@git fetch --quiet --tags $(UV_REMOTE) 2>/dev/null || true; \
+	newest_tag=$$(git ls-remote --tags --refs $(UV_REMOTE) 'refs/tags/v*' 2>/dev/null | sed 's|.*refs/tags/||' | grep -E '^v[0-9]' | sort -V | tail -1); \
+	tag_sha=$$(git rev-parse --verify --quiet "$$newest_tag^{commit}" || true); \
+	[ -n "$$tag_sha" ] || tag_sha=$$(git ls-remote --tags $(UV_REMOTE) "refs/tags/$$newest_tag^{}" 2>/dev/null | cut -f1); \
 	newest_version=$${newest_tag#v}; \
 	remote_sha=$$(git ls-remote $(UV_REMOTE) refs/heads/$(UV_BRANCH) 2>/dev/null | cut -f1); \
 	if [ -z "$$newest_tag" ]; then \
 		echo "note: no tags on $(UV_REMOTE); dependents would resolve $(UV_BRANCH) HEAD instead" >&2; \
 		newest_tag="$(UV_BRANCH) HEAD"; \
+		echo "ultraviolet $(UV_REMOTE)/$(UV_BRANCH) = $$(echo $$remote_sha | cut -c1-7)"; \
 	elif [ -n "$$remote_sha" ] && [ "$$tag_sha" != "$$remote_sha" ]; then \
 		echo "ultraviolet newest tag = $$newest_tag ($$(echo $$tag_sha | cut -c1-7))"; \
-		echo "warning: $(UV_REMOTE)/$(UV_BRANCH) $$(echo $$remote_sha | cut -c1-7) is ahead of $$newest_tag" >&2; \
-		echo "         untagged commits never reach dependents: tag a patch release to ship them" >&2; \
+		unshipped=$$(git diff --name-only "$$tag_sha..$$remote_sha" -- src shard.yml 2>/dev/null | head -1); \
+		if [ -n "$$unshipped" ]; then \
+			echo "warning: $(UV_REMOTE)/$(UV_BRANCH) $$(echo $$remote_sha | cut -c1-7) has source changes after $$newest_tag" >&2; \
+			echo "         untagged commits never reach dependents: tag a patch release to ship them" >&2; \
+		else \
+			echo "note: $(UV_REMOTE)/$(UV_BRANCH) is ahead of $$newest_tag, but only tooling/docs changed" >&2; \
+		fi; \
 	else \
 		echo "ultraviolet newest tag = $$newest_tag ($$(echo $$tag_sha | cut -c1-7))"; \
 	fi; \
