@@ -98,7 +98,10 @@ module Ultraviolet
       Window.new_window(nil, 0, 0, width, height, method, false)
     end
 
-    private def self.new_window(
+    # protected, not private: `new_screen`/`new_window` and the instance
+    # `#new_window`/`#new_view` below all reach this overload through the class,
+    # and Crystal rejects a private class method called with a receiver.
+    protected def self.new_window(
       parent : Window?,
       x : Int32,
       y : Int32,
