@@ -311,6 +311,9 @@ module Ultraviolet
       @buf.resize(width, height)
       @buf.touched = Array(LineData?).new(height) { LineData.new(-1, -1) }
       @scr.resize(width, height)
+      # Go's TerminalScreen.Resize marks the renderer for a full erase, so the
+      # next frame clears instead of patching a stale screen.
+      @scr.erase
     end
 
     def start : Nil
@@ -490,7 +493,18 @@ module Ultraviolet
     end
 
     def flush : Nil
+      nudge_inline_cursor
       @scr.flush
+    end
+
+    # nudge_inline_cursor reproduces Go's TerminalScreen.Flush rule: with the
+    # cursor hidden in inline mode, a cursor left at the end of the line can make
+    # some terminals wrap, so move it to column 0 of the same row first.
+    private def nudge_inline_cursor : Nil
+      return if @state.altscreen?
+      x, y = @scr.position
+      return unless x >= @buf.width - 1
+      @scr.move_to(0, y)
     end
 
     def display : Nil
@@ -520,6 +534,8 @@ module Ultraviolet
 
       if state.cur != Position.new(-1, -1)
         @scr.move_to(state.cur.x, state.cur.y)
+      else
+        nudge_inline_cursor
       end
 
       @scr.flush

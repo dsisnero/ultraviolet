@@ -16,7 +16,7 @@ module PtyCapture
 
   ROWS     = 24
   COLS     = 80
-  IDLE     = 250.milliseconds
+  IDLE     = 500.milliseconds
   DEADLINE = 5.seconds
   LIMIT    = 8192
 

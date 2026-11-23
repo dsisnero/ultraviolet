@@ -68,6 +68,15 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 ### Internal
 
 - Example output is now compared against the **vendored Go examples**:
+  seven of the twelve comparable examples are byte-identical; the other
+  five need the renderer's inline (non-fullscreen) path, which currently
+  paints nothing when Go's `TerminalScreen` renderer flags are applied
+  (`plans/parity.md` records the reproduction).
+- `Terminal#resize` erases like Go's `TerminalScreen.Resize`, and the
+  inline cursor nudge from `TerminalScreen.Flush` is implemented, which is
+  what closed the gap on `mouse` and `prependline`.
+- Example snapshots (`spec/testdata/examples/*.golden`) widened their idle
+  window so a slow first frame cannot be captured as an empty one.
   `make parity-examples` runs both sides on identical pseudo terminals and
   diffs the first frame. Eight of twelve comparable examples are byte-identical
   after colour normalisation; the rest are tracked in `plans/parity.md`.

@@ -138,51 +138,57 @@ scripts/parity_examples.cr -- <name>` checks one example.
 | Example | Status | Notes |
 |---------|--------|-------|
 | `boxes` | ✅ identical | — |
-| `draw` | ⬜ | only the initial clear differs (`ESC [ H ESC [ J` vs `ESC [ H ESC [ 2 J`); same effect from home, renderer nit |
 | `helloworld` | ✅ identical | — |
 | `image` | ✅ identical | needs its data file in cwd; the harness runs each side from its own directory |
+| `rgbimage` | ✅ identical | the 0x0 image payload case now matches Go |
 | `splits` | ✅ identical | — |
 | `tv` | ✅ identical | — |
-| `widths` | ✅ identical | — |
-| `altscreen` | ⬜ | inline frames: Go paints nothing before its first size event, and its Flush nudges the cursor at 0x0 |
-| `panic` | ⬜ | same inline-frame cause as `altscreen` (text now matches, typo included) |
-| `mouse` | ⬜ | inline renderer: Go uses relative cursor movement and erases the line tail; this port emits absolute moves and padded cells |
-| `prependline` | ⬜ | needs Go's `TerminalScreen.InsertAbove` shape (implemented as `Terminal#insert_above`) plus the inline cursor rules above |
-| `rgbimage` | ✅ identical | the empty payload case (0x0 image) now matches Go |
+| `widths` | ✅ identical | needed the `ansi` shard patch (below) |
+| `altscreen` | ⬜ | inline frames |
+| `draw` | ⬜ | initial clear is `ESC [ J` where Go emits `ESC [ 2 J`; same effect from home |
+| `mouse` | ⬜ | inline frames |
+| `panic` | ⬜ | inline frames |
+| `prependline` | ⬜ | inline frames |
 | `layout` | ⏭ skipped | Go's example is built on lipgloss, which this port does not depend on |
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
 
-Remaining work, in order, with the evidence gathered so far:
+**Root cause for the five remaining, measured:** Go's `TerminalScreen` gives its
+renderer `SetFullscreen(false)` + `SetRelativeCursor(true)`
+(`vendor/ultraviolet/terminal_screen.go:64-65`). Setting the same two flags on
+this port's `Terminal` renderer makes inline frames produce **only the startup
+handshake and then nothing**: `TerminalRenderer#clear_update`
+(`src/ultraviolet/terminal_renderer.cr:1029`) takes the non-fullscreen branch
+(`clear_below` + `clear_bottom` + `paint_line`) and emits no cells, where the
+fullscreen branch does. Reproduced by pointing `examples/splits` (normally
+identical) at the flags: it stopped painting entirely. With the flags on,
+`mouse` and `prependline` did become identical, which confirms they only need
+that path fixed.
 
-1. **Inline cursor strategy.** Go's `TerminalScreen` renderer runs with
-   `SetFullscreen(false)` and `SetRelativeCursor(true)`; this port's `Terminal`
-   renderer does not, so inline frames use absolute moves and padded cells
-   instead of `\e[A` + erase-tail. Setting those flags globally regressed
-   `draw`/`widths`, so it needs the renderer's own expectations re-derived, not
-   a one-line change.
-2. **`InsertAbove` shape.** `Terminal#insert_above` now mirrors Go
-   (`terminal_screen.go:817`): relative moves, one `InsertLine` for the block,
-   `EraseLineRight` per line. `examples/prependline.cr` uses it. The byte diff
-   that remains is item 1.
-3. **Initial clear form.** `draw` clears to `ESC [ J` where Go emits
-   `ESC [ 2 J`. Equivalent from home; worth aligning when the renderer work
-   above happens.
-4. **Zero-size start.** `Terminal#start` no longer pre-sizes the frame buffer;
-   like Go's `TerminalScreen`, it stays 0×0 until the application handles its
-   first `WindowSizeEvent` (which `start` now always sends). Examples that drew
-   before that event were guarded (`examples/{splits,widths,draw}.cr`).
+Next step for these five: fix `clear_update`/`clear_below`/`clear_bottom` (and
+the relative `move_cursor` choices) for non-fullscreen frames, with the ported
+renderer specs re-checked — they exercise the fullscreen paths today.
+
+Also still open, smaller:
+
+1. `draw`'s initial clear form (`ESC [ J` vs `ESC [ 2 J`).
+2. `Terminal#start` no longer pre-sizes the frame buffer (matching Go's 0x0
+   `TerminalScreen`), so `splits`, `widths` and `draw` guard their first paint
+   until the initial `WindowSizeEvent`, which `start` now always sends.
+3. `Terminal#insert_above` mirrors Go's `InsertAbove`; the renderer's own
+   `prepend_string` keeps its ported behaviour (the ported "prepends one line"
+   spec caught an EraseLineRight I had put in the wrong layer).
 
 Shard patch (per the patch-shard workflow):
 
-- `lib/ansi` now exposes `Ansi.each_grapheme_cluster`, so `StyledString`
-  segments exactly as the width functions measure (virama-joined conjuncts).
-  Upstream branch: `dsisnero/ansi` `expose-grapheme-clusters` (pushed,
-  `063f3ac`), pinned in `shard.yml` until it lands on the main branch.
-  This is what made `widths` identical.
-- Same branch should also gain a single-argument `Ansi.window_op(p)` overload:
-  the `ps.empty?` branch is dead because Crystal rejects a call that only fills
-  a typed splat, so `Ansi.window_op(4)` does not compile and the examples write
-  `"\e[4t"` literals.
+- `lib/ansi` gained `Ansi.each_grapheme_cluster`, so `StyledString` segments
+  exactly as the width functions measure (virama-joined conjuncts are one
+  cluster). Upstream branch `dsisnero/ansi` `expose-grapheme-clusters`
+  (`063f3ac`), pinned in `shard.yml` until it lands. Specs were written first
+  and fail without it. This is what made `widths` identical.
+- The same branch should also gain a single-argument `Ansi.window_op(p)`
+  overload: its `ps.empty?` branch is dead because Crystal rejects a call that
+  only fills a typed splat, so `Ansi.window_op(4)` does not compile and the
+  examples write `"\e[4t"` literals.
 
 ## Recent work outside plan phases
 
