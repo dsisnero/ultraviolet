@@ -1,4 +1,4 @@
-.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples smoke-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 .PHONY: container-info container-build test-linux container-dev container-clean
 
 # Local Linux testing in a container. Apple `container` is preferred on macOS,
@@ -140,6 +140,18 @@ check-examples:
 		crystal build --no-codegen "$$f" || exit $$?; \
 	done
 
+# Snapshot every example's first frame (verify / regenerate).
+snapshot-examples: $(EXAMPLE_BINARIES)
+	@crystal run scripts/snapshot_examples.cr
+
+snapshot-update: $(EXAMPLE_BINARIES)
+	@GOLDEN_UPDATE=1 crystal run scripts/snapshot_examples.cr
+
+# Compare each example's first frame against the vendored Go example. Local
+# only: it needs a Go toolchain and the modules in vendor/ultraviolet/examples.
+parity-examples: $(EXAMPLE_BINARIES)
+	@crystal run scripts/parity_examples.cr
+
 # Regenerate the decoder golden with the vendored Go decoder as the oracle.
 # Needs Go; the output is committed, so CI verifies Crystal alone.
 decode-golden:
@@ -208,6 +220,9 @@ help:
 	@echo "  check-examples     - Type-check every example without building binaries"
 	@echo "  smoke-examples     - Run each example under a pty for a moment"
 	@echo "  decode-golden      - Regenerate the decoder golden from the vendored Go decoder"
+	@echo "  snapshot-examples  - Verify each example's first frame against its golden"
+	@echo "  snapshot-update    - Regenerate the example goldens"
+	@echo "  parity-examples    - Diff each example against the vendored Go example"
 	@echo "  check-win32        - Type-check the Win32 console readers (cross-target)"
 	@echo "  test-linux         - Run the spec suite on Linux in a container"
 	@echo "  container-info     - Show the detected container runtime"

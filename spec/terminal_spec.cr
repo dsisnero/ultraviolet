@@ -107,6 +107,57 @@ end
       term.running?.should be_false
     end
 
+    # Go's Terminal.Start asks whether the terminal measures width by grapheme
+    # cluster (DECRQM for mode 2027) and its event loop switches to grapheme
+    # width when the reply says the mode is settable or set. Nothing called the
+    # port's request/enable helpers before this, so the negotiation never
+    # happened and `width_method` stayed on wcwidth measurement.
+    it "negotiates grapheme width when the terminal supports mode 2027" do
+      master, slave = pty_pair(24, 80)
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+      # A Devanagari conjunct: uniwidth measures 2 columns, grapheme clustering 1.
+      sample = "स्ते"
+
+      begin
+        term.start
+        term.width_method.call(sample).should eq(2)
+
+        term.send_event(Ultraviolet::ModeReportEvent.new(mode: 2027, value: Ansi::ModeSet.value.to_i32))
+        term.events.receive # forwarded only after the negotiation ran
+
+        term.width_method.call(sample).should eq(Ansi.string_width(sample))
+        term.width_method.call(sample).should eq(1)
+        captured_output(master).should contain("\e[?2027h")
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+    end
+
+    it "keeps wcwidth when the terminal does not recognize mode 2027" do
+      master, slave = pty_pair(24, 80)
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+      sample = "स्ते"
+
+      begin
+        term.start
+        before = term.width_method.call(sample)
+        before.should eq(2)
+
+        # ModeNotRecognized: the terminal cannot honor the mode.
+        term.send_event(Ultraviolet::ModeReportEvent.new(mode: 2027, value: 0))
+        term.events.receive
+
+        term.width_method.call(sample).should eq(before)
+        captured_output(master).should_not contain("\e[?2027h")
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+    end
+
     # Upstream's TestStopWithInputInFlightDoesNotPanic: Stop used to clear the
     # reader while the input loop could still evaluate it.
     it "stops while input is in flight" do
@@ -148,6 +199,23 @@ end
         slave.close
       end
     end
+  end
+
+  # captured_output drains whatever the terminal wrote to the pty so far.
+  private def captured_output(master : IO::FileDescriptor) : String
+    buffer = IO::Memory.new
+    master.read_timeout = 300.milliseconds
+    begin
+      loop do
+        chunk = Bytes.new(1024)
+        read = master.read(chunk)
+        break if read == 0
+        buffer.write(chunk[0, read])
+        master.read_timeout = 100.milliseconds
+      end
+    rescue IO::TimeoutError
+    end
+    buffer.to_s
   end
 
   # read_key waits for the next key event, skipping the window-size events a

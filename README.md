@@ -207,6 +207,8 @@ examples and an unchanged tree rebuilds nothing.
 ```bash
 make check-examples            # type-check, no binaries
 make smoke-examples            # start each one under a pty
+make snapshot-examples         # compare each frame with its golden
+make parity-examples           # diff each frame against the Go example
 make build-examples            # build stale example binaries
 make run-example EXAMPLE=mouse # build nothing, just run it
 ```

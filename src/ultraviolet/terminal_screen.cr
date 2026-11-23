@@ -11,6 +11,7 @@ module Ultraviolet
     @mouse_mode : MouseMode
     @mouse_encoding : MouseEncoding
     @synchronized_updates : Bool
+    @width_method_override : Bool
     @cursor : Cursor?
     @background_color : Color?
     @foreground_color : Color?
@@ -33,6 +34,7 @@ module Ultraviolet
       @mouse_mode = MouseMode::None
       @mouse_encoding = MouseEncoding::Legacy
       @synchronized_updates = false
+      @width_method_override = false
       @cursor = nil
       @background_color = nil
       @foreground_color = nil
@@ -57,7 +59,14 @@ module Ultraviolet
       @screen.width_method
     end
 
+    # set_width_method applies an explicit width method, which also pins it: a
+    # later Unicode core negotiation must not override an application's choice.
     def set_width_method(method : WidthMethod) : Nil
+      @width_method_override = true
+      apply_width_method(method)
+    end
+
+    private def apply_width_method(method : WidthMethod) : Nil
       @screen.method = method
     end
 
@@ -98,14 +107,25 @@ module Ultraviolet
       @mouse_encoding = encoding
     end
 
+    # request_grapheme_width asks the terminal whether it measures cell width by
+    # grapheme cluster (DECRQM for Unicode core mode, DEC mode 2027). The reply
+    # arrives as a ModeReportEvent; see Terminal#handle_event.
     def request_grapheme_width : Nil
       @renderer.write_string(Ansi::RequestModeUnicodeCore)
     end
 
+    # enable_grapheme_width turns Unicode core mode on and switches every width
+    # consumer to grapheme measurement, so what this port draws matches what the
+    # terminal paints. An explicit width method wins: the negotiation is a no-op
+    # once the application has set one.
     def enable_grapheme_width : Nil
+      return if @width_method_override
+
       @renderer.write_string(Ansi::SetModeUnicodeCore)
       @renderer.set_width_method(Ansi::GraphemeWidth)
       @renderer.set_grapheme_width(true)
+      apply_width_method(GRAPHEME_WIDTH_METHOD)
+      @renderer.flush
     end
 
     def mouse_encoding : MouseEncoding

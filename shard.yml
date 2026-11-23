@@ -16,6 +16,9 @@ development_dependencies:
   # or examples/rgbimage.cr.
   stumpy_png:
     github: stumpycr/stumpy_png
+  # Golden compares snapshots and rewrites them with GOLDEN_UPDATE=1.
+  golden:
+    github: dsisnero/golden
 
 dependencies:
   colorful:

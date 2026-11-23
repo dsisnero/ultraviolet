@@ -32,6 +32,7 @@ module Ultraviolet
     @buf : RenderBuffer
     @scr : TerminalRenderer
     @method : WidthMethod
+    @width_method_override : Bool
     @profile : ColorProfile
     @use_tabs : Bool
     @use_bspace : Bool
@@ -85,6 +86,7 @@ module Ultraviolet
       @scr = TerminalRenderer.new(@out, env)
       @buf = RenderBuffer.new(0, 0)
       @method = DEFAULT_WIDTH_METHOD
+      @width_method_override = false
       @profile = ColorProfile.detect(@out, env)
       @scr.color_profile = @profile
       @use_tabs = false
@@ -148,8 +150,40 @@ module Ultraviolet
       @method
     end
 
+    # width_method= pins an explicit measurement choice: a later Unicode core
+    # negotiation leaves it alone, and the renderer measures the same way.
     def width_method=(method : WidthMethod) : Nil
+      @width_method_override = true
+      apply_width_method(method)
+    end
+
+    # apply_width_method propagates one choice to every consumer: this terminal
+    # (measurement), the renderer (cell widths while painting), and the
+    # renderer's grapheme flag.
+    private def apply_width_method(method : WidthMethod) : Nil
       @method = method
+      grapheme = method == GRAPHEME_WIDTH_METHOD
+      @scr.set_width_method(grapheme ? Ansi::GraphemeWidth : Ansi::WcWidth)
+      @scr.set_grapheme_width(grapheme)
+    end
+
+    # request_grapheme_width asks the terminal whether it measures width by
+    # grapheme cluster (DECRQM for Unicode core mode, DEC mode 2027).
+    def request_grapheme_width : Nil
+      @scr.write_string(Ansi::RequestModeUnicodeCore)
+    end
+
+    # enable_grapheme_width turns Unicode core mode on and measures by grapheme
+    # cluster, so what this port draws matches what the terminal paints. An
+    # explicit width method wins.
+    def enable_grapheme_width : Nil
+      return if @width_method_override
+
+      @scr.write_string(Ansi::SetModeUnicodeCore)
+      apply_width_method(GRAPHEME_WIDTH_METHOD)
+      # Go flushes in enableGraphemeWidth: the mode has to reach the terminal
+      # before the next frame is measured against it.
+      @scr.flush
     end
 
     def bounds : Rectangle
@@ -317,11 +351,18 @@ module Ultraviolet
       end
       optimize_movements
       configure_renderer
+      reset_tab_stops
 
       @running = true
       spawn { event_loop }
       start_input
       start_winch
+
+      # Ask whether the terminal measures cell width by grapheme cluster (DEC
+      # mode 2027) and flush the query, the way Go's Terminal.Start does. The
+      # reply reaches #handle_event through the event loop.
+      request_grapheme_width
+      @scr.flush
     end
 
     def pause : Nil
@@ -468,6 +509,14 @@ module Ultraviolet
       @state.cur_hidden = true
     end
 
+    # reset_tab_stops makes the terminal's tab stops every 8 columns. When hard
+    # tabs are used, the renderer computes tab positions from that spacing, so
+    # the terminal has to agree. Go writes the same sequence from
+    # TerminalScreen.Restore when resetTabs is set.
+    private def reset_tab_stops : Nil
+      @scr.write_string(Ansi::SetTabEvery8Columns) if @use_tabs
+    end
+
     private def configure_renderer : Nil
       @scr.color_profile = @profile
       if @use_tabs
@@ -509,6 +558,7 @@ module Ultraviolet
     private def restore : Nil
       stop_winch
       stop_input
+      reset_tab_stops
       if last = @last_state
         if last.altscreen?
           set_alt_screen(false)
@@ -706,6 +756,7 @@ module Ultraviolet
       loop do
         event = @evch.receive?
         break unless event
+        handle_event(event)
         case event
         when WindowSizeEvent
           @size = Size.new(event.width, event.height)
@@ -715,6 +766,24 @@ module Ultraviolet
         @evs.send(event)
       end
       @evloop.send(nil)
+    end
+
+    # handle_event reacts to internal events before they are forwarded to the
+    # application, mirroring Go's Terminal.handleEvent. Unicode core mode (DEC
+    # mode 2027) is enabled when the terminal reports it as settable or already
+    # set; a terminal that does not recognize it keeps wcwidth measurement.
+    private def handle_event(event : Event) : Nil
+      return unless event.is_a?(ModeReportEvent)
+      report = event.as(ModeReportEvent)
+      return unless report.mode == Ansi::ModeUnicodeCore.value
+
+      # Enable only for states where the terminal can honor the mode: set,
+      # permanently set, or reset-but-settable. A terminal that does not
+      # recognize it (or has it permanently reset) keeps wcwidth measurement.
+      case report.value
+      when Ansi::ModeSet.value.to_i32, Ansi::ModePermanentlySet.value.to_i32, Ansi::ModeReset.value.to_i32
+        enable_grapheme_width
+      end
     end
 
     private def env_int(key : String) : Int32?

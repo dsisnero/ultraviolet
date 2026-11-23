@@ -1,0 +1,7 @@
+# Golden snapshot settings for scripts/snapshot_examples.cr.
+dir: spec/testdata
+redactions:
+  # Inline images carry a random colour per frame; the payload length varies
+  # with the terminal's pixel size, so mask the whole base64 run.
+  - pattern: '[A-Za-z0-9+/]{80,}={0,2}'
+    replacement: '<base64>'

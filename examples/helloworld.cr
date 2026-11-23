@@ -1,57 +1,81 @@
 require "../src/ultraviolet"
 
-# Note: `crystal run` can interfere with interactive TTY input on some systems.
-# If key events don't arrive, build and run a binary with `crystal build`.
+# Port of vendor/ultraviolet/examples/helloworld.
+#
+# Centers a two-line view, toggles the alternate screen with space, suspends
+# with ctrl+z, and exits on any other key.
+term = Ultraviolet::Terminal.default_terminal
+screen = term
 
-env = ENV.map { |key, value| "#{key}=#{value}" }
-term = Ultraviolet::Terminal.new(STDIN, STDOUT, env)
-
-stop = Channel(Nil).new(1)
-Signal::INT.trap { stop.send(nil) }
-Signal::TERM.trap { stop.send(nil) }
-Signal::TRAP.trap { stop.send(nil) }
-
-term.start
-term.enter_alt_screen
+# Go calls scr.EnterAltScreen() before Start so the alternate screen is active
+# for the first frame.
+screen.enter_alt_screen
+alt_screen = true
 
 begin
+  term.start
+rescue ex
+  STDERR.puts "failed to start program: #{ex.message}"
+  exit 1
+end
+
+view = [
+  "Hello, World!",
+  "Press any key to exit.",
+]
+view_widths = view.map { |line| Ansi.string_width(line) }
+
+display = -> do
+  Ultraviolet::Screen.clear(screen)
+  bounds = screen.bounds
+  context = Ultraviolet::Screen::Context.new(screen)
+  view.each_with_index do |line, index|
+    x = (bounds.dx - view_widths[index]) // 2
+    y = (bounds.dy - view.size) // 2 + index
+    context.draw_string(line, x, y)
+  end
+  screen.display
+end
+
+physical_width = 0
+physical_height = 0
+
+begin
+  display.call
+
   loop do
-    event = nil
-    select
-    when stop.receive
-      break
-    when ev = term.events.receive
-      event = ev
-    when timeout(16.milliseconds)
-    end
-
-    if event
-      if ENV["UV_DEBUG_EVENTS"]?
-        STDERR.puts("event=#{event.class} #{event}")
-        if event.is_a?(Ultraviolet::Key)
-          key = event.as(Ultraviolet::Key)
-          STDERR.puts("  key: code=#{key.code} text=#{key.text.inspect} mod=#{key.mod}")
+    case event = term.events.receive
+    when Ultraviolet::WindowSizeEvent
+      physical_width = event.width
+      physical_height = event.height
+      screen.resize(physical_width, alt_screen ? physical_height : view.size)
+      display.call
+    when Ultraviolet::Key
+      if event.match_string("space")
+        if alt_screen
+          screen.exit_alt_screen
+          alt_screen = false
+          screen.resize(physical_width, view.size)
+        else
+          screen.enter_alt_screen
+          alt_screen = true
+          screen.resize(physical_width, physical_height)
         end
-      end
-      case event
-      when Ultraviolet::WindowSizeEvent
-        term.resize(event.width, event.height)
-        term.erase
-      when Ultraviolet::Key
-        is_q = event.text == "q" || event.code == 'q'.ord
-        is_ctrl_c = (event.mod & Ultraviolet::ModCtrl) != 0 && (event.code == 'c'.ord || event.text == "c")
-        break if is_q || is_ctrl_c || event.match_string("q", "ctrl+c")
+        display.call
+      elsif event.match_string("ctrl+z")
+        term.stop
+        Ultraviolet.suspend
+        term.start
+      else
+        break
       end
     end
-
-    "Hello, World!".each_char_with_index do |char, idx|
-      term.set_cell(idx, 0, Ultraviolet::Cell.new(char.to_s, 1))
-    end
-    term.display
   end
 ensure
+  # Go's last render runs on the way out, after Stop.
   begin
-    term.shutdown(1.second)
+    display.call
   rescue
   end
+  term.stop
 end

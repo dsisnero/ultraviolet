@@ -15,6 +15,9 @@ log/
 node_modules/
 *.dwarf
 
+# Examples and the Go references write log files
+*.log
+
 # Binaries from `make build-examples` land next to their sources
 /examples/*
 !/examples/*.cr

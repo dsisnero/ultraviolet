@@ -7,6 +7,11 @@ module Ultraviolet
 
   DEFAULT_WIDTH_METHOD = ->(str : String) { UnicodeCharWidth.width(str) }
 
+  # GRAPHEME_WIDTH_METHOD measures by grapheme cluster, matching a terminal that
+  # honors Unicode core mode (DEC mode 2027). It is selected after the terminal
+  # confirms support, so width and the terminal's own measurement agree.
+  GRAPHEME_WIDTH_METHOD = ->(str : String) { Ansi.string_width(str) }
+
   struct Link
     property url : String
     property params : String

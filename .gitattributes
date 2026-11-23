@@ -11,3 +11,7 @@
 *.exe  binary
 *.dll  binary
 *.dwarf binary
+
+# Golden snapshots are raw terminal frames: their `\r\n` and escape sequences
+# are the content, so they must never be line-ending normalized.
+spec/testdata/** -text

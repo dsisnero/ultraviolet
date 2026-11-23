@@ -103,6 +103,21 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   (`\e[14t`), whose `CSI 4 ; h ; w t` reply decodes to `PixelSizeEvent`. The Go
   example sends `ansi.WindowOp(4)` instead, which terminals read as a resize
   request and do not answer; that one-number divergence is deliberate.
+- `examples/` output is compared against the vendored Go examples with
+  `make parity-examples` (local only: it needs Go). Frames are compared after
+  rewriting every SGR colour to RGB, because Go passes palette entries through
+  as indexed colours while this port resolves them, and after trimming the
+  startup handshake. `make snapshot-examples` pins each example's own frame as a
+  regression golden (`spec/testdata/examples/`), regenerated with
+  `make snapshot-update`; `space` (wall-clock animation) and `prependline`
+  (random colour) are skipped.
+- **Open divergence the harness found:** Go's default width method is
+  `ansi.WcWidth` (`buffer.go:617`) until the terminal confirms DEC mode 2027;
+  this port defaults to uniwidth, which measures like grapheme clustering (a
+  Devanagari conjunct is 1 column instead of 2). `examples/widths.cr` therefore
+  reports a different model on a terminal that never answers the query. Fixing
+  it means re-porting the width expectations, so it is tracked here rather than
+  changed in passing.
 - Colors are RGB-only. `Ultraviolet::Color` is an RGB struct, so
   `AnsiColor.basic`/`.indexed` resolve palette entries to RGB and the output
   uses `38;2`/`48;2` where Go's `ansi.BasicColor`/`ansi.IndexedColor` emit

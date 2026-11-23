@@ -1063,6 +1063,10 @@ module Ultraviolet
         logf("output: %s", @buf.to_slice.inspect)
       end
       @writer.write(@buf.to_slice)
+      # The writer is usually an IO::FileDescriptor, which buffers on its own:
+      # without this a small frame can sit in that buffer instead of reaching
+      # the terminal. Go writes to an unbuffered stdout, so Flush always lands.
+      @writer.flush
       @buf.clear
     end
 

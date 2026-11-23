@@ -1,0 +1,19 @@
+[?5W[?2027$p[?1049h[?25l[H[2Jwidth method: grapheme (DEC mode 2027)
+the right edges below should form one straight column
+
+....|....+....|....+....|.
+│hello world[13X[5;26H│ uv=11 ansi=11  ascii[?7l
+[K│नमस्ते दुनिया                │ uv=8 ansi=7  hindi[?7h[6;46H
+│स्ते क्ष त्र ज्ञ[13X[7;26H│ uv=11 ansi=7  hindi conjunct
+│café résumé[13X[8;26H│ uv=11 ansi=11  combining[?7l
+[K│世界你好                │ uv=8 ansi=8  cjk[?7h[9;44H[?7l
+[K│🌈 🔥 🦄                │ uv=8 ansi=8  emoji[?7h[10;46H[?7l
+[K│👨‍👩‍👧‍👦                      │ uv=2 ansi=2  zwj family[?7h[11;51H[?7l
+[K│👨‍💻 👩‍🚀                   │ uv=5 ansi=5  zwj work[?7h[12;49H[?7l
+[K│🏳️‍🌈                       │ uv=1 ansi=2  zwj flag[?7h[13;49H[?7l
+[K│👍🏽 👋🏿                   │ uv=5 ansi=5  skin tone[?7h[14;50H[?7l
+[K│⚠️ ❤️ ✈️                   │ uv=5 ansi=8  vs16[?7h[15;45H[?7l
+[K│1️⃣ 2️⃣ 3️⃣                   │ uv=5 ansi=8  keycap[?7h[16;47H
+│🇺🇸 🇯🇵[21X[17;26H│ uv=3 ansi=5  flags
+
+w: force wcwidth   g: force grapheme width   q: quit

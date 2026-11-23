@@ -16,8 +16,8 @@ module Ultraviolet
 
     def self.suspend : Nil
       resumed = Channel(Nil).new(1)
-      Signal::CONT.trap { resumed.try_send(nil) }
-      Process.kill(Signal::TSTP, 0)
+      Signal::CONT.trap { resumed.send(nil) }
+      Process.signal(Signal::TSTP, 0)
       resumed.receive
     ensure
       Signal::CONT.reset
