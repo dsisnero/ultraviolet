@@ -13,10 +13,8 @@ rescue ex
   exit 1
 end
 
-# Go's TerminalScreen starts in inline mode; this port's Terminal starts in the
-# alternate screen, so leave it inline before the first frame.
-term.exit_alt_screen
-
+# Go's terminal starts inline, and so does this port's: nothing to leave before
+# the first frame.
 counter = 5
 
 # Go runs a ticker goroutine that sends a tickEvent through the terminal every

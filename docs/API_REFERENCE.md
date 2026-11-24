@@ -76,9 +76,9 @@ Crystal Ultraviolet API mapped to Go upstream types.
 | `uv.DefaultTerminal()` | `Ultraviolet::Terminal.default_terminal` |
 | `uv.ControllingTerminal()` | `Ultraviolet::Terminal.controlling_terminal` |
 | `t.Start()` | `term.start` |
-| `t.Stop()` | `term.shutdown(timeout)` |
+| `t.Stop()` | `term.stop` (`term.shutdown(timeout)` also waits for the event loop) |
 | `t.Events()` returns `<-chan Event` | `term.events : Channel(Event)` |
-| `t.Screen()` returns `*TerminalScreen` | Terminal itself implements `Screen` |
+| `t.Screen()` returns `*TerminalScreen` | `term.screen`; `Terminal` also delegates the drawing and mode helpers |
 | `t.SendEvent(ev)` | `term.events.send(ev)` |
 
 ## TerminalScreen
@@ -86,14 +86,15 @@ Crystal Ultraviolet API mapped to Go upstream types.
 | Go | Crystal |
 |----|---------|
 | `uv.NewTerminalScreen(w, env)` | `Ultraviolet::TerminalScreen.new(writer, env)` |
-| `scr.EnterAltScreen()` | `screen.enter_alt_screen` |
-| `scr.ExitAltScreen()` | Not used directly; `reset` emits exit sequence |
+| `scr.EnterAltScreen()` | `screen.enter_alt_screen` (or `term.enter_alt_screen`) |
+| `scr.ExitAltScreen()` | `screen.exit_alt_screen` (or `term.exit_alt_screen`) |
 | `scr.Reset()` | `screen.reset : Nil` (emits ANSI, preserves state) |
 | `scr.Restore()` | `screen.restore : Nil` (re-emits previous state) |
 | `scr.Display(drawable)` | `screen.display(drawable?)` |
 | `scr.Render()` | `screen.render` |
 | `scr.Flush()` | `screen.flush` |
 | `scr.SetMouseMode(m)` | `screen.set_mouse_mode(mode)` |
+| `scr.SetMouseEncoding(e)` | `screen.set_mouse_encoding(encoding)` |
 | `scr.SetKeyboardEnhancements(ke)` | `screen.set_keyboard_enhancements(enh)` |
 | `scr.InsertAbove(content)` | `screen.insert_above(content)` |
 

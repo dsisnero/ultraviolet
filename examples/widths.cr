@@ -80,8 +80,10 @@ display = -> do
   screen.display
 end
 
-# The buffer is 0x0 until the first WindowSizeEvent arrives, as in Go.
-display.call unless screen.bounds.empty?
+# Go renders once before the event loop, on a still-0x0 buffer. Keeping that
+# render is what makes the startup bytes match: in fullscreen mode it emits the
+# erase that precedes the first real frame.
+display.call
 
 begin
   loop do

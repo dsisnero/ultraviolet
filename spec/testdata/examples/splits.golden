@@ -1,4 +1,4 @@
-[?5W[?25l[?2027$p[?1049h[A[H[2JHorizontal Layout Example. Press q to quit
+[?1049h[?25l[?5W[?1049h[?25l[H[2J[?2027$p[H[2JHorizontal Layout Example. Press q to quit
 Each line has 2 constraints, plus Min(0) to fill the remaining space.
 E.g. the second line of the Len/Min box is [Len(2), Min(2), Min(0)]
 Note: constraint labels that don't fit are truncated[8;2HLen | Len     Len | Min     Len | Max     Len | Perc    Len | Ratio

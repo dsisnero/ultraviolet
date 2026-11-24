@@ -34,9 +34,12 @@ Terminal
        -> typed Ultraviolet events
 ```
 
-- `Terminal` owns lifecycle and terminal mode setup.
-- `TerminalScreen` exposes drawing, cursor, color, title, progress bar, and
-  program status state.
+- `Terminal` owns lifecycle, terminal mode setup, and the input event loop; it is
+  a facade over its `TerminalScreen` (`term.screen`), as Go's `Terminal` is over
+  `t.scr`. Drawing and state helpers on `Terminal` delegate to the screen, so the
+  screen owns every piece of screen state and `stop` can undo it.
+- `TerminalScreen` exposes drawing, cursor, color, title, progress bar,
+  program status, mouse, paste, and keyboard state.
 - Buffers hold cells and dirty-region state used by the renderer.
 - The renderer diffs cells and emits optimized ANSI sequences.
 - The reader/scanner/decoder converts terminal input into typed events.
@@ -54,8 +57,10 @@ Terminal
 
 ## Intentional divergences
 
-- Crystal merges Go's `Terminal` and `Screen` responsibilities into
-  `TerminalScreen`.
+- Crystal's `Terminal` adds drawing helpers (it includes `Screen` and the buffer
+  helpers) that delegate to its `TerminalScreen`, where Go code calls
+  `t.Screen().SetCell(...)` and friends directly. The state itself lives on the
+  screen in both languages.
 - `EventScanner` is extracted from `TerminalReader`, mirroring Go's
   `eventScanner`.
 - Some Go dependencies are provided by Crystal shards (`ansi`, `terminfo`,

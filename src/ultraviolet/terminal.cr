@@ -1,4 +1,4 @@
-require "./terminal_renderer"
+require "./terminal_screen"
 require "./buffer"
 require "./event"
 require "./environ"
@@ -11,6 +11,17 @@ module Ultraviolet
   ErrRunning              = Exception.new("terminal is running")
   ErrNotRunning           = Exception.new("terminal not running")
 
+  # Terminal is a thin facade over a [TerminalScreen], the way Go's `Terminal`
+  # is a facade over `t.scr`. Every piece of screen state — alternate screen,
+  # cursor, mouse mode and encoding, bracketed paste, keyboard enhancements,
+  # colors, progress bar, program status, window title, synchronized updates,
+  # tab stops — lives on the screen, so stopping the terminal undoes it without
+  # this class tracking a second copy. The drawing helpers are delegations to
+  # the screen's own window, so `examples/` and dependents keep their surface.
+  #
+  # Terminal owns what is not screen state: the console fds, the input poll
+  # reader and its event loop, the window-size notifier, the raw-mode state, and
+  # the terminal size.
   class Terminal
     include Screen
 
@@ -19,9 +30,7 @@ module Ultraviolet
     getter size : Size
     getter pixel_size : Size
     getter? running : Bool
-    property logger : Logger?
-    property profile : ColorProfile
-    getter method : WidthMethod
+    getter screen : TerminalScreen
 
     @in : IO
     @out : IO
@@ -29,15 +38,8 @@ module Ultraviolet
     @out_tty : IO::FileDescriptor?
     @in_tty_state : TtyState?
     @out_tty_state : TtyState?
-    @buf : RenderBuffer
-    @scr : TerminalRenderer
-    @method : WidthMethod
-    @width_method_override : Bool
-    @profile : ColorProfile
     @use_tabs : Bool
     @use_bspace : Bool
-    @state : TerminalState
-    @last_state : TerminalState?
     @prepend : Array(String)
     @evs : Channel(Event)
     @evch : Channel(Event)
@@ -50,15 +52,6 @@ module Ultraviolet
     @poll_reader : PollReader?
     @logger : Logger?
     @opts : Options
-
-    struct TerminalState
-      property? altscreen : Bool
-      property? cur_hidden : Bool
-      property cur : Position
-
-      def initialize(@altscreen : Bool = false, @cur_hidden : Bool = false, @cur : Position = Position.new(-1, -1))
-      end
-    end
 
     def self.default_terminal : Terminal
       Terminal.new(Console.default, Options.default)
@@ -83,21 +76,13 @@ module Ultraviolet
       )
       @environ = Environ.new(env)
       @termtype = @environ.getenv("TERM")
-      # The renderer writes into a queue, not the terminal, the way Go builds
-      # its renderer on `TerminalScreen`'s buffer: a cursor move made while
-      # flushing a frame stays in the renderer and reaches the terminal with the
-      # next frame. See #flush.
-      @queue = IO::Memory.new
-      @scr = TerminalRenderer.new(@queue, env)
-      @buf = RenderBuffer.new(0, 0)
-      @method = DEFAULT_WIDTH_METHOD
-      @width_method_override = false
-      @profile = ColorProfile.detect(@out, env)
-      @scr.color_profile = @profile
+      # Like Go's `NewTerminal`, the screen is built on the console's writer.
+      # The renderer writes into the screen's queue, not the terminal, so a
+      # cursor move made while flushing a frame reaches the terminal with the
+      # next frame. See [TerminalScreen#flush].
+      @screen = TerminalScreen.new(@out, env)
       @use_tabs = false
       @use_bspace = false
-      @state = TerminalState.new
-      @last_state = nil
       @prepend = [] of String
       @evs = Channel(Event).new
       @evch = Channel(Event).new
@@ -127,124 +112,116 @@ module Ultraviolet
       @opts
     end
 
+    def logger : Logger?
+      @logger
+    end
+
     def logger=(logger : Logger?) : Nil
       @logger = logger
+      @screen.logger = logger
     end
 
     def color_profile : ColorProfile
-      @profile
+      @screen.color_profile
     end
 
     def color_profile=(profile : ColorProfile) : Nil
-      @profile = profile
-    end
-
-    def state : TerminalState
-      @state
+      @screen.color_profile = profile
     end
 
     def color_model : ColorProfile
-      @profile
+      @screen.color_profile
     end
 
     def convert(color : Color) : Color
-      ColorProfileUtil.convert(@profile, color)
+      ColorProfileUtil.convert(@screen.color_profile, color)
     end
 
     def width_method : WidthMethod
-      @method
+      @screen.width_method
     end
 
     # width_method= pins an explicit measurement choice: a later Unicode core
     # negotiation leaves it alone, and the renderer measures the same way.
     def width_method=(method : WidthMethod) : Nil
-      @width_method_override = true
-      apply_width_method(method)
-    end
-
-    # apply_width_method propagates one choice to every consumer: this terminal
-    # (measurement), the renderer (cell widths while painting), and the
-    # renderer's grapheme flag.
-    private def apply_width_method(method : WidthMethod) : Nil
-      @method = method
-      grapheme = method == GRAPHEME_WIDTH_METHOD
-      @scr.set_width_method(grapheme ? Ansi::GraphemeWidth : Ansi::WcWidth)
-      @scr.set_grapheme_width(grapheme)
+      @screen.width_method = method
     end
 
     # request_grapheme_width asks the terminal whether it measures width by
     # grapheme cluster (DECRQM for Unicode core mode, DEC mode 2027).
     def request_grapheme_width : Nil
-      queue_string(Ansi::RequestModeUnicodeCore)
+      @screen.request_grapheme_width
     end
 
     # enable_grapheme_width turns Unicode core mode on and measures by grapheme
     # cluster, so what this port draws matches what the terminal paints. An
     # explicit width method wins.
     def enable_grapheme_width : Nil
-      return if @width_method_override
-
-      queue_string(Ansi::SetModeUnicodeCore)
-      apply_width_method(GRAPHEME_WIDTH_METHOD)
-      # Go flushes in enableGraphemeWidth: the mode has to reach the terminal
-      # before the next frame is measured against it.
-      drain
+      @screen.enable_grapheme_width
     end
 
     def bounds : Rectangle
-      Ultraviolet.rect(0, 0, @buf.width, @buf.height)
+      @screen.bounds
     end
 
     def width : Int32
-      @buf.width
+      @screen.width
     end
 
     def height : Int32
-      @buf.height
+      @screen.height
+    end
+
+    def string_width(str : String) : Int32
+      @screen.string_width(str)
     end
 
     def cell_at(x : Int32, y : Int32) : Cell?
-      @buf.cell_at(x, y)
+      @screen.cell_at(x, y)
     end
 
     def set_cell(x : Int32, y : Int32, cell : Cell?) : Nil
-      @buf.set_cell(x, y, cell)
+      @screen.set_cell(x, y, cell)
     end
 
     def clear : Nil
-      @buf.clear
+      @screen.clear
     end
 
     def clear_area(area : Rectangle) : Nil
-      @buf.clear_area(area)
+      @screen.clear_area(area)
     end
 
     def fill(cell : Cell?) : Nil
-      @buf.fill(cell)
+      @screen.fill(cell)
     end
 
     def fill_area(cell : Cell?, area : Rectangle) : Nil
-      @buf.fill_area(cell, area)
+      @screen.fill_area(cell, area)
     end
 
     def clone : Buffer
-      @buf.clone
+      @screen.clone
     end
 
     def clone_area(area : Rectangle) : Buffer?
-      @buf.clone_area(area)
+      @screen.clone_area(area)
     end
 
+    # position and set_position are the renderer's pen. Go's terminal facade has
+    # no equivalent; the screen exposes them for parity with the renderer.
     def position : {Int32, Int32}
-      @scr.position
+      @screen.position
     end
 
     def set_position(x : Int32, y : Int32) : Nil
-      @scr.set_position(x, y)
+      @screen.set_position(x, y)
     end
 
+    # move_to asks for the cursor to be at (x, y) after the next flush, the way
+    # Go's `TerminalScreen.SetCursorPosition` does.
     def move_to(x : Int32, y : Int32) : Nil
-      @state.cur = Position.new(x, y)
+      @screen.set_cursor_position(x, y)
     end
 
     def draw(d : Drawable) : Nil
@@ -263,25 +240,27 @@ module Ultraviolet
         frame_height = d.height
       else
         # For other Drawable types, use default height
-        # Note: In Go, there are type switches for interfaces with Height() and Bounds() methods
-        # In Crystal, we would need to define those interfaces separately
+        # Note: In Go, there are type switches for interfaces with Height() and
+        # Bounds() methods. In Crystal, we would need to define those interfaces
+        # separately.
       end
 
       if frame_height != frame_area.dy
         frame_area = Ultraviolet.rect(frame_area.min.x, frame_area.min.y, frame_area.dx, frame_height)
       end
 
-      # Resize the screen buffer to match the frame area
-      @buf.resize(frame_area.dx, frame_area.dy)
+      # Resize the screen's window to match the frame area. The renderer keeps
+      # its own size, which #resize updates from the terminal.
+      @screen.buffer.resize(frame_area.dx, frame_height)
 
       # Clear our screen buffer before copying the new frame into it
-      @buf.clear
-      d.draw(self, @buf.bounds) unless d.nil?
+      @screen.clear
+      d.draw(self, @screen.bounds) unless d.nil?
 
       # If the frame height is greater than the screen height, we drop the
       # lines from the top of the buffer.
       if frame_height > @size.height
-        @buf.lines = @buf.lines[frame_height - @size.height..]
+        @screen.buffer.lines = @screen.buffer.lines[frame_height - @size.height..]
       end
     end
 
@@ -313,12 +292,7 @@ module Ultraviolet
     end
 
     def resize(width : Int32, height : Int32) : Nil
-      @buf.resize(width, height)
-      @buf.touched = Array(LineData?).new(height) { LineData.new(-1, -1) }
-      @scr.resize(width, height)
-      # Go's TerminalScreen.Resize marks the renderer for a full erase, so the
-      # next frame clears instead of patching a stale screen.
-      @scr.erase
+      @screen.resize(width, height)
     end
 
     def start : Nil
@@ -338,51 +312,29 @@ module Ultraviolet
         STDERR.puts("uv: fds in=#{in_fd} out=#{out_fd} stdin=#{stdin_fd} stdout=#{stdout_fd}")
       end
 
-      if @last_state.nil?
-        # Go's TerminalScreen starts inline and hidden-cursor; the example decides
-        # whether to enter the alternate screen before Start. Forcing it here made
-        # inline examples emit an exit-alt-screen sequence they never asked for.
-        hide_cursor
-        @state.cur = Position.new(-1, -1)
-      end
-
       width, height = fetch_size
       @size = Size.new(width, height)
-      # Go's TerminalScreen owns a 0x0 window until the application resizes it
-      # from its first WindowSizeEvent. Pre-sizing here painted an extra frame
-      # that Go does not paint, and the app's own resize then repainted.
-      @scr.resize(@buf.width, @buf.height)
       begin
         make_raw
       rescue ex
-        restore
+        restore_tty
         raise ex
       end
       optimize_movements
-      configure_renderer
-      reset_tab_stops
+      @screen.configure_movements(@use_tabs, @use_bspace)
 
       @running = true
       spawn { event_loop }
       start_input
       start_winch
 
-      # Write the state the screen is in, then ask whether the terminal measures
-      # cell width by grapheme cluster (DEC mode 2027), the way Go's
-      # Terminal.Start does through TerminalScreen.Restore + Flush. The reply
-      # reaches #handle_event through the event loop.
-      set_alt_screen(true) if @state.altscreen?
-      queue_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
-      # Go's TerminalScreen.Restore renders the (still 0x0) buffer before asking
-      # about grapheme width. The cursor write that Flush makes afterwards is
-      # queued behind everything else and only reaches the terminal with the
-      # first frame, because only #render drains the renderer.
-      @scr.render(@buf)
-      @scr.flush
-      request_grapheme_width
-      drain
-      write_cursor
-      @last_state = @state
+      # Go's Terminal.Start restores the screen state, asks whether the terminal
+      # measures cell width by grapheme cluster (DEC mode 2027), then flushes.
+      # The screen starts inline with a hidden cursor, so an application that
+      # never entered the alternate screen emits no alt-screen sequence.
+      @screen.restore
+      @screen.request_grapheme_width
+      @screen.flush
     end
 
     def pause : Nil
@@ -396,10 +348,15 @@ module Ultraviolet
       @running = true
       make_raw
       optimize_movements
-      configure_renderer
+      @screen.configure_movements(@use_tabs, @use_bspace)
       start_input
       start_winch
-      initialize_state
+      # The screen still holds the state the application set before Pause, so
+      # restoring it re-emits mouse modes, paste mode and the rest, as Go's
+      # Stop-then-Start cycle does.
+      @screen.restore
+      @screen.request_grapheme_width
+      @screen.flush
     end
 
     def stop : Nil
@@ -447,45 +404,10 @@ module Ultraviolet
     end
 
     # insert_above writes *content* above the current frame, scrolling the screen
-    # up to make room, and leaves the cursor at the top. It mirrors Go's
-    # TerminalScreen.InsertAbove (terminal_screen.go:817): relative moves from the
-    # renderer's current position, one InsertLine for the whole block, then each
-    # line followed by EraseLineRight.
-    #
-    # This is separate from the renderer's prepend queue: Go's examples call
-    # InsertAbove for immediate output, and the renderer's prependString (with its
-    # own ported specs) is a different path.
+    # up to make room, and leaves the cursor at the top. See
+    # [TerminalScreen#insert_above].
     def insert_above(content : String) : Nil
-      return if content.empty?
-
-      width = @buf.width
-      height = @buf.height
-      _x, y = @scr.position
-
-      builder = String::Builder.new
-      builder << '\r'
-      down = height - y - 1
-      builder << Ansi.cursor_down(down) if down > 0
-
-      lines = content.split('\n')
-      offset = lines.size
-      lines.each do |line|
-        line_width = @method.call(line)
-        offset += line_width // width if width > 0 && line_width > width
-      end
-
-      builder << "\n" * offset
-      builder << Ansi.cursor_up(offset + height - 1)
-      builder << Ansi.insert_line(offset)
-      lines.each do |line|
-        builder << line
-        builder << Ansi::EraseLineRight
-        builder << "\r\n"
-      end
-
-      @scr.set_position(0, 0)
-      queue_string(builder.to_s)
-      drain
+      @screen.insert_above(content)
     end
 
     def prepend_string(value : String) : Nil
@@ -497,162 +419,117 @@ module Ultraviolet
     end
 
     def write(bytes : Bytes) : Int32
-      queue_bytes(bytes)
-      bytes.size
+      @screen.write(bytes)
     end
 
     def write_string(value : String) : Int32
-      queue_string(value)
-      value.bytesize
+      @screen.write_string(value)
     end
 
-    # flush mirrors Go's `TerminalScreen.Flush`: write what is queued, then
-    # decide where the cursor belongs. Go makes that move through the renderer,
-    # which the next render drains, so the bytes belong to the next frame and
-    # not to this one.
+    # flush writes everything the screen has queued. Go's `TerminalScreen.Flush`
+    # assumes a Render already drained the renderer into the queue; this facade
+    # has always drained it too, so bytes buffered by the renderer alone (a
+    # kitty image transfer, for instance) reach the terminal here.
     def flush : Nil
-      @scr.flush
-      drain
-      write_cursor
-    end
-
-    # drain writes the queued state and the frames the renderer drained into it.
-    # Go's `TerminalScreen` calls this part `Flush`.
-    private def drain : Nil
-      return if @queue.size == 0
-
-      @queue.rewind
-      IO.copy(@queue, @out)
-      @out.flush
-      @queue.clear
-    end
-
-    # queue_string queues bytes the screen sends on its own behalf, the way Go
-    # writes them straight into `TerminalScreen.buf`. They go out on #drain.
-    private def queue_string(value : String) : Nil
-      @queue.write(value.to_slice)
-    end
-
-    private def queue_bytes(bytes : Bytes) : Nil
-      @queue.write(bytes)
-    end
-
-    # write_cursor reproduces Go's `TerminalScreen.Flush` cursor handling: use
-    # the application's position when it set one, otherwise, in inline mode, move
-    # a cursor left at the end of the line to column 0 of the same row (some
-    # terminals wrap it otherwise). Only #render drains it.
-    private def write_cursor : Nil
-      state = @state
-      if state.cur != Position.new(-1, -1)
-        @scr.move_to(state.cur.x, state.cur.y)
-      elsif !state.altscreen?
-        x, y = @scr.position
-        @scr.move_to(0, y) if x >= @buf.width - 1
-      end
+      @screen.drain_renderer
+      @screen.flush
     end
 
     def display : Nil
-      state = @state
-      if last = @last_state
-        if last.altscreen? != state.altscreen?
-          set_alt_screen(state.altscreen?)
-        end
-      elsif state.altscreen?
-        set_alt_screen(true)
-      end
-
-      if last = @last_state
-        if last.cur_hidden? != state.cur_hidden?
-          queue_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
-        end
-      else
-        queue_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
-      end
-
-      # A cursor write made while flushing the last frame waited in the
-      # renderer; draining it here puts it ahead of this frame's bytes, which is
-      # where Go puts it (Render renders, then flushes the renderer).
-      @scr.render(@buf)
-      @scr.flush
-
+      # Render drains the renderer into the screen's queue. Prepend lines queue
+      # into the renderer, which #flush leaves for the next render — that is
+      # where Go puts the cursor write a frame makes, so the frame's own bytes go
+      # out first.
+      @screen.render
       if @prepend.size > 0
         @prepend.each { |line| prepend_line(line) }
         @prepend.clear
       end
-
-      drain
-      write_cursor
-      @last_state = state
+      @screen.flush
     end
 
     def erase : Nil
-      @buf.touched = [] of LineData?
-      @scr.erase
-      clear
+      @screen.erase
     end
 
     def buffered : Int32
-      @scr.buffered
+      @screen.buffered
     end
 
     def touched : Int32
-      @scr.touched(@buf)
+      @screen.touched
     end
 
     def enter_alt_screen : Nil
-      @state.altscreen = true
+      @screen.enter_alt_screen
     end
 
     def exit_alt_screen : Nil
-      @state.altscreen = false
+      @screen.exit_alt_screen
+    end
+
+    def alt_screen? : Bool
+      @screen.alt_screen?
     end
 
     def show_cursor : Nil
-      @state.cur_hidden = false
+      @screen.show_cursor
     end
 
     def hide_cursor : Nil
-      @state.cur_hidden = true
+      @screen.hide_cursor
     end
 
-    # reset_tab_stops makes the terminal's tab stops every 8 columns. When hard
-    # tabs are used, the renderer computes tab positions from that spacing, so
-    # the terminal has to agree. Go writes the same sequence from
-    # TerminalScreen.Restore when resetTabs is set.
-    private def reset_tab_stops : Nil
-      queue_string(Ansi::SetTabEvery8Columns) if @use_tabs
+    def cursor_visible? : Bool
+      @screen.cursor_visible?
     end
 
-    private def configure_renderer : Nil
-      @scr.fullscreen = false
-      @scr.relative_cursor = true
-      @scr.color_profile = @profile
-      if @use_tabs
-        @scr.tab_stops = @size.width
-      end
-      @scr.backspace = @use_bspace
-      @scr.logger = @logger
+    def set_mouse_mode(mode : MouseMode) : Nil
+      @screen.set_mouse_mode(mode)
     end
 
-    # set_alt_screen switches the alternate screen the way Go's TerminalScreen
-    # does: the sequence is queued for the terminal (Go writes it into `s.buf`),
-    # and the renderer only updates its own flags. Letting the renderer write it
-    # would put it in the frame stream and move it behind whatever the
-    # application queued in between.
-    private def set_alt_screen(enable : Bool) : Nil
-      if enable
-        queue_string(Ansi::SetModeAltScreenSaveCursor)
-        @scr.save_cursor
-        @scr.fullscreen = true
-        @scr.relative_cursor = false
-        @scr.erase
-      else
-        @scr.erase
-        @scr.relative_cursor = true
-        @scr.fullscreen = false
-        queue_string(Ansi::ResetModeAltScreenSaveCursor)
-        @scr.restore_cursor
-      end
+    def mouse_mode : MouseMode
+      @screen.mouse_mode
+    end
+
+    def set_mouse_encoding(encoding : MouseEncoding) : Nil
+      @screen.set_mouse_encoding(encoding)
+    end
+
+    def mouse_encoding : MouseEncoding
+      @screen.mouse_encoding
+    end
+
+    def enable_bracketed_paste : Nil
+      @screen.enable_bracketed_paste
+    end
+
+    def disable_bracketed_paste : Nil
+      @screen.disable_bracketed_paste
+    end
+
+    def bracketed_paste? : Bool
+      @screen.bracketed_paste?
+    end
+
+    def set_window_title(title : String) : Nil
+      @screen.set_window_title(title)
+    end
+
+    def set_program_status(status : ProgramStatus?) : Nil
+      @screen.set_program_status(status)
+    end
+
+    def set_progress_bar(progress : ProgressBar?) : Nil
+      @screen.set_progress_bar(progress)
+    end
+
+    def set_keyboard_enhancements(enhancements : KeyboardEnhancements?) : Nil
+      @screen.set_keyboard_enhancements(enhancements)
+    end
+
+    def set_synchronized_updates(enabled : Bool) : Nil
+      @screen.set_synchronized_updates(enabled)
     end
 
     private def prepend_line(line : String) : Nil
@@ -660,45 +537,19 @@ module Ultraviolet
       str_lines.each_with_index do |str, i|
         str_lines[i] = Ansi.truncate(str, @size.width, "")
       end
-      @scr.prepend_string(@buf, str_lines.join("\n"))
+      @screen.prepend_string(str_lines.join("\n"))
     end
 
-    private def initialize_state : Nil
-      if last = @last_state
-        set_alt_screen(last.altscreen?)
-        queue_string(last.cur_hidden? ? "\e[?25l" : "\e[?25h")
-        if last.cur != Position.new(-1, -1)
-          move_to(last.cur.x, last.cur.y)
-        end
-      else
-        set_alt_screen(true)
-      end
-      @scr.flush
-      drain
-    end
-
-    # restore mirrors Go's `Terminal.Stop`, which resets the screen
-    # (`TerminalScreen.Reset`) and flushes it: it undoes the state it queued
-    # (alternate screen, cursor visibility, styles) and deliberately leaves the
-    # application's frame on screen — it does not clear, and it does not reset
-    # tab stops, which Go only ever writes from `Restore` at start.
-    #
-    # The state Reset undoes that this port tracks lives in `@state`; the rest
-    # (mouse modes, bracketed paste, styles) belongs to [TerminalScreen], which
-    # applications drive directly, so a [Terminal] never queued them.
+    # restore mirrors Go's `Terminal.Stop`: reset the screen (`Reset`) and flush
+    # it, then restore the console. Reset undoes everything the screen tracked —
+    # alternate screen, cursor, mouse modes and encoding, bracketed paste,
+    # keyboard enhancements, colors, title, progress bar — and deliberately
+    # leaves the application's frame and the program status on screen.
     private def restore : Nil
       stop_winch
       stop_input
-      set_alt_screen(false) if @state.altscreen?
-      queue_string("\e[?25h")
-      @scr.flush
-      drain
-      # Go's Reset parks the cursor on the bottom row, but it makes that move
-      # through the renderer, which `Stop` never drains: the move is computed and
-      # then dropped, and only the state writes above reach the terminal.
-      bottom = @buf.height > 0 ? @buf.height - 1 : 0
-      @scr.move_to(0, bottom)
-      @scr.set_position(-1, -1)
+      @screen.reset
+      @screen.flush
       restore_tty
     end
 

@@ -8,22 +8,14 @@ require "../src/ultraviolet"
 # terminal's window size.
 #
 # Differences from the Go example:
-#   - Go calls scr.SetMouseMode/SetMouseEncoding on its TerminalScreen; Crystal's
-#     Terminal has no such methods, so the same sequences are emitted with the
-#     ANSI helpers and reset on the way out (like examples/boxes.cr).
 #   - Go never enters the alternate screen here, so neither does this port: the
-#     frame is drawn inline. Terminal#start still sizes the screen before the
-#     first display, where Go's TerminalScreen starts at 0x0 and is only sized
-#     by the app's WindowSizeEvent handler; that is a library difference, not
-#     one this example can paper over.
+#     frame is drawn inline.
 term = Ultraviolet::Terminal.default_terminal
 ws = term.get_winsize
 term.start
 
-mouse_mode = String.build { |io| Ultraviolet.encode_mouse_mode(io, Ultraviolet::MouseMode::Motion) }
-mouse_encoding = String.build { |io| Ultraviolet.encode_mouse_encoding(io, Ultraviolet::MouseEncoding::SGRPixel) }
-term.write_string(mouse_mode)
-term.write_string(mouse_encoding)
+term.set_mouse_mode(Ultraviolet::MouseMode::Motion)
+term.set_mouse_encoding(Ultraviolet::MouseEncoding::SGRPixel)
 
 last_button = Ultraviolet::MouseButton::None
 last_x = 0
@@ -78,9 +70,7 @@ begin
     end
   end
 ensure
-  # Go's Terminal.Stop restores the screen state, including the mouse mode and
-  # encoding it tracked. This port enables them with raw sequences, so reset the
-  # two modes we turned on.
-  term.write_string(Ansi.reset_mode(Ansi::ModeMouseAnyEvent, Ansi::ModeMouseExtSgrPixel))
+  # Go's Terminal.Stop restores the screen state, which now includes the mouse
+  # mode and encoding this example set, so nothing is reset by hand.
   term.stop
 end

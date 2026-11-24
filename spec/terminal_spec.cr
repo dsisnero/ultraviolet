@@ -61,10 +61,72 @@ describe "Terminal stop" do
   end
 end
 
+# Go's `Terminal` is a thin facade over a `TerminalScreen` (`t.scr`), and this
+# port's is too: the screen owns the screen state, so stopping can undo what the
+# application enabled without `Terminal` keeping a second copy of it.
+describe "Terminal screen" do
+  it "exposes the screen and delegates the drawing surface to it" do
+    output = IO::Memory.new
+    term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
+
+    term.screen.should be_a(Ultraviolet::TerminalScreen)
+    term.resize(4, 2)
+    term.set_cell(1, 1, Ultraviolet::Cell.new("X", 1))
+
+    term.cell_at(1, 1).try(&.string).should eq("X")
+    term.screen.cell_at(1, 1).try(&.string).should eq("X")
+    term.bounds.should eq(Ultraviolet.rect(0, 0, 4, 2))
+    term.width.should eq(4)
+    term.height.should eq(2)
+  end
+
+  it "queues state as it is set and writes it on flush, as Go does" do
+    output = IO::Memory.new
+    term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
+
+    term.enter_alt_screen
+    term.set_mouse_mode(Ultraviolet::MouseMode::Motion)
+    term.set_mouse_encoding(Ultraviolet::MouseEncoding::SGRPixel)
+    term.enable_bracketed_paste
+    term.hide_cursor
+
+    # Go's setters write into the screen's buffer; nothing reaches the terminal
+    # until Flush drains it.
+    output.to_s.should be_empty
+    term.screen.alt_screen?.should be_true
+    term.screen.mouse_mode.should eq(Ultraviolet::MouseMode::Motion)
+    term.screen.mouse_encoding.should eq(Ultraviolet::MouseEncoding::SGRPixel)
+    term.screen.bracketed_paste?.should be_true
+    term.screen.cursor_visible?.should be_false
+
+    term.flush
+    written = output.to_s
+    written.should contain("\e[?1049h")
+    written.should contain("\e[?1003h")
+    written.should contain("\e[?1016h")
+    written.should contain("\e[?2004h")
+    written.should contain("\e[?25l")
+  end
+
+  it "switches the alternate screen through the screen" do
+    output = IO::Memory.new
+    term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
+
+    term.enter_alt_screen
+    term.exit_alt_screen
+    term.screen.alt_screen?.should be_false
+    term.flush
+
+    written = output.to_s
+    written.should contain("\e[?1049h")
+    written.should contain("\e[?1049l")
+  end
+end
+
 describe "Terminal display" do
   # `display` was defined twice and the later, shorter definition won, dropping
-  # the alt-screen, cursor, and prepend handling. A display that ignores
-  # `@state` writes nothing at all.
+  # the alt-screen, cursor, and prepend handling. A display that ignored the
+  # screen state wrote nothing at all.
   it "applies the terminal state it was given" do
     output = IO::Memory.new
     term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
@@ -252,6 +314,42 @@ end
           key.should_not be_nil, "round #{round}: expected input after start"
           term.stop
         end
+      ensure
+        term.stop
+        master.close
+        slave.close
+      end
+    end
+
+    # Go's Stop goes through TerminalScreen.Reset, so every mode the screen
+    # tracked is undone without the application resetting it by hand — that is
+    # why examples/mouse no longer emits its own reset.
+    it "resets the screen state the application enabled on stop" do
+      master, slave = pty_pair
+      term = Ultraviolet::Terminal.new(slave, slave, ["TERM=xterm-256color"])
+
+      begin
+        term.start
+        term.enter_alt_screen
+        term.set_mouse_mode(Ultraviolet::MouseMode::Motion)
+        term.set_mouse_encoding(Ultraviolet::MouseEncoding::SGRPixel)
+        term.enable_bracketed_paste
+        term.hide_cursor
+        term.flush
+
+        enabled = captured_output(master)
+        enabled.should contain("\e[?1049h")
+        enabled.should contain("\e[?1003h")
+        enabled.should contain("\e[?1016h")
+        enabled.should contain("\e[?2004h")
+
+        term.stop
+        reset = captured_output(master)
+        reset.should contain("\e[?1049l") # alternate screen off
+        reset.should contain("\e[?1003l") # any-event tracking off
+        reset.should contain("\e[?1016l") # SGR-pixel encoding off
+        reset.should contain("\e[?2004l") # bracketed paste off
+        reset.should contain("\e[?25h")   # cursor shown again
       ensure
         term.stop
         master.close

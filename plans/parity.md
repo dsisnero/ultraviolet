@@ -6,13 +6,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. `v1.1.5` shipped the two-buffer renderer work
-  (`9ebee98`, `29bca5d`): every comparable example matches Go byte for byte
-  (11/11) and the renderer/terminal output model is Go's two-buffer one.
+- **Active plan:** none open. `v1.1.5` shipped the two-buffer renderer work,
+  and the `Terminal`/`TerminalScreen` feature below is implemented on `main` but
+  is **not tagged or pushed yet** — gates are green, so it is ready to become
+  `v1.1.6` with the owner's go-ahead.
 - **Next up** (priority order), details below under *Planned work*:
-  1. **`Terminal` should own a `TerminalScreen`** — the last structural
-     difference from upstream, and the next feature. Scoped below; it changes
-     the public shape, so it is a deliberate feature, not a cleanup.
+  1. Release the `Terminal`/`TerminalScreen` work as `v1.1.6` (release procedure
+     in [AGENTS.md](../AGENTS.md#releasing)), then `make update_dependents` and
+     the consumer check.
   2. **Check upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
      `8ecbcf0` as of 2026-11-24 (fourth check, after `d9728b6` and `ab56604`).
@@ -69,40 +70,49 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
 
-### Planned work: `Terminal` owns a `TerminalScreen`
+### Closed: `Terminal` owns a `TerminalScreen`
 
-The last structural difference from upstream. Go's `Terminal` is a thin facade
-over a `TerminalScreen` (`t.scr`): every piece of screen state — alternate
-screen, mouse mode and encoding, bracketed paste, keyboard enhancements, cursor
-shape/color/position, background/foreground color, progress bar, program status,
-window title, synchronized updates, reset tab stops — lives there once, and
-`Stop`/`Pause` need no duplicate reset logic. This port's `Terminal` keeps a bare
-`TerminalRenderer` and reimplements that layer: it tracks only alt-screen and
-cursor-hidden in `@state`, writes state sequences itself, and leaves
-`TerminalScreen` — which *does* hold the richer state — untouched, so nothing
-ever tells it what the application enabled. That is why `stop` cannot undo mouse
-or paste modes, and why `examples/mouse.cr` resets its two modes by hand.
+The last structural difference from upstream is gone. Go's `Terminal` is a thin
+facade over a `TerminalScreen` (`t.scr`), and this port's is now too: the screen
+owns every piece of screen state (alternate screen, mouse mode and encoding,
+bracketed paste, keyboard enhancements, cursor, colors, progress bar, program
+status, window title, synchronized updates, reset tab stops), so `stop` undoes
+what the application enabled without `Terminal` tracking a second copy. The
+`TerminalState`/`@last_state` delta machinery, `@buf`, `@scr`, and `@queue` are
+deleted; `Terminal` keeps a `@screen : TerminalScreen` and delegates.
 
-Scope (one feature, one commit):
+**What landed:**
 
-1. Give `Terminal` a `@screen : TerminalScreen` and route `write`,
-   `write_string`, `render`, `flush`, alt-screen switching, cursor visibility,
-   program status, and width-method negotiation through it.
-2. Expose `Terminal#screen` and keep `Terminal`'s drawing/config helpers
-   (`set_cell`, `bounds`, `fill_area`, `color_profile=`, …) as delegations, so
-   `examples/` and `bubbletea.cr` keep compiling unchanged.
-3. Delete the `TerminalState`/`@last_state` delta machinery: the screen knows the
-   state, so "apply the delta on display" goes away with it.
-4. Then `stop` undoes mouse/paste modes itself, and `examples/mouse.cr` drops its
-   manual reset — that is the acceptance signal, because the example must stay
-   byte-identical to Go with the reset removed.
+- `Terminal#screen` is the screen; `write`, `write_string`, `render`, `flush`,
+  alt-screen switching, cursor visibility, grapheme-width negotiation, and the
+  drawing helpers (`set_cell`, `clear`, `fill_area`, `bounds`, `resize`,
+  `buffered`, `touched`, `clone`, …) delegate to it. Examples and dependents
+  kept their surface; `lipgloss`, `bubbletea.cr`, `bubbletea-examples`, and
+  `bubbles-examples` build and pass on the release they pin.
+- `start` is Go's `Terminal.Start` tail: `screen.restore` → `request_grapheme_width`
+  → `screen.flush`, which re-emits tab-stop reset, alt screen, cursor, mouse,
+  paste, keyboard, colors, title, progress, and program status.
+- `stop` is Go's `Terminal.Stop`: `screen.reset` → `screen.flush` → console
+  restore. **`examples/mouse.cr` and `examples/boxes.cr` dropped their manual
+  mouse resets** and now set the modes through `set_mouse_mode`/
+  `set_mouse_encoding`; `Pause`/`Resume` use the same pair.
+- Timeline fixes the new model exposed, all at the example layer: `boxes` and
+  `splits` enter the alternate screen before `start` (as Go does), `widths` and
+  `altscreen` render once before the event loop on the still-0x0 screen (as Go
+  does) instead of sizing first, and `altscreen`/`panic` no longer carry the
+  "this port starts in the alternate screen" workaround.
+- Gaps the shared screen uncovered and fixed: `exit_alt_screen` writes the reset
+  sequence unconditionally (Go does), `reset` emits the keyboard pop where Go
+  emits it, `restore` re-emits the mouse encoding, `set_mouse_encoding` queues
+  its sequence, `set_width_method` propagates to the renderer, and `flush` wraps
+  output in hide/show cursor when synchronized updates are off.
 
-Verification is already in place: `make parity-examples` (11/11),
-`make snapshot-examples` (12 goldens) and `make check-inline-fixture` pin the
-bytes, so drift shows up immediately. The risk is public surface, not behavior:
-after the shape settles, check that `../lipgloss`, `../bubbletea.cr`,
-`../bubbletea.cr/bubbletea-examples` and `../bubbles-examples` still build and
-pass.
+**Verified:** `make parity-examples` reports 11 compared / 0 differing, and a
+full-session byte diff (not just the first frame) against the same Go binaries is
+identical for `altscreen`, `boxes`, `draw`, `helloworld`, `panic`, `rgbimage`,
+`tv`, and `widths`; `image`, `mouse`, and `splits` are identical once the
+documented palette-vs-RGB SGR form is masked. `spec/testdata/examples/*.golden`
+were regenerated because the startup handshake now matches Go's.
 
 ### Closed: inline-renderer byte parity
 
@@ -221,14 +231,12 @@ quit at 1.2 s. Five runs were byte-identical.
   (`\e[14t`), whose `CSI 4 ; h ; w t` reply decodes to `PixelSizeEvent`. The Go
   example sends `ansi.WindowOp(4)` instead, which terminals read as a resize
   request and do not answer; that one-number divergence is deliberate.
-- `Terminal` does not track mouse modes, bracketed paste, keyboard
-  enhancements, or styles, so `stop` cannot undo them the way Go's
-  `TerminalScreen.Reset` does; `examples/mouse.cr` resets the two modes it
-  enables itself. Its two-buffer output model matches Go's: the renderer writes
-  into a queue (`NewTerminalRenderer(s.buf, …)`) and `Terminal#render` drains it,
-  so a cursor move made while flushing a frame waits for the next one. A
-  `Terminal` still decides alt-screen switches itself rather than delegating to
-  a `TerminalScreen`; `TerminalScreen` tracks the richer state Go does.
+- `Terminal` is a facade over its `TerminalScreen`: `stop` resets the screen
+  state, so mouse modes, bracketed paste, keyboard enhancements, colors, title,
+  and progress bar are undone the way Go's `TerminalScreen.Reset` undoes them,
+  while the application's frame and the program status stay on screen. The
+  renderer keeps Go's two-buffer model (`NewTerminalRenderer(s.buf, …)`): a
+  cursor move made while flushing a frame waits for the next one.
 - `examples/` output is compared against the vendored Go examples with
   `make parity-examples` (local only: it needs Go). Frames are compared after
   rewriting every SGR colour to RGB, because Go passes palette entries through
@@ -236,7 +244,9 @@ quit at 1.2 s. Five runs were byte-identical.
   startup handshake. `make snapshot-examples` pins each example's own frame as a
   regression golden (`spec/testdata/examples/`), regenerated with
   `make snapshot-update`; `space` (wall-clock animation) and `prependline`
-  (random colour) are skipped.
+  (random colour) are skipped. Since the screen owns the state, a full-session
+  diff against the same Go binaries is also identical for every compared
+  example, except where only the SGR colour form differs.
 - **Open divergence the harness found:** Go's default width method is
   `ansi.WcWidth` (`buffer.go:617`) until the terminal confirms DEC mode 2027;
   this port defaults to uniwidth, which measures like grapheme clustering (a
@@ -263,22 +273,23 @@ scripts/parity_examples.cr -- <name>` checks one example.
 
 | Example | Status | Notes |
 |---------|--------|-------|
-| `altscreen` | ✅ identical | — |
-| `boxes` | ✅ identical | — |
+| `altscreen` | ✅ identical | renders once before the event loop on the still-0x0 screen, as Go does |
+| `boxes` | ✅ identical | enters the alternate screen before `start`, and sets its mouse mode through the screen |
 | `draw` | ✅ identical | needed `enter_alt_screen` before `start`, as Go's example does |
 | `helloworld` | ✅ identical | — |
 | `image` | ✅ identical | needs its data file in cwd; the harness runs each side from its own directory |
-| `mouse` | ✅ identical | the inline `\r\e[A` nudge is deferred to the next frame, as Go's renderer buffer does |
+| `mouse` | ✅ identical | the inline `\r\e[A` nudge is deferred to the next frame, as Go's renderer buffer does; the example sets its modes through the screen and lets `stop` reset them |
 | `panic` | ✅ identical | captured with a window longer than its 1 Hz tick; the panic report and backtrace are cut, since only one language can produce them |
 | `rgbimage` | ✅ identical | the 0x0 image payload case matches Go |
-| `splits` | ✅ identical | — |
+| `splits` | ✅ identical | enters the alternate screen before `start`, as Go does |
 | `tv` | ✅ identical | — |
-| `widths` | ✅ identical | needed the `ansi` shard patch (below) |
+| `widths` | ✅ identical | renders once before the event loop on the still-0x0 screen, as Go does |
 | `layout` | ⏭ skipped | Go's example is built on lipgloss, which this port does not depend on |
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
 | `prependline` | ⏭ skipped | random colour per frame and scheduling-dependent frame count |
 
-All eleven comparable examples are byte-identical.
+All eleven comparable examples are byte-identical, in the first frame and for the
+whole captured session.
 
 `mouse` used to differ in where a two-byte inline cursor nudge was written: Go
 queues its mode writes first and nudges during the first display, this port
@@ -297,12 +308,13 @@ was cut first. `PtyCapture::IDLE_OVERRIDES` gives it a 2 s window and
 `PtyCapture::CUT` drops the panic report and backtrace, which are
 language-specific by construction.
 
-`Terminal#stop` now mirrors Go's `Terminal.Stop` → `TerminalScreen.Reset`: it
-undoes the state it queued (alternate screen, cursor visibility), leaves the
-application's frame on screen, and no longer resets tab stops or clears below
-the frame. Go's `Reset` also parks the cursor on the bottom row, but through the
-renderer buffer that `Stop` never drains, so the move is computed and dropped;
-`Terminal#restore` drops it too, to keep the same bytes on the wire.
+`Terminal#stop` mirrors Go's `Terminal.Stop` → `TerminalScreen.Reset`: it undoes
+the state the screen tracked (mouse modes and encoding, bracketed paste, keyboard
+enhancements, alternate screen, cursor visibility, colors, title, progress bar),
+leaves the application's frame on screen, and does not reset tab stops or clear
+below the frame. Go's `Reset` also parks the cursor on the bottom row, but through
+the renderer buffer that `Stop` never drains, so the move is computed and dropped;
+this port drops it too, to keep the same bytes on the wire.
 
 `Terminal` now configures its renderer like Go's `TerminalScreen`
 (`fullscreen = false`, `relative_cursor = true`, terminal_screen.go:64-65);

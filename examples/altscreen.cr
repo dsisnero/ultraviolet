@@ -14,21 +14,13 @@ rescue ex
   exit 1
 end
 
-# Go's TerminalScreen starts in inline mode; this port's Terminal starts in the
-# alternate screen, so leave it inline before the first frame.
-screen.exit_alt_screen
+# Go's terminal starts inline, and so does this port's: nothing to leave before
+# the first frame.
 
 help = "Press space to toggle screen mode or any other key to exit."
 alt_screen = false
 
-# Go starts with a zero-sized screen, so its first display paints nothing and
-# the first painted frame is the one the initial WindowSizeEvent triggers. Size
-# the frame here so the startup paint lands on that frame.
-physical_width, physical_height = term.fetch_size
-
 display = -> do
-  screen.resize(physical_width, alt_screen ? physical_height : 2)
-
   line = alt_screen ? "This is using alternate screen mode." : "This is using inline mode."
 
   Ultraviolet::Screen.clear(screen)
@@ -36,13 +28,21 @@ display = -> do
   screen.display
 end
 
+physical_width = 0
+physical_height = 0
+
 begin
-  # The first frame is painted by the initial WindowSizeEvent, as in Go.
+  # Go renders once before the event loop, on a still-0x0 screen: it paints
+  # nothing, and the first painted frame is the one the initial
+  # WindowSizeEvent triggers.
+  display.call
+
   loop do
     case event = term.events.receive
     when Ultraviolet::WindowSizeEvent
       physical_width = event.width
       physical_height = event.height
+      screen.resize(physical_width, alt_screen ? physical_height : 2)
       display.call
     when Ultraviolet::KeyPressEvent
       if event.match_string("space")

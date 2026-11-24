@@ -13,8 +13,8 @@ require "../src/ultraviolet"
 #   - The Go example writes debug output to uv.log; this port logs nothing.
 #   - AppWindow has no z field. Go stores one but never sets it, so its stable
 #     sort is a no-op and the z-order slice order is the paint order.
-#   - Go's TerminalScreen has SetMouseMode; Crystal's Terminal does not, so the
-#     drag mouse mode is emitted with the ANSI helpers (like examples/mouse.cr).
+#   - Go's TerminalScreen has SetMouseMode; Terminal delegates to the screen, so
+#     the drag mode goes through set_mouse_mode and Stop resets it.
 #   - Go's scr.Display(app) clears the screen and draws in one call; here the
 #     loop calls term.clear, app.draw, then term.display.
 #   - The root context draws into the root window. Go's root context draws into
@@ -276,16 +276,13 @@ module Boxes
 
   def self.run
     term = Ultraviolet::Terminal.default_terminal
-    term.start
+    # Go enters the alternate screen and hides the cursor before Start; the
+    # screen tracks both, so Restore re-emits them and Stop undoes them.
     term.enter_alt_screen
     term.hide_cursor
+    term.start
 
-    # Go uses scr.SetMouseMode(uv.MouseModeDrag). Crystal's Terminal has no
-    # set_mouse_mode (only TerminalScreen does), so emit it with ANSI helpers.
-    mouse_mode = ->(mode : Ultraviolet::MouseMode) do
-      String.build { |io| Ultraviolet.encode_mouse_mode(io, mode) }
-    end
-    term.write_string(mouse_mode.call(Ultraviolet::MouseMode::Drag))
+    term.set_mouse_mode(Ultraviolet::MouseMode::Drag)
 
     width, height = term.fetch_size
     app = App.new(width, height, term.width_method)
@@ -316,7 +313,7 @@ module Boxes
         term.display
       end
     ensure
-      term.write_string(mouse_mode.call(Ultraviolet::MouseMode::None))
+      # Stop resets the screen state, which now includes the mouse mode.
       term.shutdown(1.second)
     end
   end

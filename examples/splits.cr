@@ -219,8 +219,10 @@ module Splits
 end
 
 term = Ultraviolet::Terminal.default_terminal
-term.start
+# Go enters the alternate screen before Start, so Restore re-emits the mode and
+# the handshake is byte-identical.
 term.enter_alt_screen
+term.start
 
 render = ->(area : Ultraviolet::Rectangle) do
   Splits.render(term, area)

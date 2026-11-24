@@ -20,6 +20,43 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [Unreleased]
+
+Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.5`.
+
+### Changed
+
+- **`Terminal` is a facade over a `TerminalScreen`**, the last structural
+  difference from upstream. The screen owns every piece of screen state
+  (alternate screen, mouse mode and encoding, bracketed paste, keyboard
+  enhancements, cursor, colors, progress bar, program status, window title,
+  synchronized updates, tab stops), so `stop` undoes what the application
+  enabled without `Terminal` tracking a second copy. `Terminal#screen` exposes
+  it; the drawing and mode helpers on `Terminal` delegate. The
+  `TerminalState`/`@last_state` delta machinery is gone, along with the
+  duplicate buffer, renderer, and output queue.
+- `start` is Go's `Terminal.Start` tail (`screen.restore` → grapheme-width
+  request → `screen.flush`), and `stop` is Go's `Terminal.Stop`
+  (`screen.reset` → `screen.flush` → console restore). An application that never
+  entered the alternate screen no longer sees an alt-screen sequence at start.
+
+### Fixed
+
+- `examples/mouse` and `examples/boxes` set their mouse mode and encoding through
+  the screen and no longer reset them by hand: `stop` does it, as upstream does.
+- `TerminalScreen#exit_alt_screen` writes the reset sequence on every call (Go
+  does; the port used to skip it when not in alt mode), `#reset` emits the
+  keyboard-enhancement pop where Go emits it, `#restore` re-emits the mouse
+  encoding, `#set_mouse_encoding` queues its sequence, and `#set_width_method`
+  propagates to the renderer.
+- `flush` wraps queued output in hide/show cursor when synchronized updates are
+  off and the cursor is visible, as Go's `TerminalScreen.Flush` does.
+- Examples whose startup handshake the new model exposed: `boxes` and `splits`
+  now enter the alternate screen before `start`, and `widths`/`altscreen` render
+  once before the event loop on the still-0x0 screen, matching their Go
+  counterparts. `spec/testdata/examples/*.golden` were regenerated: the startup
+  bytes now match Go's.
+
 ## [1.1.5] - 2026-11-24
 
 Patch release on the self-numbered line. Delta since `1.1.4`.
