@@ -15,9 +15,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.3` tagged at `c36ff37`; `v1.1.4` carries the inline
-  renderer alignment and `shard.yml` matches it. Sibling repos refresh with
-  `make update_dependents` after each tag push.
+- **Release state:** `v1.1.4` tagged at `2fab221` and pushed; `shard.yml`
+  matches it, siblings were moved to `1.1.4` with `make update_dependents`, and
+  a fresh consumer install resolves `1.1.4`. `v1.1.3` was tagged at `c36ff37`.
+  Sibling repos refresh with `make update_dependents` after each tag push.
 - **Current focus:** **inline-renderer byte parity — resolved**, root-caused
   and fixed; `v1.1.4` is the release that ships it.
   **What it was:** `bubbletea.cr`'s Go-fixture spec
