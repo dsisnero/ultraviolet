@@ -442,3 +442,40 @@ describe Ultraviolet::RenderBuffer do
     buffer.touched[2].try(&.last_cell).should eq(3)
   end
 end
+
+describe Ultraviolet::RenderBuffer do
+  it "marks every line touched when cleared" do
+    buffer = Ultraviolet::RenderBuffer.new(4, 3)
+    buffer.touched = Array(Ultraviolet::LineData?).new(3, nil)
+
+    buffer.clear
+
+    buffer.touched_lines.should eq(3)
+    buffer.touched.each do |line|
+      line.should_not be_nil
+      line.not_nil!.first_cell.should eq(0)
+      line.not_nil!.last_cell.should eq(4)
+    end
+  end
+
+  it "marks the affected lines touched for area clear and fill" do
+    buffer = Ultraviolet::RenderBuffer.new(6, 4)
+    buffer.touched = Array(Ultraviolet::LineData?).new(4, nil)
+
+    buffer.clear_area(Ultraviolet.rect(1, 1, 3, 2))
+    buffer.touched[1].try(&.first_cell).should eq(1)
+    buffer.touched[1].try(&.last_cell).should eq(4)
+    buffer.touched[2].try(&.first_cell).should eq(1)
+    buffer.touched[2].try(&.last_cell).should eq(4)
+    buffer.touched[0].should be_nil
+    buffer.touched[3].should be_nil
+
+    buffer.touched = Array(Ultraviolet::LineData?).new(4, nil)
+    buffer.fill_area(Ultraviolet::EMPTY_CELL, Ultraviolet.rect(2, 0, 2, 3))
+    buffer.touched[0].try(&.first_cell).should eq(2)
+    buffer.touched[0].try(&.last_cell).should eq(4)
+    buffer.touched[2].try(&.first_cell).should eq(2)
+    buffer.touched[2].try(&.last_cell).should eq(4)
+    buffer.touched[3].should be_nil
+  end
+end

@@ -6,20 +6,19 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none. [The `8ecbcf0` refresh](commit_8ecbcf0.md) is complete
-  and there is no open porting feature. `v1.1.2` was released on top of it.
+- **Active plan:** inline-renderer byte parity follow-up, tracked below. The
+  [`8ecbcf0` refresh](commit_8ecbcf0.md) is complete; `v1.1.2` and `v1.1.3`
+  were released on top of it.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.2` tagged at `93931e3` and pushed; `shard.yml`
-  version matches the tag. Sibling repos (`../lipgloss`, `../bubbletea.cr`,
-  `../bubbletea.cr/bubbletea-examples`, `../bubbles-examples`) are locked at
-  `1.1.2`; refresh them with `make update_dependents` after each tag push.
-  A fresh consumer installing `dsisnero/bubbletea.cr` now resolves
-  ultraviolet `1.1.2` instead of `1.1.1`.
+- **Release state:** `v1.1.3` tagged at `c36ff37` and pushed; `shard.yml`
+  version matches the tag. Sibling repos are locked at `1.1.3`; refresh them
+  with `make update_dependents` after each tag push. The inline fix earns the
+  next patch, `v1.1.4`.
 - **Current focus:** **inline-renderer byte parity**, opened by the `v1.1.2`
   release. `bubbletea.cr`'s Go-fixture spec
   (`spec/parity/v2_control_sequences_spec.cr`) fails after the bump: on the
@@ -29,6 +28,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   incomplete (see `ff48b22`: "inline frames emit only the startup handshake").
   Nothing else regressed: the decoder/`ProgramStatusSupportEvent` release is
   otherwise sound, and a fresh consumer install resolves and builds.
+  **Progress:** `RenderBuffer#clear`/`#clear_area`/`#fill`/`#fill_area` now mark
+  the affected lines touched exactly like Go; this removes one divergence in
+  the inline path, but the fixture still reports `<CR><ESC>[30C` instead of
+  `<CR><LF><ESC>[A<ESC>[30C`.
 - **Next up, in priority order:**
   1. **Fix the inline renderer against the Go oracle.** Compare
      `TerminalRenderer#move`/`move_cursor_sequence` and the phantom-newline
@@ -48,7 +51,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
      bump, tag, `make update_dependents`, consumer check) is
      [Releasing](../AGENTS.md#releasing) in `AGENTS.md`; it is not repeated
      here. Untagged `src/` changes on `main` are invisible to dependents, and
-     `make update_dependents` says so. The renderer fix above earns `v1.1.3`.
+     `make update_dependents` says so. The renderer fix above earns `v1.1.4`.
   4. **Optional: re-run the adversarial signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
      refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
@@ -67,19 +70,17 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `make test`, `make test-linux`, and `check-win32` are green.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `df732c6` (`test: port upstream's grapheme
-  width negotiation specs`); `08d57db` (inline-frame renderer) and `f877017`
-  (`ansi` back on `main`) precede it. Last commit overall: `cd607a1`
-  (release tooling).
+- **Last code feature commit:** `e69cda7` (`port: match ten of eleven Go
+  examples byte for byte`); the render buffer touch fix follows.
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-23 at `93931e3`):** `make format-check`,
-  `make lint` (58 files), `make test` (451 examples), `make inventory`
-  (819 items) and `make parity` (819 APIs / 196 tests, backend `regex`) pass.
-  `make check-win32` and `make test-linux` were last green at `ab56604` and
-  were not re-run for the release, which changed no source.
+- **Gates (last verified 2026-11-23):** `make format-check`, `make lint`
+  (58 files), `make test` (453 examples), `make inventory` (819 items),
+  `make parity` (819 APIs / 196 tests, backend `regex`), `make check-examples`,
+  and `make snapshot-examples` pass. `make check-win32` and `make test-linux`
+  were last green at `ab56604` and were not re-run for this change.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).

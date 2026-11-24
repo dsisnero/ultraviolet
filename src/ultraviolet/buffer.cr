@@ -583,6 +583,40 @@ module Ultraviolet
       super
     end
 
+    def clear : Nil
+      super
+      width = self.width
+      y = 0
+      while y < @lines.size
+        touch_line(0, y, width)
+        y += 1
+      end
+    end
+
+    def clear_area(area : Rectangle) : Nil
+      super
+      width = area.max.x - area.min.x
+      y = area.min.y
+      while y < area.max.y
+        touch_line(area.min.x, y, width)
+        y += 1
+      end
+    end
+
+    def fill(cell : Cell?) : Nil
+      fill_area(cell, bounds)
+    end
+
+    def fill_area(cell : Cell?, area : Rectangle) : Nil
+      super
+      width = area.max.x - area.min.x
+      y = area.min.y
+      while y < area.max.y
+        touch_line(area.min.x, y, width)
+        y += 1
+      end
+    end
+
     def resize(width : Int32, height : Int32) : Nil
       current_width = self.width
       current_height = self.height
