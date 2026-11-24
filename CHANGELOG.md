@@ -97,10 +97,13 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 
 - **Every comparable example now matches Go byte for byte** (11 of 11; `mouse`
   and `panic` were the holdouts).
-  - `Terminal` defers a frame's cursor write to the next frame, the way Go's
-    `TerminalScreen` does by building its renderer on the screen's own buffer.
-    An inline app's `\r\e[A` nudge therefore lands after the writes it queues
-    before its first display, not before them.
+  - `Terminal` and `TerminalScreen` carry Go's two-buffer output model: the
+    renderer writes into a queue that `render` drains (`NewTerminalRenderer(s.buf,
+    …)` upstream), while screen-level writes go straight into that queue. A
+    cursor write made while flushing a frame therefore waits for the next frame,
+    so an inline app's `\r\e[A` nudge lands after the writes it queues before
+    its first display, not before them. Alt-screen switches are queued like Go's
+    rather than written through the renderer.
   - `Terminal#stop` mirrors `Terminal.Stop` → `TerminalScreen.Reset`: it undoes
     the state it queued, leaves the application's frame on screen, and no longer
     resets tab stops or clears below the frame. `Terminal#stop` also no longer

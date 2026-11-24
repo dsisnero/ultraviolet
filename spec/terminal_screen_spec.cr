@@ -110,11 +110,13 @@ describe Ultraviolet::TerminalScreen do
     screen.resize(4, 2)
 
     screen.set_synchronized_updates(true)
+    # Go wraps the queue only when it holds something: an empty flush writes
+    # nothing at all, so queue a write first.
+    screen.write_string("X")
     screen.flush
 
     flushed = output.to_s
-    flushed.includes?(Ansi::SetModeSynchronizedOutput).should be_true
-    flushed.includes?(Ansi::ResetModeSynchronizedOutput).should be_true
+    flushed.should eq("#{Ansi::SetModeSynchronizedOutput}X#{Ansi::ResetModeSynchronizedOutput}")
   end
 
   it "manages mouse encoding state" do

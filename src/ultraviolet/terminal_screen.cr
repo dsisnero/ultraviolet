@@ -3,6 +3,8 @@ module Ultraviolet
     include Screen
 
     @screen : ScreenBuffer
+    @writer : IO
+    @buf : IO::Memory
     @renderer : TerminalRenderer
     @profile : ColorProfile
     @alt_screen : Bool
@@ -21,7 +23,12 @@ module Ultraviolet
 
     def initialize(writer : IO, env : Array(String) = [] of String)
       @screen = ScreenBuffer.new(0, 0)
-      @renderer = TerminalRenderer.new(writer, env)
+      # Like Go's `NewTerminalRenderer(s.buf, …)`: the renderer writes into this
+      # screen's own queue, and only #render drains it, so a cursor write made by
+      # #flush waits for the next frame.
+      @writer = writer
+      @buf = IO::Memory.new
+      @renderer = TerminalRenderer.new(@buf, env)
       @profile = ColorProfile.detect(writer, env)
       @renderer.fullscreen = false
       @renderer.relative_cursor = true
@@ -111,7 +118,7 @@ module Ultraviolet
     # grapheme cluster (DECRQM for Unicode core mode, DEC mode 2027). The reply
     # arrives as a ModeReportEvent; see Terminal#handle_event.
     def request_grapheme_width : Nil
-      @renderer.write_string(Ansi::RequestModeUnicodeCore)
+      queue_string(Ansi::RequestModeUnicodeCore)
     end
 
     # enable_grapheme_width turns Unicode core mode on and switches every width
@@ -121,11 +128,13 @@ module Ultraviolet
     def enable_grapheme_width : Nil
       return if @width_method_override
 
-      @renderer.write_string(Ansi::SetModeUnicodeCore)
+      queue_string(Ansi::SetModeUnicodeCore)
       @renderer.set_width_method(Ansi::GraphemeWidth)
       @renderer.set_grapheme_width(true)
       apply_width_method(GRAPHEME_WIDTH_METHOD)
-      @renderer.flush
+      # Go flushes here: the mode has to reach the terminal before the next
+      # frame is measured against it.
+      flush
     end
 
     def mouse_encoding : MouseEncoding
@@ -147,15 +156,18 @@ module Ultraviolet
       flush
     end
 
+    # render mirrors Go's `TerminalScreen.Render`: paint the frame, then let the
+    # renderer drain its own bytes into this screen's queue (`rend.Flush` in Go).
+    # The queue reaches the terminal on #flush.
     def render : Nil
       @renderer.render(@screen)
+      @renderer.flush
     end
 
+    # flush mirrors Go's `TerminalScreen.Flush`: write the queue, then decide
+    # where the cursor belongs. The cursor move goes through the renderer, which
+    # only #render drains, so those bytes land with the next frame.
     def flush : Nil
-      if @synchronized_updates
-        @renderer.write_string(Ansi::SetModeSynchronizedOutput)
-      end
-
       if cursor = @cursor
         if !cursor.hidden? && cursor.position.x >= 0 && cursor.position.y >= 0
           @renderer.move_to(cursor.position.x, cursor.position.y)
@@ -165,23 +177,60 @@ module Ultraviolet
         @renderer.move_to(0, y) if x >= width - 1
       end
 
-      @renderer.flush
+      drain
+    end
 
-      if @synchronized_updates
-        @renderer.write_string(Ansi::ResetModeSynchronizedOutput)
-        @renderer.flush
+    # drain writes the queue to the terminal. Go writes the synchronized-update
+    # mode around it, and only when it holds something.
+    private def drain : Nil
+      return if @buf.size == 0
+
+      @writer.write(Ansi::SetModeSynchronizedOutput.to_slice) if @synchronized_updates
+      @buf.rewind
+      IO.copy(@buf, @writer)
+      @buf.clear
+      @writer.write(Ansi::ResetModeSynchronizedOutput.to_slice) if @synchronized_updates
+      @writer.flush
+    end
+
+    # enter_alt_screen mirrors Go's `TerminalScreen.EnterAltScreen`: the mode is
+    # queued for the terminal and only the renderer's own flags change with it.
+    def enter_alt_screen : Nil
+      queue_string(Ansi::SetModeAltScreenSaveCursor)
+      if (cursor = @cursor) && !cursor.hidden?
+        queue_string(Ansi::ShowCursor)
+      else
+        queue_string(Ansi::HideCursor)
+      end
+      if enh = @keyboard_enhancements
+        queue_string(String.build { |io| Ultraviolet.encode_keyboard_enhancements(io, enh) })
+      end
+      unless @alt_screen
+        @renderer.save_cursor
+        @renderer.erase
+        @renderer.fullscreen = true
+        @renderer.relative_cursor = false
+        @alt_screen = true
       end
     end
 
-    def enter_alt_screen : Nil
-      return if @alt_screen
-      @renderer.enter_alt_screen
-      @alt_screen = true
-    end
-
+    # exit_alt_screen mirrors Go's `TerminalScreen.ExitAltScreen`.
     def exit_alt_screen : Nil
       return unless @alt_screen
-      @renderer.exit_alt_screen
+
+      queue_string(Ansi::ResetModeAltScreenSaveCursor)
+      if @cursor.nil? || (cursor = @cursor) && cursor.hidden?
+        queue_string(Ansi::HideCursor)
+      else
+        queue_string(Ansi::ShowCursor)
+      end
+      if enh = @keyboard_enhancements
+        queue_string(String.build { |io| Ultraviolet.encode_keyboard_enhancements(io, enh) })
+      end
+      @renderer.restore_cursor
+      @renderer.erase
+      @renderer.fullscreen = false
+      @renderer.relative_cursor = true
       @alt_screen = false
     end
 
@@ -190,7 +239,7 @@ module Ultraviolet
     end
 
     def hide_cursor : Nil
-      @renderer.write_string(Ansi::HideCursor)
+      queue_string(Ansi::HideCursor)
       if cursor = @cursor
         cursor.hidden = true
         @cursor = cursor
@@ -198,7 +247,7 @@ module Ultraviolet
     end
 
     def show_cursor : Nil
-      @renderer.write_string(Ansi::ShowCursor)
+      queue_string(Ansi::ShowCursor)
       if cursor = @cursor
         cursor.hidden = false
         @cursor = cursor
@@ -237,7 +286,7 @@ module Ultraviolet
     end
 
     def set_cursor_style(shape : CursorShape, blink : Bool) : Nil
-      @renderer.write_string(Ansi.set_cursor_style(shape.encode(blink)))
+      queue_string(Ansi.set_cursor_style(shape.encode(blink)))
       cursor = @cursor || Ultraviolet.new_cursor(-1, -1)
       cursor.shape = shape
       cursor.blink = blink
@@ -254,7 +303,7 @@ module Ultraviolet
 
     def set_cursor_color(color : Color?) : Nil
       seq = String.build { |io| Ultraviolet.encode_cursor_color(io, color) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       cursor = @cursor || Ultraviolet.new_cursor(-1, -1)
       cursor.color = color
       @cursor = cursor
@@ -266,7 +315,7 @@ module Ultraviolet
 
     def set_background_color(color : Color?) : Nil
       seq = String.build { |io| Ultraviolet.encode_background_color(io, color) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @background_color = color
     end
 
@@ -276,7 +325,7 @@ module Ultraviolet
 
     def set_foreground_color(color : Color?) : Nil
       seq = String.build { |io| Ultraviolet.encode_foreground_color(io, color) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @foreground_color = color
     end
 
@@ -285,12 +334,12 @@ module Ultraviolet
     end
 
     def enable_bracketed_paste : Nil
-      @renderer.write_string(Ansi::SetModeBracketedPaste)
+      queue_string(Ansi::SetModeBracketedPaste)
       @bracketed_paste = true
     end
 
     def disable_bracketed_paste : Nil
-      @renderer.write_string(Ansi::ResetModeBracketedPaste)
+      queue_string(Ansi::ResetModeBracketedPaste)
       @bracketed_paste = false
     end
 
@@ -300,7 +349,7 @@ module Ultraviolet
 
     def set_mouse_mode(mode : MouseMode) : Nil
       seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, mode) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @mouse_mode = mode
     end
 
@@ -310,7 +359,7 @@ module Ultraviolet
 
     def set_window_title(title : String) : Nil
       seq = String.build { |io| Ultraviolet.encode_window_title(io, title) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @window_title = title
     end
 
@@ -320,7 +369,7 @@ module Ultraviolet
 
     def set_keyboard_enhancements(enhancements : KeyboardEnhancements?) : Nil
       seq = String.build { |io| Ultraviolet.encode_keyboard_enhancements(io, enhancements) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @keyboard_enhancements = enhancements
     end
 
@@ -330,7 +379,7 @@ module Ultraviolet
 
     def set_progress_bar(progress : ProgressBar?) : Nil
       seq = String.build { |io| Ultraviolet.encode_progress_bar(io, progress) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @progress_bar = progress
     end
 
@@ -340,7 +389,7 @@ module Ultraviolet
 
     def set_program_status(status : ProgramStatus?) : Nil
       seq = String.build { |io| Ultraviolet.encode_program_status(io, status) }
-      @renderer.write_string(seq)
+      queue_string(seq)
       @program_status = status
     end
 
@@ -355,55 +404,55 @@ module Ultraviolet
         # Emit KittyKeyboard(0,1) before exiting alt screen to prevent
         # mis-rendered characters in terminals that support the kitty
         # keyboard protocol.
-        @renderer.write_string(Ansi.kitty_keyboard(0, 1)) if has_keyboard
-        @renderer.write_string(Ansi::ResetModeAltScreenSaveCursor)
+        queue_string(Ansi.kitty_keyboard(0, 1)) if has_keyboard
+        queue_string(Ansi::ResetModeAltScreenSaveCursor)
       end
 
       # Show the cursor unless the cursor is explicitly hidden.
       if (cursor = @cursor) ? !cursor.hidden? : true
-        @renderer.write_string(Ansi::ShowCursor)
+        queue_string(Ansi::ShowCursor)
       end
 
       # Emit mouse mode reset directly; don't change @mouse_mode so Restore works.
       unless @mouse_mode.none?
         seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, MouseMode::None) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       # Reset mouse encoding to legacy; preserve @mouse_encoding for Restore.
       unless @mouse_encoding.legacy?
         seq = String.build { |io| Ultraviolet.encode_mouse_encoding(io, MouseEncoding::Legacy) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if cursor = @cursor
         if cursor.shape != CursorShape::Block || !cursor.blink?
-          @renderer.write_string(Ansi.set_cursor_style(0))
+          queue_string(Ansi.set_cursor_style(0))
         end
         if cursor.color
-          @renderer.write_string(Ansi::ResetCursorColor)
+          queue_string(Ansi::ResetCursorColor)
         end
       end
 
       if @background_color
-        @renderer.write_string(Ansi::ResetBackgroundColor)
+        queue_string(Ansi::ResetBackgroundColor)
       end
 
       if @foreground_color
-        @renderer.write_string(Ansi::ResetForegroundColor)
+        queue_string(Ansi::ResetForegroundColor)
       end
 
       if @bracketed_paste
-        @renderer.write_string(Ansi::ResetModeBracketedPaste)
+        queue_string(Ansi::ResetModeBracketedPaste)
       end
 
       unless @window_title.empty?
-        @renderer.write_string(Ansi.set_window_title(""))
+        queue_string(Ansi.set_window_title(""))
       end
 
       if (pb = @progress_bar) && !pb.state.none?
         seq = String.build { |io| Ultraviolet.encode_progress_bar(io, nil) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       # The program status is deliberately left in place. The Program Status
@@ -414,7 +463,7 @@ module Ultraviolet
       # KittyKeyboard(0,1) is also emitted here if keyboard enhancements exist.
       # Preserve @keyboard_enhancements so Restore can re-emit them.
       if has_keyboard
-        @renderer.write_string(Ansi.kitty_keyboard(0, 1))
+        queue_string(Ansi.kitty_keyboard(0, 1))
       end
 
       @renderer.move_to(0, {height - 1, 0}.max)
@@ -424,80 +473,97 @@ module Ultraviolet
       # Emit raw ANSI sequences (do NOT modify internal state via setters
       # so state survives reset/restore cycles — matching Go behavior).
       if @alt_screen
-        @renderer.write_string(Ansi::SetModeAltScreenSaveCursor)
+        queue_string(Ansi::SetModeAltScreenSaveCursor)
       end
 
       if (cursor = @cursor) && !cursor.hidden?
-        @renderer.write_string(Ansi::ShowCursor)
+        queue_string(Ansi::ShowCursor)
       else
-        @renderer.write_string(Ansi::HideCursor)
+        queue_string(Ansi::HideCursor)
       end
 
       if enh = @keyboard_enhancements
         seq = String.build { |io| Ultraviolet.encode_keyboard_enhancements(io, enh) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       unless @mouse_mode.none?
         seq = String.build { |io| Ultraviolet.encode_mouse_mode(io, @mouse_mode) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if cursor = @cursor
         if cursor.shape != CursorShape::Block || !cursor.blink?
-          @renderer.write_string(Ansi.set_cursor_style(cursor.shape.encode(cursor.blink?)))
+          queue_string(Ansi.set_cursor_style(cursor.shape.encode(cursor.blink?)))
         end
         if cursor.color
           seq = String.build { |io| Ultraviolet.encode_cursor_color(io, cursor.color) }
-          @renderer.write_string(seq)
+          queue_string(seq)
         end
       end
 
       if @background_color
         seq = String.build { |io| Ultraviolet.encode_background_color(io, @background_color) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if @foreground_color
         seq = String.build { |io| Ultraviolet.encode_foreground_color(io, @foreground_color) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if @bracketed_paste
-        @renderer.write_string(Ansi::SetModeBracketedPaste)
+        queue_string(Ansi::SetModeBracketedPaste)
       end
 
       unless @window_title.empty?
         seq = String.build { |io| Ultraviolet.encode_window_title(io, @window_title) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if (pb = @progress_bar) && !pb.state.none?
         seq = String.build { |io| Ultraviolet.encode_progress_bar(io, pb) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       if ps = @program_status
         seq = String.build { |io| Ultraviolet.encode_program_status(io, ps) }
-        @renderer.write_string(seq)
+        queue_string(seq)
       end
 
       render
     end
 
+    # write queues bytes for the terminal, like Go's `TerminalScreen.Write`.
     def write(bytes : Bytes) : Int32
-      @renderer.write(bytes)
+      queue_bytes(bytes)
+      bytes.size
     end
 
+    # write_string queues a string for the terminal, like Go's
+    # `TerminalScreen.WriteString`.
     def write_string(value : String) : Int32
-      @renderer.write_string(value)
+      queue_string(value)
+      value.bytesize
     end
 
+    # queue_string queues bytes this screen sends on its own behalf, the way Go
+    # writes them straight into `TerminalScreen.buf`. They go out on #flush.
+    private def queue_string(value : String) : Nil
+      @buf.write(value.to_slice)
+    end
+
+    private def queue_bytes(bytes : Bytes) : Nil
+      @buf.write(bytes)
+    end
+
+    # insert_above mirrors Go's `TerminalScreen.InsertAbove`: write straight to
+    # the terminal, outside the frame the renderer manages.
     def insert_above(content : String) : Nil
       return if content.empty?
       @renderer.prepend_string(@screen, content)
-      @renderer.render(@screen)
-      @renderer.flush
+      render
+      drain
     end
   end
 

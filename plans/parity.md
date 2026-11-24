@@ -193,12 +193,11 @@ byte-identical.
 - `Terminal` does not track mouse modes, bracketed paste, keyboard
   enhancements, or styles, so `stop` cannot undo them the way Go's
   `TerminalScreen.Reset` does; `examples/mouse.cr` resets the two modes it
-  enables itself. A `Terminal` also keeps one output queue where Go keeps two
-  (the renderer writes into the screen's buffer), so a cursor move made while
-  flushing a frame is deferred by capture-and-reinsert
-  (`TerminalRenderer#take_buffered`, `Terminal#take_cursor_write`) rather than
-  by writing into a second buffer. `TerminalScreen#flush` still emits its nudge
-  immediately; nothing in the examples exercises that path.
+  enables itself. Its two-buffer output model matches Go's: the renderer writes
+  into a queue (`NewTerminalRenderer(s.buf, …)`) and `Terminal#render` drains it,
+  so a cursor move made while flushing a frame waits for the next one. A
+  `Terminal` still decides alt-screen switches itself rather than delegating to
+  a `TerminalScreen`; `TerminalScreen` tracks the richer state Go does.
 - `examples/` output is compared against the vendored Go examples with
   `make parity-examples` (local only: it needs Go). Frames are compared after
   rewriting every SGR colour to RGB, because Go passes palette entries through
@@ -255,10 +254,11 @@ queues its mode writes first and nudges during the first display, this port
 nudged inside `start`. The cause was structural: Go's `TerminalScreen` builds
 its renderer on *its own* buffer (`NewTerminalRenderer(s.buf, …)`), so a cursor
 move made while flushing a frame waits in the renderer buffer until the next
-render drains it. This port has one queue, so `Terminal` now takes that write
-back out (`TerminalRenderer#take_buffered`) and puts it ahead of the next frame
-(`Terminal#take_cursor_write`). That reproduces the deferral for both the
-explicit cursor position and the inline nudge.
+render drains it. `Terminal` and `TerminalScreen` now do the same — the renderer
+writes into a queue, `render` drains it into the terminal's buffer (`rend.Flush`
+in Go), and screen-level writes go straight into that buffer. The deferral is
+therefore a property of the structure, for both the explicit cursor position and
+the inline nudge.
 
 `panic` needed a capture change rather than a code change: it ticks at 1 Hz and
 the harness stopped after a 1 s idle gap, so whichever side drifted past the gap

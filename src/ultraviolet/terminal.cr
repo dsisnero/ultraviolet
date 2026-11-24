@@ -38,7 +38,6 @@ module Ultraviolet
     @use_bspace : Bool
     @state : TerminalState
     @last_state : TerminalState?
-    @pending_cursor : Bytes
     @prepend : Array(String)
     @evs : Channel(Event)
     @evch : Channel(Event)
@@ -84,7 +83,12 @@ module Ultraviolet
       )
       @environ = Environ.new(env)
       @termtype = @environ.getenv("TERM")
-      @scr = TerminalRenderer.new(@out, env)
+      # The renderer writes into a queue, not the terminal, the way Go builds
+      # its renderer on `TerminalScreen`'s buffer: a cursor move made while
+      # flushing a frame stays in the renderer and reaches the terminal with the
+      # next frame. See #flush.
+      @queue = IO::Memory.new
+      @scr = TerminalRenderer.new(@queue, env)
       @buf = RenderBuffer.new(0, 0)
       @method = DEFAULT_WIDTH_METHOD
       @width_method_override = false
@@ -94,7 +98,6 @@ module Ultraviolet
       @use_bspace = false
       @state = TerminalState.new
       @last_state = nil
-      @pending_cursor = Bytes.empty
       @prepend = [] of String
       @evs = Channel(Event).new
       @evch = Channel(Event).new
@@ -172,7 +175,7 @@ module Ultraviolet
     # request_grapheme_width asks the terminal whether it measures width by
     # grapheme cluster (DECRQM for Unicode core mode, DEC mode 2027).
     def request_grapheme_width : Nil
-      @scr.write_string(Ansi::RequestModeUnicodeCore)
+      queue_string(Ansi::RequestModeUnicodeCore)
     end
 
     # enable_grapheme_width turns Unicode core mode on and measures by grapheme
@@ -181,11 +184,11 @@ module Ultraviolet
     def enable_grapheme_width : Nil
       return if @width_method_override
 
-      @scr.write_string(Ansi::SetModeUnicodeCore)
+      queue_string(Ansi::SetModeUnicodeCore)
       apply_width_method(GRAPHEME_WIDTH_METHOD)
       # Go flushes in enableGraphemeWidth: the mode has to reach the terminal
       # before the next frame is measured against it.
-      @scr.flush
+      drain
     end
 
     def bounds : Rectangle
@@ -369,15 +372,16 @@ module Ultraviolet
       # Terminal.Start does through TerminalScreen.Restore + Flush. The reply
       # reaches #handle_event through the event loop.
       set_alt_screen(true) if @state.altscreen?
-      @scr.write_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
+      queue_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
       # Go's TerminalScreen.Restore renders the (still 0x0) buffer before asking
       # about grapheme width. The cursor write that Flush makes afterwards is
       # queued behind everything else and only reaches the terminal with the
-      # first frame, so it is taken as pending here rather than flushed.
+      # first frame, because only #render drains the renderer.
       @scr.render(@buf)
-      request_grapheme_width
       @scr.flush
-      @pending_cursor = take_cursor_write
+      request_grapheme_width
+      drain
+      write_cursor
       @last_state = @state
     end
 
@@ -480,8 +484,8 @@ module Ultraviolet
       end
 
       @scr.set_position(0, 0)
-      @scr.write_string(builder.to_s)
-      @scr.flush
+      queue_string(builder.to_s)
+      drain
     end
 
     def prepend_string(value : String) : Nil
@@ -493,29 +497,51 @@ module Ultraviolet
     end
 
     def write(bytes : Bytes) : Int32
-      @scr.write(bytes)
+      queue_bytes(bytes)
+      bytes.size
     end
 
     def write_string(value : String) : Int32
-      @scr.write_string(value)
+      queue_string(value)
+      value.bytesize
     end
 
+    # flush mirrors Go's `TerminalScreen.Flush`: write what is queued, then
+    # decide where the cursor belongs. Go makes that move through the renderer,
+    # which the next render drains, so the bytes belong to the next frame and
+    # not to this one.
     def flush : Nil
-      @scr.write(@pending_cursor) unless @pending_cursor.empty?
-      @pending_cursor = Bytes.empty
       @scr.flush
-      @pending_cursor = take_cursor_write
+      drain
+      write_cursor
     end
 
-    # take_cursor_write reproduces Go's TerminalScreen.Flush cursor handling and
-    # takes its bytes out of the queue: an application-supplied position is moved
-    # to, otherwise in inline mode a cursor left at the end of the line is moved
-    # to column 0 of the same row (it can make some terminals wrap).
-    #
-    # Go writes both into the renderer's own buffer, which is only drained by the
-    # next render, so the bytes belong to the next frame, not to this flush.
-    private def take_cursor_write : Bytes
-      mark = @scr.buffered
+    # drain writes the queued state and the frames the renderer drained into it.
+    # Go's `TerminalScreen` calls this part `Flush`.
+    private def drain : Nil
+      return if @queue.size == 0
+
+      @queue.rewind
+      IO.copy(@queue, @out)
+      @out.flush
+      @queue.clear
+    end
+
+    # queue_string queues bytes the screen sends on its own behalf, the way Go
+    # writes them straight into `TerminalScreen.buf`. They go out on #drain.
+    private def queue_string(value : String) : Nil
+      @queue.write(value.to_slice)
+    end
+
+    private def queue_bytes(bytes : Bytes) : Nil
+      @queue.write(bytes)
+    end
+
+    # write_cursor reproduces Go's `TerminalScreen.Flush` cursor handling: use
+    # the application's position when it set one, otherwise, in inline mode, move
+    # a cursor left at the end of the line to column 0 of the same row (some
+    # terminals wrap it otherwise). Only #render drains it.
+    private def write_cursor : Nil
       state = @state
       if state.cur != Position.new(-1, -1)
         @scr.move_to(state.cur.x, state.cur.y)
@@ -523,7 +549,6 @@ module Ultraviolet
         x, y = @scr.position
         @scr.move_to(0, y) if x >= @buf.width - 1
       end
-      @scr.take_buffered(mark)
     end
 
     def display : Nil
@@ -538,27 +563,25 @@ module Ultraviolet
 
       if last = @last_state
         if last.cur_hidden? != state.cur_hidden?
-          @scr.write_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
+          queue_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
         end
       else
-        @scr.write_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
+        queue_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
       end
 
-      # A cursor write made while flushing the last frame waited in Go's
-      # renderer buffer; put it back ahead of this frame so the bytes land in
-      # the same place.
-      @scr.write(@pending_cursor) unless @pending_cursor.empty?
-      @pending_cursor = Bytes.empty
-
+      # A cursor write made while flushing the last frame waited in the
+      # renderer; draining it here puts it ahead of this frame's bytes, which is
+      # where Go puts it (Render renders, then flushes the renderer).
       @scr.render(@buf)
+      @scr.flush
 
       if @prepend.size > 0
         @prepend.each { |line| prepend_line(line) }
         @prepend.clear
       end
 
-      @scr.flush
-      @pending_cursor = take_cursor_write
+      drain
+      write_cursor
       @last_state = state
     end
 
@@ -597,7 +620,7 @@ module Ultraviolet
     # the terminal has to agree. Go writes the same sequence from
     # TerminalScreen.Restore when resetTabs is set.
     private def reset_tab_stops : Nil
-      @scr.write_string(Ansi::SetTabEvery8Columns) if @use_tabs
+      queue_string(Ansi::SetTabEvery8Columns) if @use_tabs
     end
 
     private def configure_renderer : Nil
@@ -611,11 +634,24 @@ module Ultraviolet
       @scr.logger = @logger
     end
 
+    # set_alt_screen switches the alternate screen the way Go's TerminalScreen
+    # does: the sequence is queued for the terminal (Go writes it into `s.buf`),
+    # and the renderer only updates its own flags. Letting the renderer write it
+    # would put it in the frame stream and move it behind whatever the
+    # application queued in between.
     private def set_alt_screen(enable : Bool) : Nil
       if enable
-        @scr.enter_alt_screen
+        queue_string(Ansi::SetModeAltScreenSaveCursor)
+        @scr.save_cursor
+        @scr.fullscreen = true
+        @scr.relative_cursor = false
+        @scr.erase
       else
-        @scr.exit_alt_screen
+        @scr.erase
+        @scr.relative_cursor = true
+        @scr.fullscreen = false
+        queue_string(Ansi::ResetModeAltScreenSaveCursor)
+        @scr.restore_cursor
       end
     end
 
@@ -630,7 +666,7 @@ module Ultraviolet
     private def initialize_state : Nil
       if last = @last_state
         set_alt_screen(last.altscreen?)
-        @scr.write_string(last.cur_hidden? ? "\e[?25l" : "\e[?25h")
+        queue_string(last.cur_hidden? ? "\e[?25l" : "\e[?25h")
         if last.cur != Position.new(-1, -1)
           move_to(last.cur.x, last.cur.y)
         end
@@ -638,6 +674,7 @@ module Ultraviolet
         set_alt_screen(true)
       end
       @scr.flush
+      drain
     end
 
     # restore mirrors Go's `Terminal.Stop`, which resets the screen
@@ -653,17 +690,14 @@ module Ultraviolet
       stop_winch
       stop_input
       set_alt_screen(false) if @state.altscreen?
-      @scr.write_string("\e[?25h")
-      # Go's Reset parks the cursor on the bottom row, but it does that through
-      # the renderer's own buffer, which Stop never drains: the move is computed
-      # and then dropped, and only the state writes above reach the terminal.
-      # Take the move back out of the queue to keep the same bytes on the wire.
-      mark = @scr.buffered
+      queue_string("\e[?25h")
+      @scr.flush
+      drain
+      # Go's Reset parks the cursor on the bottom row, but it makes that move
+      # through the renderer, which `Stop` never drains: the move is computed and
+      # then dropped, and only the state writes above reach the terminal.
       bottom = @buf.height > 0 ? @buf.height - 1 : 0
       @scr.move_to(0, bottom)
-      @scr.take_buffered(mark)
-      @scr.flush
-      @pending_cursor = Bytes.empty
       @scr.set_position(-1, -1)
       restore_tty
     end
