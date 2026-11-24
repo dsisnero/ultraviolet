@@ -154,87 +154,58 @@ module Ultraviolet
       combined
     end
 
-    # TODO: Compare with Go's deserializeWin32Input (uses ansi.DecodeSequence)
-    private def deserialize_win32_input(buf : Bytes) : {Int32, Bytes}
+    # Mirrors Go's eventScanner.deserializeWin32Input
+    # (terminal_reader.go:454): decode through the ANSI parser rather than
+    # matching CSI shapes by hand, so prefixed, intermediate, multi-byte and
+    # short-parameter records are classified exactly as Go classifies them.
+    # The parser comes from the shard's pool, as Go takes one from `ansi`.
+    protected def deserialize_win32_input(buf : Bytes) : {Int32, Bytes}
+      parser = Ansi.get_parser
+      begin
+        deserialize_win32_input(buf, parser)
+      ensure
+        Ansi.put_parser(parser)
+      end
+    end
+
+    private def deserialize_win32_input(buf : Bytes, parser : Ansi::Parser) : {Int32, Bytes}
       processed = 0
+      state = Ansi::NormalState
       out = IO::Memory.new
-      i = 0
-      while i < buf.size
-        if buf[i] == Ansi::ESC && i + 1 < buf.size && buf[i + 1] == '['.ord
-          seq_len, params = parse_win32_sequence(buf, i)
-          if seq_len == 0
-            break
-          end
-          if seq_len == -1
-            out.write(encode_grapheme_bufs)
-            out.write_byte(buf[i])
-            i += 1
-            next
-          end
+      data = buf
 
-          if params.size == 6
-            vk = params[0]
-            if vk == 0
-              uc = params[2]
-              kd = params[3]
-              kd = kd.clamp(0, 1)
-              store_grapheme_rune(kd, uc)
-              processed += seq_len
-              i += seq_len
-              next
-            end
-          end
-
+      while data.size > 0
+        seq, width, n, new_state = Ansi.decode_sequence(data, state, parser)
+        # A zero-width sequence that the parser classifies as Win32 Input Mode
+        # with virtual key 0 is a serialized key record or a UTF-16 half; it is
+        # consumed instead of forwarded. Go's `break` leaves only the switch,
+        # so the tail of the loop body still runs for the non-zero vk case.
+        if width == 0 && parser.command == '_'.ord && parser.param(0, 0)[0] == 0
+          kd = parser.param(3, 0)[0].clamp(0, 1)
+          store_grapheme_rune(kd, parser.param(2, 0)[0])
+          processed += n
+        else
           out.write(encode_grapheme_bufs)
-          out.write(buf[i, seq_len])
-          i += seq_len
-          next
+          out.write(seq)
         end
 
-        out.write(encode_grapheme_bufs)
-        out.write_byte(buf[i])
-        i += 1
+        state = new_state
+        data = data[n, data.size - n]
+        # Go cannot reach this, and neither can a caller that starts in the
+        # normal state; stop rather than spin if the parser ever consumes none.
+        break if n <= 0
       end
 
       out.write(encode_grapheme_bufs)
-      result = out.to_slice
-      if i < buf.size
-        result = append_bytes(result, buf[i, buf.size - i])
-      end
-      {processed, result}
+      {processed, out.to_slice}
     end
 
-    private def parse_win32_sequence(buf : Bytes, start : Int32) : {Int32, Array(Int32)}
-      return {0, [] of Int32} if start + 2 >= buf.size
-      return {0, [] of Int32} unless buf[start] == Ansi::ESC && buf[start + 1] == '['.ord
-
-      params = [] of Int32
-      value = 0
-      has_value = false
-      i = start + 2
-      while i < buf.size
-        byte = buf[i]
-        if byte >= '0'.ord && byte <= '9'.ord
-          value = value * 10 + (byte - '0'.ord)
-          has_value = true
-        elsif byte == ';'.ord
-          params << (has_value ? value : 0)
-          value = 0
-          has_value = false
-        else
-          if byte == '_'.ord
-            params << (has_value ? value : 0)
-            return {i - start + 1, params}
-          end
-          return {-1, [] of Int32}
-        end
-        i += 1
-      end
-
-      {0, [] of Int32}
-    end
-
-    # TODO: Verify grapheme encoding matches Go's encodeGraphemeBufs (kitty keyboard sequences)
+    # Mirrors Go's eventScanner.encodeGraphemeBufs (terminal_reader.go:390).
+    # Two details are Go's, not a cleaner version of it: every kitty sequence
+    # leads with the buffer's *first* rune (`graphemeBuf[kd][0]`) rather than
+    # the grapheme's own first rune, and codepoints are joined by the rune's
+    # byte offset (`for i, r := range gr`), which also emits a sequence for a
+    # grapheme whose runes are all NUL.
     protected def encode_grapheme_bufs : Bytes
       out = IO::Memory.new
       @grapheme_buf.each_with_index do |buf, kind|
@@ -244,21 +215,22 @@ module Ultraviolet
             out << Ultraviolet.safe_char(code).to_s
           end
         else
-          graphemes = String.build do |io|
+          first_code = buf[0]
+          text = String.build do |io|
             buf.each { |code| io << Ultraviolet.safe_char(code) }
           end
-          TextSegment.each_grapheme(graphemes) do |segment|
-            grapheme = segment.str
-            codes = [] of String
-            first_code = 0
-            grapheme.each_char_with_index do |char, idx|
-              next if char.ord == 0
-              codes << char.ord.to_s
-              first_code = char.ord if idx == 0
+          TextSegment.each_grapheme(text) do |segment|
+            offset = 0
+            codepoints = String.build do |io|
+              segment.str.each_char do |char|
+                unless char.ord == 0
+                  io << ':' if offset > 0
+                  io << char.ord
+                end
+                offset += char.bytesize
+              end
             end
-            next if codes.empty?
-            seq = "\e[#{first_code};1:3;#{codes.join(":")}u"
-            out << seq
+            out << "\e[#{first_code};1:3;#{codepoints}u"
           end
         end
         buf.clear

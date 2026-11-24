@@ -17,6 +17,10 @@ module Ultraviolet
     def store_grapheme_rune_public(kd : Int32, code : Int32) : Nil
       @scanner.store_grapheme_rune(kd, code)
     end
+
+    def deserialize_win32_input_public(buf : Bytes) : {Int32, Bytes}
+      @scanner.deserialize_win32_input(buf)
+    end
   end
 
   private class CancelingIO < IO
@@ -151,6 +155,99 @@ module Ultraviolet
       result = reader.encode_grapheme_bufs_public
       # Kitty keyboard sequence for release: CSI code;1:3;codepointsu
       String.new(result).should eq("\e[97;1:3;97u")
+    end
+
+    # Go's encodeGraphemeBufs leads every sequence with `graphemeBuf[kd][0]` —
+    # the buffer's first rune — not the grapheme's own first rune, so a buffer
+    # holding several graphemes repeats the first rune in every prefix
+    # (terminal_reader.go:423). Read off a `uv` oracle built from the vendored
+    # tree.
+    it "leads every release sequence with the buffer's first rune, as Go does" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      reader.store_grapheme_rune_public(0, 'a'.ord)
+      reader.store_grapheme_rune_public(0, 'b'.ord)
+      reader.store_grapheme_rune_public(0, 'c'.ord)
+      String.new(reader.encode_grapheme_bufs_public).should eq(
+        "\e[97;1:3;97u\e[97;1:3;98u\e[97;1:3;99u"
+      )
+    end
+
+    it "joins a multi-rune grapheme by byte offset and keeps the astral prefix" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      reader.store_grapheme_rune_public(0, 'a'.ord)
+      reader.store_grapheme_rune_public(0, 0x301)
+      reader.store_grapheme_rune_public(0, 'b'.ord)
+      String.new(reader.encode_grapheme_bufs_public).should eq(
+        "\e[97;1:3;97:769u\e[97;1:3;98u"
+      )
+
+      astral = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      astral.store_grapheme_rune_public(0, 0x1F603)
+      astral.store_grapheme_rune_public(0, 'b'.ord)
+      String.new(astral.encode_grapheme_bufs_public).should eq(
+        "\e[128515;1:3;128515u\e[128515;1:3;98u"
+      )
+    end
+
+    it "emits a release sequence for a NUL grapheme, as Go's encoder does" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      reader.store_grapheme_rune_public(0, 0)
+      String.new(reader.encode_grapheme_bufs_public).should eq("\e[0;1:3;u")
+
+      # A NUL first rune also leads the next grapheme's sequence, since the
+      # prefix comes from the buffer rather than the grapheme.
+      both = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      both.store_grapheme_rune_public(0, 0)
+      both.store_grapheme_rune_public(0, 'a'.ord)
+      String.new(both.encode_grapheme_bufs_public).should eq("\e[0;1:3;u\e[0;1:3;97u")
+    end
+
+    # Go decodes through ansi.DecodeSequence and reads params with defaults
+    # (terminal_reader.go:454), so a record with fewer than six parameters is
+    # still consumed as a record rather than forwarded verbatim.
+    it "consumes win32 records with short parameter lists, as Go does" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      processed, bytes = reader.deserialize_win32_input_public("\e[0;0;97;1_".to_slice)
+      processed.should eq(11)
+      String.new(bytes).should eq("a")
+
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      processed, bytes = reader.deserialize_win32_input_public("\e[0_".to_slice)
+      processed.should eq(4)
+      String.new(bytes).should eq("\e[0;1:3;u")
+
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      processed, bytes = reader.deserialize_win32_input_public("\e[;;;;;_".to_slice)
+      processed.should eq(8)
+      String.new(bytes).should eq("\e[0;1:3;u")
+    end
+
+    it "defaults missing win32 params and clamps the key-down state" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      # vk is missing, so it defaults to 0 and the record is consumed.
+      processed, bytes = reader.deserialize_win32_input_public("\e[;0;97;1;0;1_".to_slice)
+      processed.should eq(14)
+      String.new(bytes).should eq("a")
+
+      # kd = 9 clamps to 1, the key-down buffer.
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      processed, bytes = reader.deserialize_win32_input_public("\e[0;0;97;9;0;1_".to_slice)
+      processed.should eq(15)
+      String.new(bytes).should eq("a")
+    end
+
+    it "forwards records the parser does not classify as win32 input mode" do
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      # Non-zero virtual key: not a serializeable record, forwarded verbatim.
+      processed, bytes = reader.deserialize_win32_input_public("\e[1;2;3;4;5;6_".to_slice)
+      processed.should eq(0)
+      String.new(bytes).should eq("\e[1;2;3;4;5;6_")
+
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      # Private-parameter prefix: Go's parser reports no '_' command.
+      processed, bytes = reader.deserialize_win32_input_public("\e[>0;1;2;3;4;5_".to_slice)
+      processed.should eq(0)
+      String.new(bytes).should eq("\e[>0;1;2;3;4;5_")
     end
   end
 end

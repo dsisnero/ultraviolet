@@ -6,20 +6,29 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. Two features closed in this stretch: `v1.1.6`
-  made `Terminal` a facade over a `TerminalScreen` (the last structural
-  difference from upstream), and `v1.1.7` made style colours keep their kind,
-  which removed the last byte-level difference — `make parity-examples` compares
-  raw bytes, colours included.
+- **Active plan:** none open. Features closed in this stretch: the two
+  verification TODOs in `event_scanner.cr` are settled — win32 input decoding
+  goes through the shared ANSI parser and grapheme release encoding leads with
+  the buffer's first rune, both matching a Go oracle; before that, `v1.1.6`
+  made `Terminal` a facade over a `TerminalScreen` and `v1.1.7` made style
+  colours keep their kind. **`src/` now carries no non-upstream TODO**; every
+  remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
-  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
-     complete, 460 specs green, upstream `go test ./...` green, tree untouched).
-     Nothing is known to be missing against `8ecbcf0`, so this is a periodic
-     confidence check rather than pending work.
-  2. **Watch upstream.** `git ls-remote
+  1. **Known performance divergence (not output parity):** bracketed paste is
+     quadratic here. `EventScanner#scan_events` appends each pasted character
+     with a full-copy `append_bytes`, so a 54 KB paste costs ~397 ms against a
+     release build, while Go's `append(d.paste, text...)` is amortised. Fix by
+     growing the paste buffer amortised (or an `IO::Memory`), then re-measure
+     with the bench recipe in the closed section below. Output is unaffected,
+     so `make parity-examples` should not move.
+  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` (last run 2026-11-24, after the win32 fix: 819 APIs /
+     196 tests clean, plan complete, 471 specs green, upstream `go test ./...`
+     green, tree untouched). Nothing is known to be missing against `8ecbcf0`,
+     so this is a periodic confidence check rather than pending work.
+  3. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
-     `8ecbcf0` as of 2026-11-24 (fifth check, after `d9728b6` and `ab56604`).
+     `8ecbcf0` as of 2026-11-24 (sixth check, after `d9728b6` and `ab56604`).
      If it moves, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
      ([recipe](commit_8ecbcf0.md)).
@@ -57,11 +66,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on `789880c`):**
-  `make format-check`, `make lint` (58 files), `make test` (465 examples),
+- **Gates (last verified 2026-11-24, with the win32 decoder fix):**
+  `make format-check`, `make lint` (58 files), `make test` (471 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (465
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (471
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -72,6 +81,46 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
+
+### Closed: win32 input decoding and grapheme encoding match Go
+
+The two `TODO: verify against Go` notes in `event_scanner.cr` were the only
+open questions in `src/` that were not also open upstream, and both hid real
+drift. Each was settled against a Go oracle built from `vendor/ultraviolet`
+(a copy under `temp/` with a probe test, so the pinned tree stays untouched),
+never against a reading of the Go source alone.
+
+**Grapheme encoding** (`encodeGraphemeBufs`, `terminal_reader.go:390`). A
+release (key-up) buffer holding several graphemes emitted a kitty sequence per
+grapheme using *that* grapheme's first rune. Go uses `graphemeBuf[kd][0]` — the
+buffer's first rune — for every sequence, so typing `ab` produced
+`\e[97;1:3;97u\e[98;…` here and `\e[97;1:3;97u\e[97;…` in Go. Two smaller Go
+details came with it: codepoints are joined by the rune's byte offset
+(`for i, r := range gr`), and a grapheme whose runes are all NUL still emits a
+sequence (`\e[0;1:3;u`) instead of being skipped.
+
+**Win32 input decoding** (`deserializeWin32Input`, `terminal_reader.go:454`).
+The hand-rolled `parse_win32_sequence` matched `CSI … _` shapes by hand and
+required exactly six parameters, so a short record (`\e[0;0;97;1_`,
+`\e[0_`, `\e[;;;;;_`) was forwarded verbatim where Go consumes it as a
+serialized key record, and it missed what the shared parser classifies
+(prefixes, intermediates, colon sub-parameters). It now decodes through
+`Ansi.decode_sequence` with a pooled `Ansi.get_parser`, mirroring Go's
+`ansi.DecodeSequence` + `GetParser`/`PutParser`; the helper that existed only
+for it is deleted.
+
+**Verified:** 17 deserialize cases and 12 encode cases are byte-identical to
+the oracle (hex-compared, including malformed records, NUL runes, astral
+pairs, colon sub-parameters and multi-grapheme buffers). Six specs in
+`spec/terminal_reader_spec.cr` pin the oracle values: buffer-first-rune
+prefixes, byte-offset joining, the NUL grapheme, short parameter lists,
+defaulted params with the key-down clamp, and records the parser does not
+classify as win32 input mode. `scan_events` cost was measured before and after
+in a release build: unchanged or faster for escape-heavy and win32 chunks,
++0.2 ms per 4.4 KB of plain text (each ASCII byte now goes through
+`decode_sequence`'s fast path instead of the hand-rolled loop). `make test`
+471 examples, `make lint` 58 files, `make format-check`, `make inventory`
+819 items and `make check-win32` all green.
 
 ### Closed: `Terminal` owns a `TerminalScreen`
 
@@ -463,7 +512,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 460 Crystal specs |
+| **Test coverage** | 196 Go tests | 471 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
