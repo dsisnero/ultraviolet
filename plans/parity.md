@@ -58,10 +58,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
   Inline renderer re-aligned with `8ecbcf0` after the stale-fixture
   investigation (see current focus); no new symbols, so the ledger is unchanged.
-- **Last code feature commit:** `6c39f53` (`port: keep a style colour's kind, as
-  Go's color.Color does`); before it, `a075174` gave `Terminal` Go's
-  `TerminalScreen` facade, `29bca5d` is the two-buffer renderer model and
-  `9ebee98` the behavior change it restructures.
+- **Last code feature commit:** `beaa488` (`port: decode win32 input and encode
+  key-up graphemes as Go does`); before it, `6c39f53` kept a style colour's
+  kind, `a075174` gave `Terminal` Go's `TerminalScreen` facade, `29bca5d` is the
+  two-buffer renderer model and `9ebee98` the behavior change it restructures.
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
