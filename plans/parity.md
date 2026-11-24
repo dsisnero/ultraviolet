@@ -6,34 +6,34 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. `v1.1.5` shipped the two-buffer renderer work,
-  and the `Terminal`/`TerminalScreen` feature below is implemented on `main` but
-  is **not tagged or pushed yet** — gates are green, so it is ready to become
-  `v1.1.6` with the owner's go-ahead.
+- **Active plan:** none open. `v1.1.6` shipped the `Terminal`/`TerminalScreen`
+  feature, which closed the last structural difference from upstream: every
+  comparable example matches Go for the whole session, not just the first frame.
 - **Next up** (priority order), details below under *Planned work*:
-  1. Release the `Terminal`/`TerminalScreen` work as `v1.1.6` (release procedure
-     in [AGENTS.md](../AGENTS.md#releasing)), then `make update_dependents` and
-     the consumer check.
-  2. **Check upstream.** `git ls-remote
+  1. **Check upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
      `8ecbcf0` as of 2026-11-24 (fourth check, after `d9728b6` and `ab56604`).
      If it moved, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
      ([recipe](commit_8ecbcf0.md)).
-  3. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` after a refresh (last run at `ab56604`: 819 APIs / 196
      tests clean, upstream `go test ./...` green, tree untouched).
+  3. **Optional:** the open width-method divergence noted under *Known
+     limitations* (Go defaults to wcwidth until DEC mode 2027 answers; this port
+     defaults to uniwidth). It needs the width expectations re-ported, so it is a
+     feature in its own right.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.5` tagged at `7fda004` and pushed; `shard.yml`
-  matches it, siblings were moved to `1.1.5` with `make update_dependents`, and
-  a fresh consumer install resolves `1.1.5`. `v1.1.4` was tagged at `2fab221`;
-  `v1.1.3` at `c36ff37`. Sibling repos refresh with `make update_dependents`
-  after each tag push.
+- **Release state:** `v1.1.6` tagged at `f47e115` and pushed; `shard.yml`
+  matches it, siblings were moved to `1.1.6` with `make update_dependents`, and
+  a fresh consumer install resolves `1.1.6`. `v1.1.5` was tagged at `7fda004`,
+  `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos refresh with
+  `make update_dependents` after each tag push.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -49,21 +49,20 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
   Inline renderer re-aligned with `8ecbcf0` after the stale-fixture
   investigation (see current focus); no new symbols, so the ledger is unchanged.
-- **Last code feature commit:** `29bca5d` (`refactor: give the port Go's
-  two-buffer renderer model`); the commit before it, `9ebee98`, is the behavior
-  change it restructures (`port: defer frame cursor writes and align stop with
-  Go`).
+- **Last code feature commit:** `a075174` (`port: give Terminal Go's
+  TerminalScreen facade`); before it, `29bca5d` is the two-buffer renderer model
+  and `9ebee98` the behavior change it restructures.
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on `7fda004`):** `make format-check`,
-  `make lint` (58 files), `make test` (454 examples), `make inventory` (819
+- **Gates (last verified 2026-11-24, on `f47e115`):** `make format-check`,
+  `make lint` (58 files), `make test` (458 examples), `make inventory` (819
   items), `make parity` (819 APIs / 196 tests, backend `regex`),
   `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, and `make parity-examples` (11 compared, 0
-  differing) pass. `make check-win32` and `make test-linux` were last green at
-  `ab56604` and were not re-run for these changes. The `panic` capture used to be
+  `make check-inline-fixture`, `make check-win32`, and `make parity-examples`
+  (11 compared, 0 differing) pass. `make test-linux` was last green at
+  `ab56604` and was not re-run for these changes. The `panic` capture used to be
   timing-sensitive; the harness now gives it a window longer than its tick period
   and cuts the language-specific report, so it is deterministic.
 
