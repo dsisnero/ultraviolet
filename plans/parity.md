@@ -6,14 +6,29 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open, one unreleased follow-up landed on `main`. The
-  [`8ecbcf0` refresh](commit_8ecbcf0.md) is complete, `v1.1.2`/`v1.1.3` were
-  released on top of it, and `v1.1.4` closed the inline-renderer follow-up.
-  **Unreleased since `v1.1.4`:** all comparable examples now match Go (11/11,
-  was 9/11): `Terminal` defers a frame's cursor write to the next frame the way
-  Go's renderer buffer does (fixes `mouse`), and `Terminal#stop` mirrors
-  `TerminalScreen.Reset` (fixes `panic`'s tail). That earns `v1.1.5` when you
-  are ready; it is committed but not tagged or pushed yet.
+- **Active plan:** none open. `v1.1.4` shipped the inline-renderer parity work,
+  and two follow-up commits plus their docs commits sit **unpushed on `main`**
+  (`9ebee98`, `29bca5d`; `git log origin/main..main`): every comparable example
+  now matches Go (11/11) and the renderer/terminal output model is Go's
+  two-buffer one. They earn `v1.1.5`; the owner asked to hold the push, so push
+  and tag only when they say so.
+- **Next up** (priority order), details below under *Planned work*:
+  1. Push `main` and tag `v1.1.5` (release procedure in
+     [AGENTS.md](../AGENTS.md#releasing)), then `make update_dependents` and the
+     consumer check. Nothing else is needed to make it releasable; gates are
+     green on `29bca5d`.
+  2. **`Terminal` should own a `TerminalScreen`** — the last structural
+     difference from upstream. Scoped below; it changes the public shape, so it
+     is a deliberate feature, not a cleanup.
+  3. **Check upstream.** `git ls-remote
+     https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
+     `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and `ab56604`).
+     If it moved, run a refresh: clone, diff `<old>..<new>`, write
+     `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
+     ([recipe](commit_8ecbcf0.md)).
+  4. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` after a refresh (last run at `ab56604`: 819 APIs / 196
+     tests clean, upstream `go test ./...` green, tree untouched).
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
@@ -24,48 +39,6 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   matches it, siblings were moved to `1.1.4` with `make update_dependents`, and
   a fresh consumer install resolves `1.1.4`. `v1.1.3` was tagged at `c36ff37`.
   Sibling repos refresh with `make update_dependents` after each tag push.
-- **Current focus:** **inline-renderer byte parity — resolved**, root-caused
-  and fixed; `v1.1.4` is the release that ships it.
-  **What it was:** `bubbletea.cr`'s Go-fixture spec
-  (`spec/parity/v2_control_sequences_spec.cr`) expected
-  `<CR><LF><ESC>[A<ESC>[30C` at a frame boundary where this renderer emitted
-  `<CR><ESC>[30C`. The expected bytes were **stale, not this port's**: they were
-  captured in Feb 2026 from ultraviolet `524a660`, whose renderer tracked a
-  `scrollHeight` and moved to a frame's last row at the end of every inline
-  render. Upstream removed both in 2026-05 (`948f4557`, `6b8d4baf`, and the
-  vendored `8ecbcf0`). Verified with Go oracles built from the vendored
-  `ultraviolet` **and** the sibling's pinned Go ultraviolet, plus bubbletea
-  v2.0.7/v2.1.0: all of them emit `<CR><ESC>[30C`, byte-identical to this
-  port. Only bubbletea v2.0.0/2.0.2 (with uv `524a660`) produced the old
-  sequence; the fixture had already mixed eras, since its kitty sequences were
-  updated to the v2.0.9 goldens while the frame boundary stayed behind. The
-  fixture is now re-derived from Go and records that provenance in the spec.
-- **Fixed in the same pass (real port drift):** the renderer still carried the
-  pre-`948f4557` inline machinery that upstream deleted:
-  `@scroll_height` (and the `should_scroll` branch that switched long inline
-  downward jumps to `CSI n B` instead of newlines — only a newline scrolls the
-  screen), the `ovw` space padding for nil cells in the overwrite
-  optimization, and `Cell#zero?` where upstream tests `isWidePlaceholder`
-  (width only) in `putAttrCell`, `putCellLR`, `putRange` and `transformLine`.
-  `Cell#wide_placeholder?` is the new predicate. Pinned by
-  `spec/terminal_renderer_inline_spec.cr` against
-  `spec/fixtures/inline_moves_golden.tsv`, which `make inline-golden`
-  regenerates from the vendored Go renderer (`scripts/inline_oracle/`).
-- **Next up, in priority order:**
-  1. **Release `v1.1.4`** (procedure: [Releasing](../AGENTS.md#releasing)):
-     gates are green (454 examples, 819 inventory items, 199 tests,
-     `check-examples`, `snapshot-examples`), `check-inline-fixture` now passes.
-  2. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
-     — still `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and
-     `ab56604`). If it moved, run a refresh: clone, diff `<old>..<new>`, write
-     `plans/commit_<new>.md`, bump `vendor/`, then port the delta in
-     feature-sized phases. The recipe and phase template are in
-     [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  3. **Optional: re-run the adversarial signoff** with
-     `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
-     refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
-     432 examples, 0 pending, and upstream `go test ./...` green. It leaves the
-     working tree untouched.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -81,30 +54,66 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
   Inline renderer re-aligned with `8ecbcf0` after the stale-fixture
   investigation (see current focus); no new symbols, so the ledger is unchanged.
-- **Last code feature commit:** `port: align inline renderer with upstream`.
+- **Last code feature commit:** `29bca5d` (`refactor: give the port Go's
+  two-buffer renderer model`); the commit before it, `9ebee98`, is the behavior
+  change it restructures (`port: defer frame cursor writes and align stop with
+  Go`).
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-23):** `make format-check`, `make lint`
-  (58 files), `make test` (454 examples), `make inventory` (819 items),
-  `make parity` (819 APIs / 196 tests, backend `regex`), `make check-examples`,
-  `make snapshot-examples`, `make check-inline-fixture`, and
-  `make parity-examples` (11 compared, 0 differing) pass. `make check-win32` and
-  `make test-linux` were last green at `ab56604` and were not re-run for this
-  change. The `panic` capture used to be timing-sensitive; the harness now gives
-  it a window longer than its tick period and cuts the language-specific report,
-  so it is deterministic.
+- **Gates (last verified 2026-11-23, on `29bca5d`):** `make format-check`,
+  `make lint` (58 files), `make test` (454 examples), `make inventory` (819
+  items), `make parity` (819 APIs / 196 tests, backend `regex`),
+  `make check-examples`, `make snapshot-examples` (12 goldens),
+  `make check-inline-fixture`, and `make parity-examples` (11 compared, 0
+  differing) pass. `make check-win32` and `make test-linux` were last green at
+  `ab56604` and were not re-run for these changes. The `panic` capture used to be
+  timing-sensitive; the harness now gives it a window longer than its tick period
+  and cuts the language-specific report, so it is deterministic.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
 
+### Planned work: `Terminal` owns a `TerminalScreen`
+
+The last structural difference from upstream. Go's `Terminal` is a thin facade
+over a `TerminalScreen` (`t.scr`): every piece of screen state — alternate
+screen, mouse mode and encoding, bracketed paste, keyboard enhancements, cursor
+shape/color/position, background/foreground color, progress bar, program status,
+window title, synchronized updates, reset tab stops — lives there once, and
+`Stop`/`Pause` need no duplicate reset logic. This port's `Terminal` keeps a bare
+`TerminalRenderer` and reimplements that layer: it tracks only alt-screen and
+cursor-hidden in `@state`, writes state sequences itself, and leaves
+`TerminalScreen` — which *does* hold the richer state — untouched, so nothing
+ever tells it what the application enabled. That is why `stop` cannot undo mouse
+or paste modes, and why `examples/mouse.cr` resets its two modes by hand.
+
+Scope (one feature, one commit):
+
+1. Give `Terminal` a `@screen : TerminalScreen` and route `write`,
+   `write_string`, `render`, `flush`, alt-screen switching, cursor visibility,
+   program status, and width-method negotiation through it.
+2. Expose `Terminal#screen` and keep `Terminal`'s drawing/config helpers
+   (`set_cell`, `bounds`, `fill_area`, `color_profile=`, …) as delegations, so
+   `examples/` and `bubbletea.cr` keep compiling unchanged.
+3. Delete the `TerminalState`/`@last_state` delta machinery: the screen knows the
+   state, so "apply the delta on display" goes away with it.
+4. Then `stop` undoes mouse/paste modes itself, and `examples/mouse.cr` drops its
+   manual reset — that is the acceptance signal, because the example must stay
+   byte-identical to Go with the reset removed.
+
+Verification is already in place: `make parity-examples` (11/11),
+`make snapshot-examples` (12 goldens) and `make check-inline-fixture` pin the
+bytes, so drift shows up immediately. The risk is public surface, not behavior:
+after the shape settles, check that `../lipgloss`, `../bubbletea.cr`,
+`../bubbletea.cr/bubbletea-examples` and `../bubbles-examples` still build and
+pass.
+
 ### Closed: inline-renderer byte parity
 
-**Goal was:** make `bubbletea.cr`'s Go-fixture spec pass, then ship the fix as
-`v1.1.4`. It passes, and the fix is the renderer alignment described under
-**Current focus** — plus a Go-derived fixture, because the expected bytes were
-themselves stale.
+Shipped as `v1.1.4`, with two follow-ups on `main` (`9ebee98`, `29bca5d`) that
+are not released yet.
 
 **Verify (two commands):**
 
@@ -114,34 +123,62 @@ make inline-golden          # re-derive the inline golden from vendored Go
 ```
 
 `make check-inline-fixture` temporarily swaps this checkout's `src/` into the
-sibling's `lib/ultraviolet`, runs `spec/parity/v2_control_sequences_spec.cr`,
-and restores the sibling on exit. It passes as of `v1.1.4`.
+sibling's `lib/ultraviolet`, runs `spec/parity/v2_control_sequences_spec.cr`, and
+restores the sibling on exit.
 
-**How the stale expectation was found (for the next session):**
+**Root cause:** `bubbletea.cr`'s Go-fixture spec
+(`spec/parity/v2_control_sequences_spec.cr`) expected
+`<CR><LF><ESC>[A<ESC>[30C` at a frame boundary where this renderer emitted
+`<CR><ESC>[30C`. The expected bytes were **stale, not this port's**: they were
+captured in Feb 2026 from ultraviolet `524a660`, whose renderer tracked a
+`scrollHeight` and moved to a frame's last row at the end of every inline render.
+Upstream removed both in 2026-05 (`948f4557`, `6b8d4baf`, and the vendored
+`8ecbcf0`). Go oracles built from the vendored `ultraviolet`, from the sibling's
+pinned Go ultraviolet, and from bubbletea v2.0.7/v2.1.0 all emit
+`<CR><ESC>[30C`, byte-identical to this port; only bubbletea v2.0.0/2.0.2 with uv
+`524a660` produced the old sequence. The fixture had already mixed eras — its
+kitty sequences were updated to the v2.0.9 goldens while the frame boundary
+stayed behind. It is now re-derived from Go, with the recipe recorded in the
+spec itself.
 
-```text
-fixture expected: <CR><LF><ESC>[A<ESC>[30C
-this port + Go:   <CR><ESC>[30C
-```
+**Real port drift found in the same pass:** the renderer still carried the
+pre-`948f4557` inline machinery upstream deleted — `@scroll_height` (and the
+`should_scroll` branch that switched long inline downward jumps to `CSI n B`
+instead of newlines; only a newline scrolls the screen), the `ovw` space padding
+for nil cells in the overwrite optimization, and `Cell#zero?` where upstream
+tests `isWidePlaceholder` (width only) in `put_attr_cell`, `put_cell_lr`,
+`put_range` and `transform_line`. `Cell#wide_placeholder?` is the new predicate.
+Pinned by `spec/terminal_renderer_inline_spec.cr` against
+`spec/fixtures/inline_moves_golden.tsv`, regenerated from the vendored Go
+renderer by `make inline-golden` (`scripts/inline_oracle/`).
 
-The LF+CUU came from ultraviolet `524a660` (2026-02-05), where an inline render
-ended by moving to the frame's last row and remembered how far it had scrolled.
-Go built from the vendored `8ecbcf0` — and from the sibling's pinned Go
-ultraviolet, and from `948f4557` — emits `<CR><ESC>[30C`; only bubbletea
-v2.0.0/2.0.2 with uv `524a660` emits the old sequence. Repro recipe: a Go
-program at `temp/` with `replace github.com/charmbracelet/ultraviolet =>
-vendor/ultraviolet` and `replace charm.land/bubbletea/v2 =>
-../bubbletea.cr/vendor/bubbletea`, a memory input/output, `WithoutSignalHandler`,
-`WithWindowSize(70, 30)`, one second ticks, quit at 1.2 s. Five runs were
-byte-identical.
+**Follow-ups on `main` after `v1.1.4` (unreleased):**
 
-**Done:** gates green, `v1.1.4` tagged, dependents refreshed.
+1. `9ebee98` — every comparable example matches Go (11/11; `mouse` and `panic`
+   were the holdouts). `Terminal#stop` mirrors `Terminal.Stop` →
+   `TerminalScreen.Reset`, and the harness gives `panic` a capture window longer
+   than its 1 Hz tick and cuts its panic report.
+2. `29bca5d` — replaced that commit's byte-capture workaround with Go's actual
+   two-buffer model (renderer writes into a queue, `render` drains it), so the
+   cursor-write deferral is structural. Output is unchanged: same 11/11 and the
+   same twelve goldens byte for byte.
+
+**Repro recipe for the Go oracle** (used above): a program under `temp/` with
+`replace github.com/charmbracelet/ultraviolet => vendor/ultraviolet` and
+`replace charm.land/bubbletea/v2 => ../bubbletea.cr/vendor/bubbletea`, memory
+input/output, `WithoutSignalHandler`, `WithWindowSize(70, 30)`, one second ticks,
+quit at 1.2 s. Five runs were byte-identical.
 
 ### Reset checklist
 
-1. Read this block, then `git log --oneline -10` and `git status`.
+1. Read this block, then `git log --oneline -10` and `git status`. If `main` is
+   ahead of origin, read *Next up* item 1 first: the unpushed commits are
+   releasable as they stand.
 2. Run `make lint && make test && make inventory` (add `make check-win32` for
-   win32 files; `make test-linux` needs Apple `container` or docker).
+   win32 files; `make test-linux` needs Apple `container` or docker). The
+   example harnesses (`parity-examples`, `snapshot-examples`,
+   `check-inline-fixture`) need the example binaries: `make build-examples`
+   first, or use the make targets that depend on them.
 3. `make inventory` / `make parity` forward to the locally installed
    `cross-language-crystal-parity` skill — they do **not** run in CI.
 4. After tagging, run `make update_dependents` and confirm the sibling locks
