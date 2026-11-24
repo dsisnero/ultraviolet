@@ -46,42 +46,14 @@ module ParityExamples
   # sequences are masked so the text and layout are still compared.
   MASK_COLORS = ["prependline"]
 
-  # SGR colours differ by construction: Go passes palette entries through as
-  # indexed colours (`31`, `41`, `38;5;N`) while this port resolves them to RGB
-  # and emits `38;2;r;g;b`. Both describe the same colour, so rewrite every form
-  # to RGB before comparing.
-  BASIC = {
-    0 => {0, 0, 0}, 1 => {205, 0, 0}, 2 => {0, 205, 0}, 3 => {205, 205, 0},
-    4 => {0, 0, 238}, 5 => {205, 0, 205}, 6 => {0, 205, 205}, 7 => {229, 229, 229},
-  }
-  BRIGHT = {
-    0 => {127, 127, 127}, 1 => {255, 0, 0}, 2 => {0, 255, 0}, 3 => {255, 255, 0},
-    4 => {92, 92, 255}, 5 => {255, 0, 255}, 6 => {0, 255, 255}, 7 => {255, 255, 255},
-  }
-  CUBE = [0, 95, 135, 175, 215, 255]
-
-  def palette(index : Int32) : {Int32, Int32, Int32}
-    if index < 8
-      return BASIC[index]
-    end
-    if index < 16
-      return BRIGHT[index - 8]
-    end
-    if index < 232
-      offset = index - 16
-      return {CUBE[offset // 36], CUBE[(offset % 36) // 6], CUBE[offset % 6]}
-    end
-    gray = 8 + (index - 232) * 10
-    {gray, gray, gray}
-  end
-
   SGR = /\e\[([0-9;]*)m/
 
   # normalize compares frames, not terminal handshakes: everything before the
   # last full-screen clear is dropped (startup writes differ in ordering and in
-  # what each side resets), then indexed/basic colours are rewritten to RGB
-  # because Go passes palette entries through while this port resolves them, and
-  # inline image payloads are masked (random colour per frame on both sides).
+  # what each side resets), and inline image payloads are masked (random colour
+  # per frame on both sides). SGR colours are compared as written: this port
+  # keeps the palette kind of a colour, so Go's `4x`/`38;5;N` come out as `4x`/
+  # `38;5;N` here too.
   def normalize(output : String, mask_colors : Bool = false) : String
     frame = output
     if index = output.rindex("\e[H\e[2J")
@@ -94,8 +66,6 @@ module ParityExamples
       # Colour values are random on both sides; everything else (text, cursor
       # moves, clears) is still compared.
       frame = frame.gsub(SGR, "<sgr>")
-    else
-      frame = frame.gsub(SGR) { |match| normalize_sgr($1, match) }
     end
     frame.gsub(/[A-Za-z0-9+\/]{80,}={0,2}/, "<base64>")
   end
@@ -103,70 +73,6 @@ module ParityExamples
   # Both sides must negotiate grapheme width, whatever the frame looks like.
   def negotiates_grapheme_width?(output : String) : Bool
     output.includes?("\e[?2027$p")
-  end
-
-  private def normalize_sgr(body : String, original : String) : String
-    parts = body.split(';')
-    rebuilt = [] of String
-    index = 0
-    changed = false
-
-    while index < parts.size
-      part = parts[index]
-      value = part.empty? ? 0 : part.to_i
-
-      # Truecolor, possibly with the 38;2 / 48;2 introducer.
-      if (value == 38 || value == 48) && parts[index + 1]? == "2" &&
-         parts[index + 4]?
-        rebuilt << "#{value};2;#{parts[index + 2]};#{parts[index + 3]};#{parts[index + 4]}"
-        index += 5
-        next
-      end
-
-      # Palette form: 38;5;N / 48;5;N.
-      if (value == 38 || value == 48) && parts[index + 1]? == "5" && (palette_index = parts[index + 2]?)
-        r, g, b = palette(palette_index.to_i)
-        rebuilt << "#{value};2;#{r};#{g};#{b}"
-        changed = true
-        index += 3
-        next
-      end
-
-      # Basic foreground 30-37 / 90-97 and background 40-47 / 100-107.
-      if value >= 30 && value <= 37
-        r, g, b = palette(value - 30)
-        rebuilt << "38;2;#{r};#{g};#{b}"
-        changed = true
-        index += 1
-        next
-      end
-      if value >= 90 && value <= 97
-        r, g, b = palette(value - 90 + 8)
-        rebuilt << "38;2;#{r};#{g};#{b}"
-        changed = true
-        index += 1
-        next
-      end
-      if value >= 40 && value <= 47
-        r, g, b = palette(value - 40)
-        rebuilt << "48;2;#{r};#{g};#{b}"
-        changed = true
-        index += 1
-        next
-      end
-      if value >= 100 && value <= 107
-        r, g, b = palette(value - 100 + 8)
-        rebuilt << "48;2;#{r};#{g};#{b}"
-        changed = true
-        index += 1
-        next
-      end
-
-      rebuilt << part
-      index += 1
-    end
-
-    changed ? "\e[#{rebuilt.join(';')}m" : original
   end
 
   def build_go(pkg : String, name : String) : String?

@@ -65,10 +65,10 @@ crystal spec spec/decoder_golden_spec.cr
 
 `make parity-examples` runs each vendored Go example and this port's counterpart
 on identical 80x24 pseudo terminals and diffs the first frame (local only: it
-needs Go). Colours are normalised to RGB first — Go emits indexed and basic SGR
-while this port resolves palette entries — and the startup handshake is trimmed
-so the comparison is about what gets painted, not about which sequences each
-side resets on the way in.
+needs Go). SGR colours are compared as written — a basic or indexed colour keeps
+its kind, so both sides emit the same escapes — and the startup handshake is
+trimmed so the comparison is about what gets painted, not about which sequences
+each side resets on the way in.
 
 `make snapshot-examples` is the regression half: it captures each example's own
 first frame against the committed goldens in `spec/testdata/examples/`

@@ -448,3 +448,69 @@ describe Ultraviolet::Style do
     end
   end
 end
+
+# Go's style colours are `color.Color`, so the concrete type decides the escape:
+# `ansi.BasicColor` is `3x`/`9x`, `ansi.IndexedColor` is `38;5;N` and
+# `ansi.RGBColor` is `38;2;r;g;b`. `colorEqual` then compares resolved channels,
+# and `ConvertStyle` only rewrites a colour the profile cannot show. Every
+# expectation below was read off the vendored Go (x/ansi `color.go`, vendored
+# `cell.go`), not from this port.
+describe Ultraviolet::Color do
+  it "encodes a colour by its kind, as the ansi colour types do" do
+    basic = Ultraviolet::Color.basic(1)
+    basic.to_fg_code.should eq("31")
+    basic.to_bg_code.should eq("41")
+    basic.to_underline_code.should eq("58;5;1")
+    Ultraviolet::Color.basic(9).to_fg_code.should eq("91")
+    Ultraviolet::Color.basic(9).to_bg_code.should eq("101")
+
+    indexed = Ultraviolet::Color.indexed(240)
+    indexed.to_fg_code.should eq("38;5;240")
+    indexed.to_bg_code.should eq("48;5;240")
+    # An index in the first 16 is still an index: Go writes `38;5;1`, not `31`.
+    Ultraviolet::Color.indexed(1).to_fg_code.should eq("38;5;1")
+
+    rgb = Ultraviolet::Color.new(1_u8, 2_u8, 3_u8)
+    rgb.to_fg_code.should eq("38;2;1;2;3")
+    rgb.to_bg_code.should eq("48;2;1;2;3")
+  end
+
+  it "resolves palette channels from the ANSI table" do
+    # ansiHex[1] is #800000, not xterm's brighter #cd0000.
+    Ultraviolet::Color.basic(1).to_rgb.should eq({128_u8, 0_u8, 0_u8})
+    Ultraviolet::Color.indexed(1).to_rgb.should eq({128_u8, 0_u8, 0_u8})
+    Ultraviolet::Color.indexed(240).to_rgb.should eq({88_u8, 88_u8, 88_u8})
+    Ultraviolet::Color.new(1_u8, 2_u8, 3_u8).to_rgb.should eq({1_u8, 2_u8, 3_u8})
+  end
+
+  # Port of Go's colorEqual: value equality across kinds, because the renderer
+  # diffs cells by colour value rather than by how a colour was named.
+  it "compares colours by resolved channels" do
+    Ultraviolet::Color.indexed(1).should eq(Ultraviolet::Color.basic(1))
+    Ultraviolet::Color.basic(1).should_not eq(Ultraviolet::Color.new(205_u8, 0_u8, 0_u8))
+    Ultraviolet::Color.basic(1).should_not eq(Ultraviolet::Color.basic(2))
+  end
+
+  # Port of colorprofile.Convert + ConvertStyle: basic passes through, an index
+  # survives every profile but ANSI, and RGB becomes the closest entry the
+  # profile can show (`ansi.Convert256`/`Convert16`).
+  it "keeps the kind a profile can show" do
+    style = Ultraviolet::Style.new(
+      fg: Ultraviolet::Color.basic(1),
+      bg: Ultraviolet::Color.indexed(240),
+    )
+
+    style.string(Ultraviolet::ColorProfile::TrueColor).should eq("\e[31;48;5;240m")
+    style.string(Ultraviolet::ColorProfile::ANSI256).should eq("\e[31;48;5;240m")
+    style.string(Ultraviolet::ColorProfile::ANSI).should eq("\e[31;100m")
+    style.string(Ultraviolet::ColorProfile::NoTTY).should eq("\e[m")
+  end
+
+  it "reduces truecolor to the palette entry a profile can show" do
+    style = Ultraviolet::Style.new(fg: Ultraviolet::Color.new(205_u8, 0_u8, 0_u8))
+
+    style.string(Ultraviolet::ColorProfile::TrueColor).should eq("\e[38;2;205;0;0m")
+    style.string(Ultraviolet::ColorProfile::ANSI256).should eq("\e[38;5;160m")
+    style.string(Ultraviolet::ColorProfile::ANSI).should eq("\e[91m")
+  end
+end

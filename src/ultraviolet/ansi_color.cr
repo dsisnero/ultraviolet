@@ -1,53 +1,30 @@
 module Ultraviolet
+  # AnsiColor exposes the palette entries SGR names, as `charmbracelet/x/ansi`
+  # does. Each constructor keeps its kind: a basic entry and an index encode
+  # differently (`3x`/`9x` versus `38;5;N`), which is the difference this port
+  # used to lose by resolving everything to RGB.
   module AnsiColor
-    BASIC = [
-      Color.new(0_u8, 0_u8, 0_u8),
-      Color.new(205_u8, 0_u8, 0_u8),
-      Color.new(0_u8, 205_u8, 0_u8),
-      Color.new(205_u8, 205_u8, 0_u8),
-      Color.new(0_u8, 0_u8, 238_u8),
-      Color.new(205_u8, 0_u8, 205_u8),
-      Color.new(0_u8, 205_u8, 205_u8),
-      Color.new(229_u8, 229_u8, 229_u8),
-    ]
-
-    BRIGHT = [
-      Color.new(127_u8, 127_u8, 127_u8),
-      Color.new(255_u8, 0_u8, 0_u8),
-      Color.new(0_u8, 255_u8, 0_u8),
-      Color.new(255_u8, 255_u8, 0_u8),
-      Color.new(92_u8, 92_u8, 255_u8),
-      Color.new(255_u8, 0_u8, 255_u8),
-      Color.new(0_u8, 255_u8, 255_u8),
-      Color.new(255_u8, 255_u8, 255_u8),
-    ]
+    BASIC  = (0..7).map { |i| Color.basic(i) }
+    BRIGHT = (8..15).map { |i| Color.basic(i) }
 
     def self.basic(index : Int32) : Color
-      BASIC[index]
+      Color.basic(index)
     end
 
     def self.bright(index : Int32) : Color
-      BRIGHT[index]
+      Color.basic(index + 8)
     end
 
+    # indexed returns an xterm 256-colour entry, including the first 16: Go's
+    # `ansi.IndexedColor(1)` encodes as `38;5;1`, not as basic red.
     def self.indexed(index : Int32) : Color
-      if index < 8
-        return basic(index)
-      end
-      if index < 16
-        return bright(index - 8)
-      end
-      if index < 232
-        offset = index - 16
-        r = offset // 36
-        g = (offset % 36) // 6
-        b = offset % 6
-        steps = [0, 95, 135, 175, 215, 255]
-        return Color.new(steps[r].to_u8, steps[g].to_u8, steps[b].to_u8)
-      end
+      Color.indexed(index)
+    end
 
-      gray = 8 + (index - 232) * 10
-      Color.new(gray.to_u8, gray.to_u8, gray.to_u8)
+    # palette resolves an index to its channels without changing kind, for
+    # callers that need RGB (image encoders, hex helpers).
+    def self.palette(index : Int32) : Color
+      Color.indexed(index)
     end
   end
 end

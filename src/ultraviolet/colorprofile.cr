@@ -42,97 +42,57 @@ module Ultraviolet
     @@ansi16_palette : Array(Color)?
     @@ansi256_palette : Array(Color)?
 
-    def self.convert(profile : ColorProfile, color : Color) : Color
+    # convert mirrors Go's `colorprofile.Profile.Convert` as `ConvertStyle` uses
+    # it: ASCII and below drop the colour, truecolor is a passthrough (kinds
+    # included), a basic entry is never touched, an index survives every profile
+    # but ANSI, and an RGB value becomes the closest palette entry the profile can
+    # show. The conversions themselves are the `ansi` shard's ports of
+    # `ansi.Convert256`/`ansi.Convert16`.
+    def self.convert(profile : ColorProfile, color : Color) : Color?
       case profile
-      when ColorProfile::ANSI256
-        closest_color(color, ansi256_palette)
-      when ColorProfile::ANSI
-        closest_color(color, ansi16_palette)
-      else
+      when ColorProfile::NoTTY, ColorProfile::Ascii
+        nil
+      when ColorProfile::TrueColor
         color
-      end
-    end
-
-    private def self.closest_color(color : Color, palette : Array(Color)) : Color
-      best = palette.first
-      best_dist = Int32::MAX
-
-      palette.each do |candidate|
-        dr = color.r.to_i - candidate.r.to_i
-        dg = color.g.to_i - candidate.g.to_i
-        db = color.b.to_i - candidate.b.to_i
-        dist = dr * dr + dg * dg + db * db
-        if dist < best_dist
-          best_dist = dist
-          best = candidate
+      else
+        if color.basic?
+          color
+        elsif color.indexed?
+          profile == ColorProfile::ANSI ? Color.basic(convert16(color).to_i) : color
+        elsif profile == ColorProfile::ANSI256
+          Color.indexed(convert256(color).to_i)
+        else
+          Color.basic(convert16(color).to_i)
         end
       end
-
-      best
     end
 
+    private def self.convert256(color : Color) : UInt8
+      index = Ansi.convert_256(Ansi::RGBColor.new(color.r, color.g, color.b))
+      index.value
+    end
+
+    private def self.convert16(color : Color) : UInt8
+      if color.indexed?
+        index = Ansi.convert_16(Ansi::IndexedColor.new(color.value))
+      else
+        index = Ansi.convert_16(Ansi::RGBColor.new(color.r, color.g, color.b))
+      end
+      index.value
+    end
+
+    # closest_ansi16_index and closest_ansi256_index keep the old helpers
+    # working: they now read the same conversions the encoder uses rather than a
+    # hand-rolled Euclidean search, so they cannot drift from Go.
     def self.closest_ansi16_index(color : Color) : Int32
-      closest_index(color, ansi16_palette)
+      converted = convert(ColorProfile::ANSI, color)
+      converted.try(&.value.to_i32) || 0
     end
 
     def self.closest_ansi256_index(color : Color) : Int32
-      closest_index(color, ansi256_palette)
-    end
-
-    private def self.closest_index(color : Color, palette : Array(Color)) : Int32
-      best_idx = 0
-      best_dist = Int32::MAX
-      palette.each_with_index do |candidate, idx|
-        dr = color.r.to_i - candidate.r.to_i
-        dg = color.g.to_i - candidate.g.to_i
-        db = color.b.to_i - candidate.b.to_i
-        dist = dr * dr + dg * dg + db * db
-        if dist < best_dist
-          best_dist = dist
-          best_idx = idx
-        end
-      end
-      best_idx
-    end
-
-    private def self.ansi16_palette : Array(Color)
-      @@ansi16_palette ||= [
-        Color.new(0_u8, 0_u8, 0_u8),       # black
-        Color.new(205_u8, 0_u8, 0_u8),     # red
-        Color.new(0_u8, 205_u8, 0_u8),     # green
-        Color.new(205_u8, 205_u8, 0_u8),   # yellow
-        Color.new(0_u8, 0_u8, 238_u8),     # blue
-        Color.new(205_u8, 0_u8, 205_u8),   # magenta
-        Color.new(0_u8, 205_u8, 205_u8),   # cyan
-        Color.new(229_u8, 229_u8, 229_u8), # white (light gray)
-        Color.new(127_u8, 127_u8, 127_u8), # bright black (dark gray)
-        Color.new(255_u8, 0_u8, 0_u8),     # bright red
-        Color.new(0_u8, 255_u8, 0_u8),     # bright green
-        Color.new(255_u8, 255_u8, 0_u8),   # bright yellow
-        Color.new(92_u8, 92_u8, 255_u8),   # bright blue
-        Color.new(255_u8, 0_u8, 255_u8),   # bright magenta
-        Color.new(0_u8, 255_u8, 255_u8),   # bright cyan
-        Color.new(255_u8, 255_u8, 255_u8), # bright white
-      ]
-    end
-
-    private def self.ansi256_palette : Array(Color)
-      @@ansi256_palette ||= begin
-        palette = ansi16_palette.dup
-        steps = [0, 95, 135, 175, 215, 255]
-        steps.each do |red_step|
-          steps.each do |green_step|
-            steps.each do |blue_step|
-              palette << Color.new(red_step.to_u8, green_step.to_u8, blue_step.to_u8)
-            end
-          end
-        end
-        24.times do |i|
-          v = (8 + i * 10).to_u8
-          palette << Color.new(v, v, v)
-        end
-        palette
-      end
+      return color.value.to_i32 if color.indexed?
+      converted = convert(ColorProfile::ANSI256, color)
+      converted.try(&.value.to_i32) || 0
     end
   end
 end

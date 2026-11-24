@@ -6,18 +6,13 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** *(in progress)* **palette-preserving colours** — port Go's
-  `color.Color` kinds so basic/indexed entries are not collapsed to RGB. Scoped
-  below under *Planned work*; it is the last byte-level divergence, because it
-  lets `make parity-examples` compare raw bytes instead of normalising every SGR
-  colour first. `v1.1.6` shipped the `Terminal`/`TerminalScreen` feature, which
-  closed the last structural difference from upstream: every comparable example
-  matches Go for the whole session, not just the first frame. The width-method
-  default turned out to be already correct and is now pinned (see *Known
-  limitations*).
-- **Next up** (priority order), details below under *Planned work*:
-  1. The palette-preserving colour work above.
-  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+- **Active plan:** none open. Two features closed in this stretch: `v1.1.6`
+  made `Terminal` a facade over a `TerminalScreen` (the last structural
+  difference from upstream), and the palette-preserving colour work (unreleased)
+  removed the last byte-level one — `make parity-examples` now compares raw bytes,
+  colours included.
+- **Next up** (priority order), details below under *Closed* sections:
+  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
      complete, 460 specs green, upstream `go test ./...` green, tree untouched).
      Nothing is known to be missing against `8ecbcf0`, so this is a periodic
@@ -61,16 +56,18 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on `d98a01a`):** `make format-check`,
-  `make lint` (58 files), `make test` (460 examples), `make inventory` (819
-  items), `make parity` (819 APIs / 196 tests, backend `regex`),
-  `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (460
+- **Gates (last verified 2026-11-24, on the palette-preserving colour commit):**
+  `make format-check`, `make lint` (58 files), `make test` (465 examples),
+  `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
+  `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (465
   examples in the container), and `make parity-examples` (11 compared, 0
-  differing) pass, as does `./scripts/verify_parity_adversarial.sh .
-  vendor/ultraviolet`. The `panic` capture used to be timing-sensitive; the
-  harness now gives it a window longer than its tick period and cuts the
-  language-specific report, so it is deterministic.
+  differing, raw bytes) pass, as does
+  `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
+  (160 examples) and `../lipgloss` (198 examples) pass against the changed
+  `Color`. The `panic` capture used to be timing-sensitive; the harness now gives
+  it a window longer than its tick period and cuts the language-specific report,
+  so it is deterministic.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
@@ -115,50 +112,48 @@ deleted; `Terminal` keeps a `@screen : TerminalScreen` and delegates.
 **Verified:** `make parity-examples` reports 11 compared / 0 differing, and a
 full-session byte diff (not just the first frame) against the same Go binaries is
 identical for `altscreen`, `boxes`, `draw`, `helloworld`, `panic`, `rgbimage`,
-`tv`, and `widths`; `image`, `mouse`, and `splits` are identical once the
-documented palette-vs-RGB SGR form is masked. `spec/testdata/examples/*.golden`
+`tv`, and `widths` — colours included, no masking. `spec/testdata/examples/*.golden`
 were regenerated because the startup handshake now matches Go's.
 
-### Planned work: palette-preserving colours
+### Closed: palette-preserving colours
 
-Go's `Style.Fg/Bg/UnderlineColor` are `color.Color` (stdlib `image/color`), so
-the concrete type survives into encoding: `ansi.BasicColor` (uint8),
-`ansi.IndexedColor` (uint8) and `ansi.RGBColor` encode as `3x`/`9x`, `38;5;N`
-and `38;2;r;g;b`. Equality (`colorEqual`) compares resolved RGBA, so
-`BasicColor(1)` equals `RGBColor{205,0,0}`, and `ConvertStyle` only rewrites a
-colour under ANSI/ANSI256 (`colorprofile.Convert`: basic passes through, indexed
-passes except under ANSI, RGB becomes the closest index).
+Go's `Style.Fg/Bg/UnderlineColor` are `color.Color` (stdlib `image/color`), so the
+concrete type survives into encoding: `ansi.BasicColor` is `3x`/`9x`,
+`ansi.IndexedColor` is `38;5;N` and `ansi.RGBColor` is `38;2;r;g;b`
+(`vendor/ultraviolet/cell.go` `String`, `ConvertStyle`, `colorEqual`). This port
+resolved every colour to RGB at construction, so its escapes were always
+truecolor and `make parity-examples` had to rewrite each SGR colour before it
+could compare anything.
 
-This port's `Color` is `r,g,b : UInt8` only, so `AnsiColor.basic`/`.indexed`
-collapse to RGB at construction and every escape is truecolor. The only place an
-index survives is `Style.color_code`'s *profile* downgrade, which recomputes one
-from RGB — so the caller's palette entry is lost, and captured output differs
-from Go (`48;2;205;0;0` where Go writes `44`).
+**What landed:**
 
-Scope (one feature, one commit):
+- `Color` carries a kind — basic, indexed or RGB — with `Color.basic(i)`,
+  `Color.indexed(i)` and `to_rgb` for consumers that need channels. Encoding is
+  kind-driven, so `AnsiColor.basic(1)` is `31`, `AnsiColor.indexed(240)` is
+  `38;5;240` and an RGB value stays `38;2;r;g;b`, in `Style#string`,
+  `Style.diff` and the `to_*_code` helpers.
+- Equality is Go's `colorEqual`: resolved channels, not the kind, so
+  `indexed(1) == basic(1)` but `basic(1) != Color.new(205, 0, 0)` (the ANSI
+  palette's red is `#800000`, xterm's is `#cd0000`). `Cell`/`Style` equality and
+  the renderer's cell diffing follow it.
+- `ColorProfileUtil.convert` mirrors `colorprofile.Convert` by delegating to the
+  `ansi` shard's ports of `ansi.Convert256`/`Convert16`: basic passes through, an
+  index survives every profile but ANSI, and RGB becomes the closest entry the
+  profile can show (so `#cd0000` is `38;5;160` under ANSI256 and `91` under ANSI).
+  The palette itself is the shard's `ansiHex`, the same table `x/ansi` uses.
+- `scripts/parity_examples.cr` lost its palette→RGB rewrite: `make
+  parity-examples` is a raw byte comparison — **11 compared, 0 differing** — which
+  is the acceptance signal. `spec/testdata/examples/{image,mouse,splits}.golden`
+  were regenerated because those examples now emit the palette escapes Go does.
+- Pinned by five cases in `spec/style_spec.cr` whose expectations were read off
+  the vendored Go (kind encoding, palette channels, cross-kind equality, and the
+  per-profile table), plus SGR parsing in `styled.cr` staying kind-faithful
+  through `AnsiColor`.
 
-1. `Color` gains a kind (`basic`/`indexed`/`rgb`) holding an index or RGB bytes,
-   with `Color.basic(i)` / `Color.indexed(i)` constructors and `to_rgb` for
-   consumers that need channels (image encoding, hex helpers).
-2. Equality mirrors `colorEqual`: compare resolved RGBA, not the kind, so
-   `Color.basic(1) == Color.new(205, 0, 0)`. `Cell`/`Style` equality follow.
-3. Encoding is kind-driven (`Style.color_code`, `Style.diff`, the `to_*_code`
-   helpers): `3x`/`9x`, `38;5;N`, `38;2;r;g;b`.
-4. `ColorProfileUtil.convert` mirrors `colorprofile.Convert`: TrueColor and basic
-   pass through, indexed passes except under ANSI (→ closest basic), RGB → closest
-   indexed under ANSI256 and closest basic under ANSI, dropped for ASCII/NoTTY.
-5. `AnsiColor.basic`/`.bright`/`.indexed` return kinded colours, which makes SGR
-   parsing in `styled.cr` kind-faithful for free; the palette tables stay for
-   channel lookups.
-6. Drop the palette→RGB rewrite from `scripts/parity_examples.cr` once the bytes
-   match: `make parity-examples` becomes a raw byte comparison, which is the
-   acceptance signal. Regenerate `spec/testdata/examples/*.golden` — the affected
-   examples now emit `4x`/`38;5`.
-
-Verification: `make parity-examples` 0 differing with no colour normalisation;
-`make snapshot-examples`, `make check-inline-fixture`, `make decode-golden` (if
-the decoder's colour form is pinned there); `../lipgloss` and `../bubbletea.cr`
-still build against the changed `Color`.
+**Verified:** `make parity-examples` 0 differing with no colour normalisation;
+`make snapshot-examples` (12), `make check-inline-fixture`, `make decode-golden`
+(no fixture change), `make test-linux` (465 examples); `../bubbletea.cr` (160
+examples) and `../lipgloss` (198 examples) pass against the changed `Color`.
 
 ### Closed: inline-renderer byte parity
 
@@ -286,15 +281,13 @@ quit at 1.2 s. Five runs were byte-identical.
   renderer keeps Go's two-buffer model (`NewTerminalRenderer(s.buf, …)`): a
   cursor move made while flushing a frame waits for the next one.
 - `examples/` output is compared against the vendored Go examples with
-  `make parity-examples` (local only: it needs Go). Frames are compared after
-  rewriting every SGR colour to RGB, because Go passes palette entries through
-  as indexed colours while this port resolves them, and after trimming the
-  startup handshake. `make snapshot-examples` pins each example's own frame as a
-  regression golden (`spec/testdata/examples/`), regenerated with
+  `make parity-examples` (local only: it needs Go). Frames are compared byte for
+  byte after trimming the startup handshake — colours included, now that a palette
+  entry keeps its kind — and `make snapshot-examples` pins each example's own
+  frame as a regression golden (`spec/testdata/examples/`), regenerated with
   `make snapshot-update`; `space` (wall-clock animation) and `prependline`
   (random colour) are skipped. Since the screen owns the state, a full-session
-  diff against the same Go binaries is also identical for every compared
-  example, except where only the SGR colour form differs.
+  diff against the same Go binaries is also identical for every compared example.
 - **Closed: the width-method default matches Go.** Go's default is
   `ansi.WcWidth` (`buffer.go:617`) until the terminal confirms DEC mode 2027, and
   so is this port's: `DEFAULT_WIDTH_METHOD` is `Ansi.string_width_wc`, and both
@@ -305,12 +298,15 @@ quit at 1.2 s. Five runs were byte-identical.
   differing. Pinned by `spec/buffer_spec.cr` (the old assertion only measured
   `"a"`, which both methods agree on) and by a `spec/terminal_screen_spec.cr`
   case for a fresh screen.
-- Colors are RGB-only. `Ultraviolet::Color` is an RGB struct, so
-  `AnsiColor.basic`/`.indexed` resolve palette entries to RGB and the output
-  uses `38;2`/`48;2` where Go's `ansi.BasicColor`/`ansi.IndexedColor` emit
-  `3x`/`4x` or `38;5`/`48;5`. Same pixels on a default palette, different bytes
-  if the user redefines it: captured frames of `examples/splits.cr` differ only
-  in the color escapes.
+- Colors keep their kind, as Go's do. `Ultraviolet::Color` is a basic, indexed or
+  RGB value, so `AnsiColor.basic`/`.indexed` emit `3x`/`4x` and `38;5;N` the way
+  Go's `ansi.BasicColor`/`ansi.IndexedColor` do, and `parity-examples` compares
+  the escapes byte for byte. Equality is Go's `colorEqual` (resolved channels,
+  not the kind), and `ColorProfileUtil.convert` mirrors `colorprofile.Convert`:
+  basic passes through, an index survives every profile but ANSI, RGB becomes the
+  closest entry the profile can show. The palette itself is `ansiHex` from
+  `charmbracelet/x/ansi` via the `ansi` shard, which is why `basic(1)` resolves
+  to `#800000` rather than xterm's brighter `#cd0000`.
 - `FallbackReader#read` is not interruptible. Upstream behaves the same way
   (`poll_fallback.go`), and its test unblocks the reader manually, so this is a
   ported behavior rather than a gap.
@@ -318,9 +314,9 @@ quit at 1.2 s. Five runs were byte-identical.
 ## Example output parity
 
 `make parity-examples` compares each vendored Go example against this port's
-counterpart and diffs the first frame: byte-identical after colour normalisation
-(indexed/basic SGR → RGB) and handshake trimming. `crystal run
-scripts/parity_examples.cr -- <name>` checks one example.
+counterpart and diffs the first frame: byte-identical after handshake trimming,
+SGR colours included. `crystal run scripts/parity_examples.cr -- <name>` checks
+one example.
 
 | Example | Status | Notes |
 |---------|--------|-------|

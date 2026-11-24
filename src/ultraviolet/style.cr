@@ -1,13 +1,100 @@
 module Ultraviolet
+  # Color mirrors Go's `color.Color` as ultraviolet uses it: a style colour is
+  # either one of the 16 basic palette entries (`ansi.BasicColor`), an xterm
+  # 256-colour index (`ansi.IndexedColor`), or truecolor RGB (`ansi.RGBColor`).
+  # The kind decides the escape a style emits — `3x`/`9x`, `38;5;N` or
+  # `38;2;r;g;b` — which is why the port cannot collapse palette entries to RGB
+  # at construction the way it used to.
+  #
+  # Equality is Go's `colorEqual`: colours compare by their resolved channels, so
+  # `Color.indexed(1)` equals `Color.basic(1)` (both resolve to `ansiHex[1]`) but
+  # neither equals a truecolor value that only looks similar. The renderer diffs
+  # cells by value, and upstream compares values rather than concrete types.
   struct Color
+    enum Kind
+      Basic
+      Indexed
+      RGB
+    end
+
+    getter kind : Kind
+    # value is the palette index for [Kind::Basic] and [Kind::Indexed].
+    getter value : UInt8
+    # r, g and b are the channels: the stored ones for [Kind::RGB], the resolved
+    # palette entry otherwise.
     getter r : UInt8
     getter g : UInt8
     getter b : UInt8
 
     def initialize(@r : UInt8, @g : UInt8, @b : UInt8)
+      @kind = Kind::RGB
+      @value = 0_u8
     end
 
-    def_equals_and_hash r, g, b
+    private def initialize(@kind : Kind, @value : UInt8)
+      @r, @g, @b = palette_rgb(@kind, @value)
+    end
+
+    # basic returns one of the 16 ANSI palette entries, as `ansi.BasicColor`
+    # does. It stays a basic colour: under a truecolor profile Go still writes
+    # `3x`/`9x` for it.
+    def self.basic(index : Int32) : Color
+      new(Kind::Basic, clamp_index(index, 15).to_u8)
+    end
+
+    # indexed returns an xterm 256-colour entry, as `ansi.IndexedColor` does.
+    def self.indexed(index : Int32) : Color
+      new(Kind::Indexed, clamp_index(index, 255).to_u8)
+    end
+
+    private def self.clamp_index(index : Int32, max : Int32) : Int32
+      index < 0 ? 0 : (index > max ? max : index)
+    end
+
+    # palette_rgb resolves a palette index the way xterm does, so a colour's
+    # channels are available without losing its kind. It is `ansiHex` in
+    # `charmbracelet/x/ansi`, which the `ansi` shard carries.
+    private def palette_rgb(_kind : Kind, index : UInt8) : {UInt8, UInt8, UInt8}
+      rgb = Ansi.ansi_to_rgb(index)
+      {rgb.r, rgb.g, rgb.b}
+    end
+
+    def basic? : Bool
+      @kind.basic?
+    end
+
+    def indexed? : Bool
+      @kind.indexed?
+    end
+
+    def rgb? : Bool
+      @kind.rgb?
+    end
+
+    # rgba reports 16-bit channels like Go's `color.Color.RGBA`, so equality can
+    # be value-based across kinds.
+    def rgba : {UInt32, UInt32, UInt32, UInt32}
+      {
+        @r.to_u32 * 0x101_u32,
+        @g.to_u32 * 0x101_u32,
+        @b.to_u32 * 0x101_u32,
+        0xffff_u32,
+      }
+    end
+
+    def to_rgb : {UInt8, UInt8, UInt8}
+      {@r, @g, @b}
+    end
+
+    def ==(other : self) : Bool
+      @r == other.r && @g == other.g && @b == other.b
+    end
+
+    def hash(hasher)
+      @r.hash(hasher)
+      @g.hash(hasher)
+      @b.hash(hasher)
+    end
 
     def to_fg_ansi : String
       "\e[#{to_fg_code}m"
@@ -22,15 +109,42 @@ module Ultraviolet
     end
 
     def to_fg_code : String
-      "38;2;#{@r};#{@g};#{@b}"
+      code(:fg)
     end
 
     def to_bg_code : String
-      "48;2;#{@r};#{@g};#{@b}"
+      code(:bg)
     end
 
     def to_underline_code : String
-      "58;2;#{@r};#{@g};#{@b}"
+      code(:underline)
+    end
+
+    # code encodes the colour by kind, as Go's `ansi.Style.ForegroundColor`
+    # does: a basic entry is `3x`/`9x`, an index is `38;5;N`, and RGB is
+    # `38;2;r;g;b` (with 4x/48 and 58 for the other slots).
+    private def code(kind : Symbol) : String
+      case @kind
+      in Color::Kind::Basic
+        index = @value.to_i32
+        case kind
+        when :fg then (index < 8 ? (30 + index) : (90 + index - 8)).to_s
+        when :bg then (index < 8 ? (40 + index) : (100 + index - 8)).to_s
+        else          "58;5;#{index}"
+        end
+      in Color::Kind::Indexed
+        case kind
+        when :fg then "38;5;#{@value}"
+        when :bg then "48;5;#{@value}"
+        else          "58;5;#{@value}"
+        end
+      in Color::Kind::RGB
+        case kind
+        when :fg then "38;2;#{@r};#{@g};#{@b}"
+        when :bg then "48;2;#{@r};#{@g};#{@b}"
+        else          "58;2;#{@r};#{@g};#{@b}"
+        end
+      end
     end
   end
 
@@ -181,10 +295,13 @@ module Ultraviolet
       parts
     end
 
+    # color_equal mirrors Go's `colorEqual`: compare resolved channels, not the
+    # kind, so a basic entry and the RGB value it resolves to are the same
+    # colour (the renderer diffs by value).
     private def self.color_equal(a : Color?, b : Color?) : Bool
       return true if a.nil? && b.nil?
       return false if a.nil? || b.nil?
-      a.r == b.r && a.g == b.g && a.b == b.b
+      a == b
     end
 
     private def self.color_diff_codes(from : Style, to : Style) : Array(String)
@@ -236,54 +353,19 @@ module Ultraviolet
       codes
     end
 
+    # color_code encodes one style colour for a profile the way Go's
+    # `ConvertStyle` + `Style.String` do: the profile converts the colour (basic
+    # passes through, an index survives unless the profile is ANSI, RGB is
+    # reduced to the closest entry), and the colour's own kind then decides the
+    # escape.
     def self.color_code(profile : ColorProfile, color : Color, kind : Symbol) : String
-      case profile
-      when ColorProfile::TrueColor
-        color_code_truecolor(color, kind)
-      when ColorProfile::ANSI256
-        idx = ColorProfileUtil.closest_ansi256_index(color)
-        color_code_ansi256(idx, kind)
-      when ColorProfile::ANSI
-        idx = ColorProfileUtil.closest_ansi16_index(color)
-        color_code_ansi16(idx, kind)
-      else
-        color_code_truecolor(color, kind)
-      end
-    end
-
-    private def self.color_code_truecolor(color : Color, kind : Symbol) : String
+      converted = ColorProfileUtil.convert(profile, color)
+      return "" if converted.nil?
       case kind
-      when :fg
-        color.to_fg_code
-      when :bg
-        color.to_bg_code
-      else
-        color.to_underline_code
+      when :fg then converted.to_fg_code
+      when :bg then converted.to_bg_code
+      else          converted.to_underline_code
       end
-    end
-
-    private def self.color_code_ansi256(index : Int32, kind : Symbol) : String
-      if index < 16 && kind != :underline
-        return color_code_ansi16(index, kind)
-      end
-      case kind
-      when :fg
-        "38;5;#{index}"
-      when :bg
-        "48;5;#{index}"
-      else
-        "58;5;#{index}"
-      end
-    end
-
-    private def self.color_code_ansi16(index : Int32, kind : Symbol) : String
-      if kind == :fg
-        return (index < 8 ? 30 + index : 90 + (index - 8)).to_s
-      end
-      if kind == :bg
-        return (index < 8 ? 40 + index : 100 + (index - 8)).to_s
-      end
-      "58;5;#{index}"
     end
 
     private def self.attr_diff_codes(from : Style, to : Style) : Array(String)

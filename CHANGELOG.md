@@ -20,6 +20,38 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [Unreleased]
+
+Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.6`.
+
+### Changed
+
+- **Style colours keep their kind**, as Go's `color.Color` values do. `Color` is
+  now a basic entry (`ansi.BasicColor`), a 256-colour index
+  (`ansi.IndexedColor`) or RGB (`ansi.RGBColor`), so `AnsiColor.basic(1)` emits
+  `31` rather than `38;2;128;0;0` and `AnsiColor.indexed(240)` emits `38;5;240`.
+  `Color.basic(i)`, `Color.indexed(i)` and `to_rgb` are the new constructors and
+  accessor; `Color.new(r, g, b)` still builds a truecolor value.
+- Equality follows Go's `colorEqual`: colours compare by resolved channels, not
+  by kind, so `indexed(1) == basic(1)` while `basic(1) != Color.new(205, 0, 0)`
+  — the palette is `ansiHex` from `charmbracelet/x/ansi` (via the `ansi` shard),
+  which resolves basic red to `#800000`, not xterm's `#cd0000`. Code that read
+  `.r/.g/.b` still compiles and now sees the ANSI palette's values.
+- `ColorProfileUtil.convert` mirrors `colorprofile.Convert`: basic passes
+  through every profile, an index survives every profile but ANSI, and RGB
+  becomes the closest entry the profile can show (`ansi.Convert256`/`Convert16`
+  from the `ansi` shard). So `#cd0000` is `38;5;160` under ANSI256 and `91` under
+  ANSI, exactly as Go writes it.
+
+### Internal
+
+- `scripts/parity_examples.cr` no longer rewrites SGR colours to RGB before
+  comparing: `make parity-examples` is a raw byte diff (11 compared, 0 differing).
+- `spec/testdata/examples/{image,mouse,splits}.golden` were regenerated: those
+  examples now emit the palette escapes Go does.
+- `spec/style_spec.cr` pins the kind encoding, the palette channels, cross-kind
+  equality and the per-profile conversion table, all read off the vendored Go.
+
 ## [1.1.6] - 2026-11-24
 
 Patch release on the self-numbered line. Delta since `1.1.5`.
