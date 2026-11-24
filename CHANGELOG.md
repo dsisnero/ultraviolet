@@ -20,6 +20,46 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.5] - 2026-11-24
+
+Patch release on the self-numbered line. Delta since `1.1.4`.
+
+Vendored upstream: `8ecbcf0`.
+
+### Fixed
+
+- **Every comparable example now matches Go byte for byte** (11 of 11; `mouse`
+  and `panic` were the holdouts).
+  - `Terminal` and `TerminalScreen` carry Go's two-buffer output model: the
+    renderer writes into a queue that `render` drains (`NewTerminalRenderer(s.buf,
+    …)` upstream), while screen-level writes go straight into that queue. A
+    cursor write made while flushing a frame therefore waits for the next frame,
+    so an inline app's `\r\e[A` nudge lands after the writes it queues before
+    its first display, not before them. Alt-screen switches are queued like Go's
+    rather than written through the renderer.
+  - `Terminal#stop` mirrors `Terminal.Stop` → `TerminalScreen.Reset`: it undoes
+    the state it queued, leaves the application's frame on screen, and no longer
+    resets tab stops or clears below the frame. `Terminal#stop` also no longer
+    emits the bottom-row cursor move, which Go computes and then drops.
+- The `panic` example's capture is deterministic: `make parity-examples` gives
+  it a window longer than its one second tick and cuts the panic report and
+  backtrace, which only one language can produce.
+
+### Internal
+
+- The renderer is built over the screen's own buffer (`NewTerminalRenderer(s.buf,
+  …)`), so the deferral above is structural rather than a pass-through
+  workaround: the renderer writes into the queue, `render` drains it, and
+  screen-level writes go straight in. `TerminalRenderer#take_buffered` is gone.
+- `make parity-examples` runs both languages on identical pseudo terminals and
+  now reports **11 compared, 0 differing**; all twelve example goldens
+  (`spec/testdata/examples/*.golden`) were regenerated for the deferred nudge,
+  and `panic`'s golden covers its whole countdown.
+- `scripts/support/pty_capture.cr` gives `panic` an idle window longer than its
+  one second tick (`IDLE_OVERRIDES`) and cuts the panic report and backtrace
+  (`CUT`); both example harnesses go through `capture_example`.
+
+
 ## [1.1.4] - 2026-11-23
 
 Patch release on the self-numbered line. Delta since `1.1.3`.
@@ -89,28 +129,15 @@ Vendored upstream: `8ecbcf0`.
   requirement during resolution.
 - `make update_dependents` refreshes sibling repos against the newest tag.
 
-## [Unreleased]
+## Earlier notes (accumulated before `1.1.5`)
+
+Work that landed while `1.1.2`–`1.1.4` were being numbered, kept for the record.
+Where these notes report example parity, the number has moved on: `1.1.5`
+compares all eleven comparable examples byte for byte.
 
 Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 
 ### Fixed
-
-- **Every comparable example now matches Go byte for byte** (11 of 11; `mouse`
-  and `panic` were the holdouts).
-  - `Terminal` and `TerminalScreen` carry Go's two-buffer output model: the
-    renderer writes into a queue that `render` drains (`NewTerminalRenderer(s.buf,
-    …)` upstream), while screen-level writes go straight into that queue. A
-    cursor write made while flushing a frame therefore waits for the next frame,
-    so an inline app's `\r\e[A` nudge lands after the writes it queues before
-    its first display, not before them. Alt-screen switches are queued like Go's
-    rather than written through the renderer.
-  - `Terminal#stop` mirrors `Terminal.Stop` → `TerminalScreen.Reset`: it undoes
-    the state it queued, leaves the application's frame on screen, and no longer
-    resets tab stops or clears below the frame. `Terminal#stop` also no longer
-    emits the bottom-row cursor move, which Go computes and then drops.
-- The `panic` example's capture is deterministic: `make parity-examples` gives
-  it a window longer than its one second tick and cuts the panic report and
-  backtrace, which only one language can produce.
 
 - **Terminal size could corrupt the caller's stack.** `ioctl` was declared with
   a fixed `Void*` third argument although C declares it variadic, so on Apple
