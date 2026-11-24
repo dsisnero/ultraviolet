@@ -8,9 +8,9 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 - **Active plan:** none open. Two features closed in this stretch: `v1.1.6`
   made `Terminal` a facade over a `TerminalScreen` (the last structural
-  difference from upstream), and the palette-preserving colour work (unreleased)
-  removed the last byte-level one — `make parity-examples` now compares raw bytes,
-  colours included.
+  difference from upstream), and `v1.1.7` made style colours keep their kind,
+  which removed the last byte-level difference — `make parity-examples` compares
+  raw bytes, colours included.
 - **Next up** (priority order), details below under *Closed* sections:
   1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
@@ -29,11 +29,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.6` tagged at `f47e115` and pushed; `shard.yml`
-  matches it, siblings were moved to `1.1.6` with `make update_dependents`, and
-  a fresh consumer install resolves `1.1.6`. `v1.1.5` was tagged at `7fda004`,
-  `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos refresh with
-  `make update_dependents` after each tag push.
+- **Release state:** `v1.1.7` tagged at `789880c` and pushed; `shard.yml`
+  matches it, siblings were moved to `1.1.7` with `make update_dependents`, and
+  a fresh consumer install resolves `1.1.7`. `v1.1.6` was tagged at `f47e115`,
+  `v1.1.5` at `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`.
+  Sibling repos refresh with `make update_dependents` after each tag push.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -49,14 +49,15 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
   Inline renderer re-aligned with `8ecbcf0` after the stale-fixture
   investigation (see current focus); no new symbols, so the ledger is unchanged.
-- **Last code feature commit:** `a075174` (`port: give Terminal Go's
-  TerminalScreen facade`); before it, `29bca5d` is the two-buffer renderer model
-  and `9ebee98` the behavior change it restructures.
+- **Last code feature commit:** `6c39f53` (`port: keep a style colour's kind, as
+  Go's color.Color does`); before it, `a075174` gave `Terminal` Go's
+  `TerminalScreen` facade, `29bca5d` is the two-buffer renderer model and
+  `9ebee98` the behavior change it restructures.
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on the palette-preserving colour commit):**
+- **Gates (last verified 2026-11-24, on `789880c`):**
   `make format-check`, `make lint` (58 files), `make test` (465 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
