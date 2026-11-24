@@ -116,8 +116,11 @@ Crystal Ultraviolet API mapped to Go upstream types.
 
 | Go | Crystal |
 |----|---------|
-| `image/color.Color` interface | `Ultraviolet::Color` struct ([event.cr](../src/ultraviolet/event.cr)) |
-| `color.RGBA{R, G, B, A}` | `Ultraviolet::Color.new(r, g, b)` |
+| `image/color.Color` interface | `Ultraviolet::Color` struct, kinded ([style.cr](../src/ultraviolet/style.cr)) |
+| `ansi.BasicColor(i)` | `Ultraviolet::Color.basic(i)` |
+| `ansi.IndexedColor(i)` | `Ultraviolet::Color.indexed(i)` |
+| `ansi.RGBColor{R, G, B}` | `Ultraviolet::Color.new(r, g, b)` |
+| `c.RGBA()` | `color.rgba` (16-bit channels); `color.to_rgb` for 8-bit |
 | `colorprofile.Profile` | `Ultraviolet::ColorProfile` enum ([colorprofile.cr](../src/ultraviolet/colorprofile.cr)) |
 | `colorprofile.TrueColor` | `ColorProfile::TrueColor` |
 | `colorprofile.ANSI256` | `ColorProfile::ANSI256` |
