@@ -20,9 +20,11 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
-## [Unreleased]
+## [1.1.6] - 2026-11-24
 
-Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.5`.
+Patch release on the self-numbered line. Delta since `1.1.5`.
+
+Vendored upstream: `8ecbcf0`.
 
 ### Changed
 
