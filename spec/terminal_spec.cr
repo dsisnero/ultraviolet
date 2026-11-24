@@ -108,6 +108,15 @@ describe "Terminal screen" do
     written.should contain("\e[?25l")
   end
 
+  it "starts on wcwidth measurement, like Go" do
+    output = IO::Memory.new
+    term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])
+
+    conjunct = "स्ते"
+    term.width_method.call(conjunct).should eq(2)
+    term.screen.width_method.call(conjunct).should eq(2)
+  end
+
   it "switches the alternate screen through the screen" do
     output = IO::Memory.new
     term = Ultraviolet::Terminal.new(IO::Memory.new, output, ["TERM=xterm-256color"])

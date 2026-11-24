@@ -292,10 +292,20 @@ describe "Buffer line and cell operations" do
 end
 
 describe Ultraviolet::ScreenBuffer do
+  # Go's NewScreenBuffer defaults to ansi.WcWidth (`buffer.go:617`), not grapheme
+  # clustering: a Devanagari conjunct measures two columns until the terminal
+  # confirms DEC mode 2027. Asserting only on "a" passes under both methods,
+  # which is how a default that measured like grapheme clustering stayed
+  # unnoticed.
   it "exposes default width method" do
     buffer = Ultraviolet::ScreenBuffer.new(10, 5)
     method = buffer.width_method
     method.call("a").should eq(1)
+
+    conjunct = "स्ते"
+    method.call(conjunct).should eq(2)
+    Ansi.string_width(conjunct).should eq(1)
+    Ultraviolet::GRAPHEME_WIDTH_METHOD.call(conjunct).should eq(1)
   end
 
   it "tests buffer width and height methods" do

@@ -80,6 +80,21 @@ describe Ultraviolet::TerminalScreen do
   # and width 2 under grapheme clustering.
   warning_sign = "\u26A0\uFE0F"
 
+  # Go's screen starts on ansi.WcWidth and only upgrades when the terminal
+  # confirms DEC mode 2027, so an unnegotiated screen measures a Devanagari
+  # conjunct as two columns. examples/widths reports this model, and the vendored
+  # Go example does the same on a terminal that never answers the query.
+  it "starts on wcwidth measurement" do
+    output = IO::Memory.new
+    screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])
+
+    conjunct = "स्ते"
+    screen.width_method.call(conjunct).should eq(2)
+    screen.string_width(conjunct).should eq(2)
+    screen.width_method.should eq(Ultraviolet::DEFAULT_WIDTH_METHOD)
+    output.to_s.should_not contain(Ansi::SetModeUnicodeCore)
+  end
+
   it "negotiates grapheme width on the screen" do
     output = IO::Memory.new
     screen = Ultraviolet::TerminalScreen.new(output, ["TERM=xterm-256color"])

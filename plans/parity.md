@@ -9,20 +9,21 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 - **Active plan:** none open. `v1.1.6` shipped the `Terminal`/`TerminalScreen`
   feature, which closed the last structural difference from upstream: every
   comparable example matches Go for the whole session, not just the first frame.
+  The last open divergence besides the documented colour form — the width-method
+  default — turned out to be already correct and is now pinned (see *Known
+  limitations*).
 - **Next up** (priority order), details below under *Planned work*:
-  1. **Check upstream.** `git ls-remote
+  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` (last run at `ab56604`: 819 APIs / 196 tests clean,
+     upstream `go test ./...` green, tree untouched). Nothing is known to be
+     missing against `8ecbcf0`, so this is a periodic confidence check rather
+     than pending work.
+  2. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
-     `8ecbcf0` as of 2026-11-24 (fourth check, after `d9728b6` and `ab56604`).
-     If it moved, run a refresh: clone, diff `<old>..<new>`, write
+     `8ecbcf0` as of 2026-11-24 (fifth check, after `d9728b6` and `ab56604`).
+     If it moves, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
      ([recipe](commit_8ecbcf0.md)).
-  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` after a refresh (last run at `ab56604`: 819 APIs / 196
-     tests clean, upstream `go test ./...` green, tree untouched).
-  3. **Optional:** the open width-method divergence noted under *Known
-     limitations* (Go defaults to wcwidth until DEC mode 2027 answers; this port
-     defaults to uniwidth). It needs the width expectations re-ported, so it is a
-     feature in its own right.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
@@ -56,8 +57,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on `f47e115`):** `make format-check`,
-  `make lint` (58 files), `make test` (458 examples), `make inventory` (819
+- **Gates (last verified 2026-11-24, on `2077bf3`):** `make format-check`,
+  `make lint` (58 files), `make test` (460 examples), `make inventory` (819
   items), `make parity` (819 APIs / 196 tests, backend `regex`),
   `make check-examples`, `make snapshot-examples` (12 goldens),
   `make check-inline-fixture`, `make check-win32`, and `make parity-examples`
@@ -246,13 +247,16 @@ quit at 1.2 s. Five runs were byte-identical.
   (random colour) are skipped. Since the screen owns the state, a full-session
   diff against the same Go binaries is also identical for every compared
   example, except where only the SGR colour form differs.
-- **Open divergence the harness found:** Go's default width method is
-  `ansi.WcWidth` (`buffer.go:617`) until the terminal confirms DEC mode 2027;
-  this port defaults to uniwidth, which measures like grapheme clustering (a
-  Devanagari conjunct is 1 column instead of 2). `examples/widths.cr` therefore
-  reports a different model on a terminal that never answers the query. Fixing
-  it means re-porting the width expectations, so it is tracked here rather than
-  changed in passing.
+- **Closed: the width-method default matches Go.** Go's default is
+  `ansi.WcWidth` (`buffer.go:617`) until the terminal confirms DEC mode 2027, and
+  so is this port's: `DEFAULT_WIDTH_METHOD` is `Ansi.string_width_wc`, and both
+  `ScreenBuffer` and `TerminalScreen` start there. A Devanagari conjunct measures
+  2 columns (grapheme clustering would say 1), `examples/widths` prints
+  `width method: wcwidth` on a terminal that never answers the query, and
+  `make parity-examples` compares it to the vendored Go example with 0
+  differing. Pinned by `spec/buffer_spec.cr` (the old assertion only measured
+  `"a"`, which both methods agree on) and by a `spec/terminal_screen_spec.cr`
+  case for a fresh screen.
 - Colors are RGB-only. `Ultraviolet::Color` is an RGB struct, so
   `AnsiColor.basic`/`.indexed` resolve palette entries to RGB and the output
   uses `38;2`/`48;2` where Go's `ansi.BasicColor`/`ansi.IndexedColor` emit
@@ -282,7 +286,7 @@ scripts/parity_examples.cr -- <name>` checks one example.
 | `rgbimage` | ✅ identical | the 0x0 image payload case matches Go |
 | `splits` | ✅ identical | enters the alternate screen before `start`, as Go does |
 | `tv` | ✅ identical | — |
-| `widths` | ✅ identical | renders once before the event loop on the still-0x0 screen, as Go does |
+| `widths` | ✅ identical | renders once before the event loop on the still-0x0 screen, as Go does; reports `wcwidth` on a terminal that never answers DEC mode 2027, as Go does |
 | `layout` | ⏭ skipped | Go's example is built on lipgloss, which this port does not depend on |
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
 | `prependline` | ⏭ skipped | random colour per frame and scheduling-dependent frame count |
