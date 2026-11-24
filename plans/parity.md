@@ -14,10 +14,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   limitations*).
 - **Next up** (priority order), details below under *Planned work*:
   1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run at `ab56604`: 819 APIs / 196 tests clean,
-     upstream `go test ./...` green, tree untouched). Nothing is known to be
-     missing against `8ecbcf0`, so this is a periodic confidence check rather
-     than pending work.
+     vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
+     complete, 460 specs green, upstream `go test ./...` green, tree untouched).
+     Nothing is known to be missing against `8ecbcf0`, so this is a periodic
+     confidence check rather than pending work.
   2. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
      `8ecbcf0` as of 2026-11-24 (fifth check, after `d9728b6` and `ab56604`).
@@ -61,11 +61,12 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `make lint` (58 files), `make test` (460 examples), `make inventory` (819
   items), `make parity` (819 APIs / 196 tests, backend `regex`),
   `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, and `make parity-examples`
-  (11 compared, 0 differing) pass. `make test-linux` was last green at
-  `ab56604` and was not re-run for these changes. The `panic` capture used to be
-  timing-sensitive; the harness now gives it a window longer than its tick period
-  and cuts the language-specific report, so it is deterministic.
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (460
+  examples in the container), and `make parity-examples` (11 compared, 0
+  differing) pass, as does `./scripts/verify_parity_adversarial.sh .
+  vendor/ultraviolet`. The `panic` capture used to be timing-sensitive; the
+  harness now gives it a window longer than its tick period and cuts the
+  language-specific report, so it is deterministic.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
@@ -418,7 +419,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 420 Crystal specs |
+| **Test coverage** | 196 Go tests | 460 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
@@ -426,24 +427,34 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 No `missing` rows remain. The 61 divergences are examples, Go-only conformance
 tooling, or Go-specific safety/allocation guards.
 
-\* Crystal merges `Terminal` and `Screen`; Go keeps them separate. Crystal also
-extracts `EventScanner` from `TerminalReader`, matching Go's `eventScanner`.
+\* `Terminal` is a facade over a `TerminalScreen`, as Go's is over `t.scr`, so
+screen state lives in one place in both. Crystal also extracts `EventScanner`
+from `TerminalReader`, matching Go's `eventScanner`.
 
 ## Remaining work (upstream-limited)
 
-All 8 remaining Crystal TODOs match Go's TODOs verbatim. They are open
-investigations in both codebases, not porting gaps:
+Every remaining Crystal TODO matches a Go TODO. They are open investigations in
+both codebases, not porting gaps:
 
 | Crystal Line | Go Line | Description |
 |-------------|---------|-------------|
-| `terminal_renderer.cr:214` | `terminal_renderer.go:325` | Use scrolling region if available |
-| `terminal_renderer.cr:287` | `terminal_renderer.go:417` | Investigate case handling for erase |
-| `buffer.cr:707` | `terminal_renderer.go:459` | Empty line scroll optimization artifacts |
-| `terminal_renderer.cr:719` | `terminal_renderer.go:947` | Unnecessary cursor movements on resize |
-| `terminal_renderer.cr:912` | `terminal_renderer.go:1149` | Investigate REP necessity for inline mode |
-| `terminal_renderer.cr:936` | `terminal_renderer.go:1185` | Inline mode character repeat optimization |
-| `terminal_renderer.cr:1079` | `terminal_renderer.go:1349` | Unintentional scrolling guard |
-| `terminal_renderer.cr:1109` | `terminal_renderer.go:1383` | Linux console terminal edge case |
+| `terminal_renderer.cr:271` | `terminal_renderer.go:355` | Use scrolling region if available |
+| `terminal_renderer.cr:272` | `terminal_renderer.go:356` | Use `Screen.Write`/`io.Writer` interface |
+| `terminal_renderer.cr:343` | `terminal_renderer.go:445` | Investigate erase case handling |
+| `terminal_renderer.cr:907` | `terminal_renderer.go:1114` | Unnecessary cursor movements on resize |
+| `terminal_renderer.cr:1314` | `terminal_renderer.go:1657` | Guard against unintentional scrolling |
+| `terminal_renderer.cr:1344` | `terminal_renderer.go:1691` | Linux console terminal edge case |
+| `buffer.cr:786` | `terminal_renderer.go:493` | Empty-line scroll-optimization artifacts |
+
+Two upstream TODO comments have no Crystal counterpart, so they are tracked as
+upstream-open rather than as work here:
+
+- `terminal_renderer.go:1453` — whether tab-stop handling needs to go further;
+  the note is attached to commented-out code the port never carried.
+- `terminal_renderer.go:1503` — whether scrolling should also be optimized in
+  inline mode; the block it annotates (`scroll_optimize` under
+  `ScrollOptim && fullscreen`) is ported, so the question becomes port work if
+  upstream answers it.
 
 Revisit when upstream addresses these TODOs or publishes a new vendor snapshot.
 

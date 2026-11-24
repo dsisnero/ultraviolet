@@ -33,3 +33,9 @@ node_modules/
 ._*
 .Spotlight-V100
 .Trashes
+
+# The parity skill's optional tree-sitter backend installs its parser into the
+# repo root when it is tried; the ledger here runs with PORT_PARSER=regex, so
+# these are tooling leftovers rather than project files.
+/package.json
+/package-lock.json
