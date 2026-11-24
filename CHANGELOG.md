@@ -20,6 +20,38 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.4] - 2026-11-23
+
+Patch release on the self-numbered line. Delta since `1.1.3`.
+
+Vendored upstream: `8ecbcf0`.
+
+### Fixed
+
+- Inline (`relative_cursor`) downward cursor moves now always use newlines, as
+  Go does, instead of a `CSI n B` sequence once the renderer had "scrolled" to
+  a row before. Only a newline scrolls the screen to make room for the next
+  row, so the old remembered-height shortcut could paint past the bottom of an
+  inline frame. The `scrollHeight` machinery upstream deleted in 2026-05 is
+  gone from the port with it.
+- `Cell#wide_placeholder?` (Go's `isWidePlaceholder`) replaces `Cell#zero?` in
+  `put_attr_cell`, `put_cell_lr`, `put_range` and `transform_line`. A wide
+  cell's continuation column is marked by zero width alone, so a styled
+  zero-width cell is still a placeholder and must never be written on its own.
+- The overwrite movement optimization no longer pads a move with spaces for
+  cells it did not read, matching Go.
+
+### Internal
+
+- `make inline-golden` regenerates `spec/fixtures/inline_moves_golden.tsv` from
+  the **vendored Go renderer** (`scripts/inline_oracle/`), and
+  `spec/terminal_renderer_inline_spec.cr` asserts this port matches it for
+  inline and fullscreen movement, including the pending-wrap ("phantom") frame
+  boundary.
+- `bubbletea.cr`'s `spec/parity/v2_control_sequences_spec.cr` was re-derived
+  from Go. Its old expectation encoded ultraviolet `524a660` behaviour that
+  upstream removed; see the note in that spec for the recipe.
+
 ## [1.1.3] - 2026-11-23
 
 Patch release on the self-numbered line. Delta since `1.1.2`.
