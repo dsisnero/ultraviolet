@@ -1,4 +1,4 @@
-.PHONY: build install update update_dependents spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update update_dependents spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 check-inline-fixture inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 .PHONY: container-info container-build test-linux container-dev container-clean
 
 # Local Linux testing in a container. Apple `container` is preferred on macOS,
@@ -240,6 +240,10 @@ smoke-examples: $(EXAMPLE_BINARIES)
 check-win32:
 	./scripts/check_win32.sh
 
+# Reproduce the sibling bubbletea.cr inline-fixture failure against this src/.
+check-inline-fixture:
+	./scripts/check_inline_fixture.sh
+
 examples/%: examples/%.cr $(EXAMPLE_DEPS)
 	@echo "Building $@"
 	crystal build $< -o $@
@@ -282,6 +286,7 @@ help:
 	@echo "  snapshot-update    - Regenerate the example goldens"
 	@echo "  parity-examples    - Diff each example against the vendored Go example"
 	@echo "  check-win32        - Type-check the Win32 console readers (cross-target)"
+	@echo "  check-inline-fixture - Reproduce bubbletea.cr's inline-fixture failure against local src/"
 	@echo "  test-linux         - Run the spec suite on Linux in a container"
 	@echo "  container-info     - Show the detected container runtime"
 	@echo "  container-build    - Build the Linux test image"

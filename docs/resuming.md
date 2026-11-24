@@ -51,7 +51,8 @@ matches the ledger policy in `AGENTS.md`. The parity gates do not run in CI.
 ## 4. Pick the next feature
 
 Take the first unchecked item in the **Next up** list (or the next `[ ]` item in
-the current phase). For each feature:
+the current phase). If `plans/parity.md` has a **Resume here** block, start with
+its repro command before the generic steps below.
 
 1. Read the upstream source under `vendor/ultraviolet/` and the nearest upstream
    tests.

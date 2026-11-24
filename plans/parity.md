@@ -85,6 +85,47 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
 
+### Resume here: inline-renderer byte parity
+
+**Goal:** make `bubbletea.cr`'s Go-fixture spec pass **without editing the
+fixture**, then ship the fix as `v1.1.4`.
+
+**Reproduce (one command):**
+
+```bash
+make check-inline-fixture
+# BUBBLE_DIR=/path/to/bubbletea.cr make check-inline-fixture
+```
+
+The target temporarily swaps this checkout's `src/` into the sibling's
+`lib/ultraviolet`, runs
+`spec/parity/v2_control_sequences_spec.cr`, and restores the sibling on exit.
+It is **expected to fail until this feature is fixed**; it is a repro, not a
+default gate.
+
+**Current expected vs actual at the frame boundary:**
+
+```text
+expected: <CR><LF><ESC>[A<ESC>[30C
+actual:   <CR><ESC>[30C
+```
+
+**Already landed:** `RenderBuffer#clear`, `#clear_area`, `#fill`, and
+`#fill_area` now mark touched lines like Go (`e307558`). That removed one
+divergence but did not close the fixture.
+
+**Next concrete investigation:** compare the trailing blank-row/phantom path in
+`TerminalRenderer#render`/`#move`/`move_cursor_sequence` and
+`TerminalScreen#flush` with `vendor/ultraviolet/terminal_renderer.go` and
+`terminal_screen.go`. Focus on why Go emits the blank-row `<LF><CUU>` and this
+renderer skips it. Re-derive any example goldens from Go; do not edit the
+fixture to accept the current bytes.
+
+**Done when:** `make check-inline-fixture` passes, then run the full gates
+(`make format-check`, `make lint`, `make test`, `make inventory`, `make parity`,
+`make check-examples`, `make snapshot-examples`), tag `v1.1.4`, and run
+`make update_dependents`.
+
 ### Reset checklist
 
 1. Read this block, then `git log --oneline -10` and `git status`.
