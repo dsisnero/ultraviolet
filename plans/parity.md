@@ -70,8 +70,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `make test`, `make test-linux`, and `check-win32` are green.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `e69cda7` (`port: match ten of eleven Go
-  examples byte for byte`); the render buffer touch fix follows.
+- **Last code feature commit:** `e307558` (`port: mark cleared render buffer
+  lines touched`).
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
