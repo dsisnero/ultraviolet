@@ -6,14 +6,18 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. `v1.1.6` shipped the `Terminal`/`TerminalScreen`
-  feature, which closed the last structural difference from upstream: every
-  comparable example matches Go for the whole session, not just the first frame.
-  The last open divergence besides the documented colour form — the width-method
-  default — turned out to be already correct and is now pinned (see *Known
+- **Active plan:** *(in progress)* **palette-preserving colours** — port Go's
+  `color.Color` kinds so basic/indexed entries are not collapsed to RGB. Scoped
+  below under *Planned work*; it is the last byte-level divergence, because it
+  lets `make parity-examples` compare raw bytes instead of normalising every SGR
+  colour first. `v1.1.6` shipped the `Terminal`/`TerminalScreen` feature, which
+  closed the last structural difference from upstream: every comparable example
+  matches Go for the whole session, not just the first frame. The width-method
+  default turned out to be already correct and is now pinned (see *Known
   limitations*).
 - **Next up** (priority order), details below under *Planned work*:
-  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+  1. The palette-preserving colour work above.
+  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
      complete, 460 specs green, upstream `go test ./...` green, tree untouched).
      Nothing is known to be missing against `8ecbcf0`, so this is a periodic
@@ -114,6 +118,47 @@ identical for `altscreen`, `boxes`, `draw`, `helloworld`, `panic`, `rgbimage`,
 `tv`, and `widths`; `image`, `mouse`, and `splits` are identical once the
 documented palette-vs-RGB SGR form is masked. `spec/testdata/examples/*.golden`
 were regenerated because the startup handshake now matches Go's.
+
+### Planned work: palette-preserving colours
+
+Go's `Style.Fg/Bg/UnderlineColor` are `color.Color` (stdlib `image/color`), so
+the concrete type survives into encoding: `ansi.BasicColor` (uint8),
+`ansi.IndexedColor` (uint8) and `ansi.RGBColor` encode as `3x`/`9x`, `38;5;N`
+and `38;2;r;g;b`. Equality (`colorEqual`) compares resolved RGBA, so
+`BasicColor(1)` equals `RGBColor{205,0,0}`, and `ConvertStyle` only rewrites a
+colour under ANSI/ANSI256 (`colorprofile.Convert`: basic passes through, indexed
+passes except under ANSI, RGB becomes the closest index).
+
+This port's `Color` is `r,g,b : UInt8` only, so `AnsiColor.basic`/`.indexed`
+collapse to RGB at construction and every escape is truecolor. The only place an
+index survives is `Style.color_code`'s *profile* downgrade, which recomputes one
+from RGB — so the caller's palette entry is lost, and captured output differs
+from Go (`48;2;205;0;0` where Go writes `44`).
+
+Scope (one feature, one commit):
+
+1. `Color` gains a kind (`basic`/`indexed`/`rgb`) holding an index or RGB bytes,
+   with `Color.basic(i)` / `Color.indexed(i)` constructors and `to_rgb` for
+   consumers that need channels (image encoding, hex helpers).
+2. Equality mirrors `colorEqual`: compare resolved RGBA, not the kind, so
+   `Color.basic(1) == Color.new(205, 0, 0)`. `Cell`/`Style` equality follow.
+3. Encoding is kind-driven (`Style.color_code`, `Style.diff`, the `to_*_code`
+   helpers): `3x`/`9x`, `38;5;N`, `38;2;r;g;b`.
+4. `ColorProfileUtil.convert` mirrors `colorprofile.Convert`: TrueColor and basic
+   pass through, indexed passes except under ANSI (→ closest basic), RGB → closest
+   indexed under ANSI256 and closest basic under ANSI, dropped for ASCII/NoTTY.
+5. `AnsiColor.basic`/`.bright`/`.indexed` return kinded colours, which makes SGR
+   parsing in `styled.cr` kind-faithful for free; the palette tables stay for
+   channel lookups.
+6. Drop the palette→RGB rewrite from `scripts/parity_examples.cr` once the bytes
+   match: `make parity-examples` becomes a raw byte comparison, which is the
+   acceptance signal. Regenerate `spec/testdata/examples/*.golden` — the affected
+   examples now emit `4x`/`38;5`.
+
+Verification: `make parity-examples` 0 differing with no colour normalisation;
+`make snapshot-examples`, `make check-inline-fixture`, `make decode-golden` (if
+the decoder's colour form is pinned there); `../lipgloss` and `../bubbletea.cr`
+still build against the changed `Color`.
 
 ### Closed: inline-renderer byte parity
 
@@ -228,10 +273,12 @@ quit at 1.2 s. Five runs were byte-identical.
   restart.
 - Mouse tracking needs a pixel-size report. `MousePixelToCell` is an exact port
   (including returning `(0, 0)` when the terminal reports no pixel size), and
-  `examples/mouse.cr` now asks for the size with XTWINOPS 14
-  (`\e[14t`), whose `CSI 4 ; h ; w t` reply decodes to `PixelSizeEvent`. The Go
-  example sends `ansi.WindowOp(4)` instead, which terminals read as a resize
-  request and do not answer; that one-number divergence is deliberate.
+  `examples/mouse.cr` asks for one the way the Go example does: XTWINOPS 4
+  (`\e[4t`, Go's `ansi.WindowOp(4)`). xterm reads that as a *resize* request and
+  answers nothing, so — exactly as in Go — the conversion relies on the winsize
+  ioctl's pixel fields, and reports `(0, 0)` on a terminal that does not fill
+  them. An earlier revision sent XTWINOPS 14 (`\e[14t`), which does get answered,
+  but it cost byte parity and was reverted in `d495ad8`.
 - `Terminal` is a facade over its `TerminalScreen`: `stop` resets the screen
   state, so mouse modes, bracketed paste, keyboard enhancements, colors, title,
   and progress bar are undone the way Go's `TerminalScreen.Reset` undoes them,
