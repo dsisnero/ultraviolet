@@ -13,10 +13,10 @@ require "./support/pty_capture"
 module ParityExamples
   extend self
 
-  ROOT          = File.expand_path("..", __DIR__)
-  EXAMPLES_DIR  = File.join(ROOT, "examples")
-  GO_EXAMPLES   = File.join(ROOT, "vendor/ultraviolet/examples")
-  BUILD_DIR     = File.join(ROOT, "temp/go-examples")
+  ROOT         = File.expand_path("..", __DIR__)
+  EXAMPLES_DIR = File.join(ROOT, "examples")
+  GO_EXAMPLES  = File.join(ROOT, "vendor/ultraviolet/examples")
+  BUILD_DIR    = File.join(ROOT, "temp/go-examples")
 
   # Crystal example => Go package under vendor/ultraviolet/examples.
   PAIRS = {
@@ -99,7 +99,6 @@ module ParityExamples
     end
     frame.gsub(/[A-Za-z0-9+\/]{80,}={0,2}/, "<base64>")
   end
-
 
   # Both sides must negotiate grapheme width, whatever the frame looks like.
   def negotiates_grapheme_width?(output : String) : Bool
@@ -215,8 +214,8 @@ module ParityExamples
       # Run each side from its own directory: examples that read data files
       # (image loads charm.jpg) resolve them relative to their source.
       go_dir = File.expand_path(pkg, GO_EXAMPLES)
-      go_raw = PtyCapture.capture(go_binary, chdir: go_dir)
-      crystal_raw = PtyCapture.capture(crystal_binary, chdir: EXAMPLES_DIR)
+      go_raw = PtyCapture.capture_example(go_binary, name, chdir: go_dir)
+      crystal_raw = PtyCapture.capture_example(crystal_binary, name, chdir: EXAMPLES_DIR)
       mask_colors = MASK_COLORS.includes?(name)
       expected = normalize(go_raw, mask_colors)
       actual = normalize(crystal_raw, mask_colors)

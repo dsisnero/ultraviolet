@@ -20,6 +20,20 @@ module PtyCapture
   DEADLINE = 8.seconds
   LIMIT    = 8192
 
+  # Examples that animate on a one second clock: the default idle gap is the same
+  # length as their tick period, so a capture stops at whichever tick happened to
+  # drift past it. Give those a window longer than the period.
+  IDLE_OVERRIDES = {
+    "panic" => 2.seconds,
+  }
+
+  # Examples whose stream ends with output only one language can produce (a panic
+  # report and its backtrace). Everything from the marker on is dropped, so the
+  # comparison covers the frames and the shutdown, not the report.
+  CUT = {
+    "panic" => "recovered from panic",
+  }
+
   # capture runs *binary* with its stdio on a fresh 80x24 pty and returns what
   # it wrote before the output went quiet.
   #
@@ -27,7 +41,19 @@ module PtyCapture
   # and "everything before the idle gap" for the rest. Taking whichever comes
   # first keeps both classes deterministic: time decides how much of a fixed
   # byte stream has been produced, never what it contains.
-  def capture(binary : String, limit : Int32 = LIMIT, chdir : String? = nil) : String
+  # capture_example captures one example by name, applying its idle window and
+  # dropping any language-specific tail (see `IDLE_OVERRIDES` and `CUT`).
+  def capture_example(binary : String, name : String, chdir : String? = nil) : String
+    output = capture(binary, chdir: chdir, idle: IDLE_OVERRIDES.fetch(name, IDLE))
+    if marker = CUT[name]?
+      if index = output.index(marker)
+        output = output[0, index]
+      end
+    end
+    output
+  end
+
+  def capture(binary : String, limit : Int32 = LIMIT, chdir : String? = nil, idle : Time::Span = IDLE) : String
     master_fd = uninitialized Int32
     slave_fd = uninitialized Int32
     winsize = uninitialized LibC::Winsize
@@ -59,7 +85,7 @@ module PtyCapture
         break if read == 0
         output.write(buffer[0, read])
         break if output.size >= limit
-        master.read_timeout = IDLE
+        master.read_timeout = idle
       end
     rescue IO::TimeoutError
       # Idle: the first frame is complete.

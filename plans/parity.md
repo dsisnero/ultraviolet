@@ -6,9 +6,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. The [`8ecbcf0` refresh](commit_8ecbcf0.md) is
-  complete, `v1.1.2`/`v1.1.3` were released on top of it, and the inline-renderer
-  follow-up is closed by `v1.1.4`. Next work is the upstream check below.
+- **Active plan:** none open, one unreleased follow-up landed on `main`. The
+  [`8ecbcf0` refresh](commit_8ecbcf0.md) is complete, `v1.1.2`/`v1.1.3` were
+  released on top of it, and `v1.1.4` closed the inline-renderer follow-up.
+  **Unreleased since `v1.1.4`:** all comparable examples now match Go (11/11,
+  was 9/11): `Terminal` defers a frame's cursor write to the next frame the way
+  Go's renderer buffer does (fixes `mouse`), and `Terminal#stop` mirrors
+  `TerminalScreen.Reset` (fixes `panic`'s tail). That earns `v1.1.5` when you
+  are ready; it is committed but not tagged or pushed yet.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
@@ -84,10 +89,12 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 - **Gates (last verified 2026-11-23):** `make format-check`, `make lint`
   (58 files), `make test` (454 examples), `make inventory` (819 items),
   `make parity` (819 APIs / 196 tests, backend `regex`), `make check-examples`,
-  `make snapshot-examples`, and `make check-inline-fixture` pass. `make
-  check-win32` and `make test-linux` were last green at `ab56604` and were not
-  re-run for this change. `make snapshot-examples` is timing-sensitive for
-  `panic` (its countdown ticks against the capture window); a retry clears it.
+  `make snapshot-examples`, `make check-inline-fixture`, and
+  `make parity-examples` (11 compared, 0 differing) pass. `make check-win32` and
+  `make test-linux` were last green at `ab56604` and were not re-run for this
+  change. The `panic` capture used to be timing-sensitive; the harness now gives
+  it a window longer than its tick period and cuts the language-specific report,
+  so it is deterministic.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
@@ -183,6 +190,15 @@ byte-identical.
   (`\e[14t`), whose `CSI 4 ; h ; w t` reply decodes to `PixelSizeEvent`. The Go
   example sends `ansi.WindowOp(4)` instead, which terminals read as a resize
   request and do not answer; that one-number divergence is deliberate.
+- `Terminal` does not track mouse modes, bracketed paste, keyboard
+  enhancements, or styles, so `stop` cannot undo them the way Go's
+  `TerminalScreen.Reset` does; `examples/mouse.cr` resets the two modes it
+  enables itself. A `Terminal` also keeps one output queue where Go keeps two
+  (the renderer writes into the screen's buffer), so a cursor move made while
+  flushing a frame is deferred by capture-and-reinsert
+  (`TerminalRenderer#take_buffered`, `Terminal#take_cursor_write`) rather than
+  by writing into a second buffer. `TerminalScreen#flush` still emits its nudge
+  immediately; nothing in the examples exercises that path.
 - `examples/` output is compared against the vendored Go examples with
   `make parity-examples` (local only: it needs Go). Frames are compared after
   rewriting every SGR colour to RGB, because Go passes palette entries through
@@ -222,8 +238,8 @@ scripts/parity_examples.cr -- <name>` checks one example.
 | `draw` | ✅ identical | needed `enter_alt_screen` before `start`, as Go's example does |
 | `helloworld` | ✅ identical | — |
 | `image` | ✅ identical | needs its data file in cwd; the harness runs each side from its own directory |
-| `mouse` | ⬜ | the two-byte `\r\e[A` inline nudge lands before the example's mouse-mode writes instead of after them |
-| `panic` | ✅ identical | — |
+| `mouse` | ✅ identical | the inline `\r\e[A` nudge is deferred to the next frame, as Go's renderer buffer does |
+| `panic` | ✅ identical | captured with a window longer than its 1 Hz tick; the panic report and backtrace are cut, since only one language can produce them |
 | `rgbimage` | ✅ identical | the 0x0 image payload case matches Go |
 | `splits` | ✅ identical | — |
 | `tv` | ✅ identical | — |
@@ -232,15 +248,30 @@ scripts/parity_examples.cr -- <name>` checks one example.
 | `space` | ⏭ skipped | animates from the wall clock on both sides |
 | `prependline` | ⏭ skipped | random colour per frame and scheduling-dependent frame count |
 
-Ten of the eleven comparable examples are byte-identical. `mouse` differs only
-in where a two-byte inline cursor nudge is written: Go queues its mode writes
-first and nudges during the first display, this port nudges at `start` because
-that is when its 0x0 render happens. Same bytes, different position.
+All eleven comparable examples are byte-identical.
 
-`Terminal#start` renders the still-0x0 buffer before asking about grapheme
-width, matching `TerminalScreen.Restore`; that first render is what an inline
-app's first frame expects. It is also what made `prependline` match in the runs
-where scheduling allowed a stable comparison.
+`mouse` used to differ in where a two-byte inline cursor nudge was written: Go
+queues its mode writes first and nudges during the first display, this port
+nudged inside `start`. The cause was structural: Go's `TerminalScreen` builds
+its renderer on *its own* buffer (`NewTerminalRenderer(s.buf, …)`), so a cursor
+move made while flushing a frame waits in the renderer buffer until the next
+render drains it. This port has one queue, so `Terminal` now takes that write
+back out (`TerminalRenderer#take_buffered`) and puts it ahead of the next frame
+(`Terminal#take_cursor_write`). That reproduces the deferral for both the
+explicit cursor position and the inline nudge.
+
+`panic` needed a capture change rather than a code change: it ticks at 1 Hz and
+the harness stopped after a 1 s idle gap, so whichever side drifted past the gap
+was cut first. `PtyCapture::IDLE_OVERRIDES` gives it a 2 s window and
+`PtyCapture::CUT` drops the panic report and backtrace, which are
+language-specific by construction.
+
+`Terminal#stop` now mirrors Go's `Terminal.Stop` → `TerminalScreen.Reset`: it
+undoes the state it queued (alternate screen, cursor visibility), leaves the
+application's frame on screen, and no longer resets tab stops or clears below
+the frame. Go's `Reset` also parks the cursor on the bottom row, but through the
+renderer buffer that `Stop` never drains, so the move is computed and dropped;
+`Terminal#restore` drops it too, to keep the same bytes on the wire.
 
 `Terminal` now configures its renderer like Go's `TerminalScreen`
 (`fullscreen = false`, `relative_cursor = true`, terminal_screen.go:64-65);
@@ -248,19 +279,9 @@ that is what made `mouse` identical and kept `splits`/`widths`/`tv` green. My
 earlier note that this path painted nothing was wrong: it was measured before
 the resize-erase and inline-nudge fixes and does not reproduce.
 
-Remaining work:
-
-1. **`prependline`'s post-insert repaint.** Go's `InsertAbove` writes directly to
-   the terminal and the following `display()` emits the frame again; this port's
-   renderer still believes its cached model matches the buffer, so it emits
-   nothing. `Terminal#insert_above` sets the position but does not invalidate
-   `@curbuf`; Go relies on the scroll having invalidated its model.
-2. **`altscreen`/`panic` nudge.** Go's first flush happens with a 0x0 screen, so
-   it nudges the cursor up (`\e[A`) and the next frame comes back down (`\n`).
-   This port starts at row 0, so those two bytes are absent; everything after
-   them is identical.
-3. **`draw`'s clear form and frame shape.** `ESC [ J` vs `ESC [ 2 J`, plus it
-   emits tall `\n`-separated lines where Go paints a cleared frame.
+No comparable example differs. `prependline` stays skipped rather than compared:
+its frame count and colours depend on scheduling and randomness, so a match is
+luck rather than evidence.
 
 Specs: the grapheme-width negotiation is now covered by faithful ports of
 upstream's `grapheme_width_test.go` — `TestGraphemeWidthNegotiation` and

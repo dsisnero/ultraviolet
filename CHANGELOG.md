@@ -95,6 +95,20 @@ Vendored upstream: `8ecbcf0`. Scope: work landed since that refresh closed.
 
 ### Fixed
 
+- **Every comparable example now matches Go byte for byte** (11 of 11; `mouse`
+  and `panic` were the holdouts).
+  - `Terminal` defers a frame's cursor write to the next frame, the way Go's
+    `TerminalScreen` does by building its renderer on the screen's own buffer.
+    An inline app's `\r\e[A` nudge therefore lands after the writes it queues
+    before its first display, not before them.
+  - `Terminal#stop` mirrors `Terminal.Stop` → `TerminalScreen.Reset`: it undoes
+    the state it queued, leaves the application's frame on screen, and no longer
+    resets tab stops or clears below the frame. `Terminal#stop` also no longer
+    emits the bottom-row cursor move, which Go computes and then drops.
+- The `panic` example's capture is deterministic: `make parity-examples` gives
+  it a window longer than its one second tick and cuts the panic report and
+  backtrace, which only one language can produce.
+
 - **Terminal size could corrupt the caller's stack.** `ioctl` was declared with
   a fixed `Void*` third argument although C declares it variadic, so on Apple
   Silicon the kernel wrote the winsize to a garbage stack address. Reading the

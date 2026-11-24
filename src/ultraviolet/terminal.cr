@@ -38,6 +38,7 @@ module Ultraviolet
     @use_bspace : Bool
     @state : TerminalState
     @last_state : TerminalState?
+    @pending_cursor : Bytes
     @prepend : Array(String)
     @evs : Channel(Event)
     @evch : Channel(Event)
@@ -93,6 +94,7 @@ module Ultraviolet
       @use_bspace = false
       @state = TerminalState.new
       @last_state = nil
+      @pending_cursor = Bytes.empty
       @prepend = [] of String
       @evs = Channel(Event).new
       @evch = Channel(Event).new
@@ -369,14 +371,13 @@ module Ultraviolet
       set_alt_screen(true) if @state.altscreen?
       @scr.write_string(@state.cur_hidden? ? "\e[?25l" : "\e[?25h")
       # Go's TerminalScreen.Restore renders the (still 0x0) buffer before asking
-      # about grapheme width; that first render is what moves the inline cursor
-      # and produces the `\r\e[A` nudge an inline app's first frame relies on.
+      # about grapheme width. The cursor write that Flush makes afterwards is
+      # queued behind everything else and only reaches the terminal with the
+      # first frame, so it is taken as pending here rather than flushed.
       @scr.render(@buf)
       request_grapheme_width
-      # TerminalScreen.Flush nudges the inline cursor *after* the queued writes,
-      # so the query goes out first and this `\r\e[A` follows it.
-      nudge_inline_cursor
       @scr.flush
+      @pending_cursor = take_cursor_write
       @last_state = @state
     end
 
@@ -500,18 +501,29 @@ module Ultraviolet
     end
 
     def flush : Nil
-      nudge_inline_cursor
+      @scr.write(@pending_cursor) unless @pending_cursor.empty?
+      @pending_cursor = Bytes.empty
       @scr.flush
+      @pending_cursor = take_cursor_write
     end
 
-    # nudge_inline_cursor reproduces Go's TerminalScreen.Flush rule: with the
-    # cursor hidden in inline mode, a cursor left at the end of the line can make
-    # some terminals wrap, so move it to column 0 of the same row first.
-    private def nudge_inline_cursor : Nil
-      return if @state.altscreen?
-      x, y = @scr.position
-      return unless x >= @buf.width - 1
-      @scr.move_to(0, y)
+    # take_cursor_write reproduces Go's TerminalScreen.Flush cursor handling and
+    # takes its bytes out of the queue: an application-supplied position is moved
+    # to, otherwise in inline mode a cursor left at the end of the line is moved
+    # to column 0 of the same row (it can make some terminals wrap).
+    #
+    # Go writes both into the renderer's own buffer, which is only drained by the
+    # next render, so the bytes belong to the next frame, not to this flush.
+    private def take_cursor_write : Bytes
+      mark = @scr.buffered
+      state = @state
+      if state.cur != Position.new(-1, -1)
+        @scr.move_to(state.cur.x, state.cur.y)
+      elsif !state.altscreen?
+        x, y = @scr.position
+        @scr.move_to(0, y) if x >= @buf.width - 1
+      end
+      @scr.take_buffered(mark)
     end
 
     def display : Nil
@@ -532,6 +544,12 @@ module Ultraviolet
         @scr.write_string(state.cur_hidden? ? "\e[?25l" : "\e[?25h")
       end
 
+      # A cursor write made while flushing the last frame waited in Go's
+      # renderer buffer; put it back ahead of this frame so the bytes land in
+      # the same place.
+      @scr.write(@pending_cursor) unless @pending_cursor.empty?
+      @pending_cursor = Bytes.empty
+
       @scr.render(@buf)
 
       if @prepend.size > 0
@@ -539,13 +557,8 @@ module Ultraviolet
         @prepend.clear
       end
 
-      if state.cur != Position.new(-1, -1)
-        @scr.move_to(state.cur.x, state.cur.y)
-      else
-        nudge_inline_cursor
-      end
-
       @scr.flush
+      @pending_cursor = take_cursor_write
       @last_state = state
     end
 
@@ -627,44 +640,32 @@ module Ultraviolet
       @scr.flush
     end
 
+    # restore mirrors Go's `Terminal.Stop`, which resets the screen
+    # (`TerminalScreen.Reset`) and flushes it: it undoes the state it queued
+    # (alternate screen, cursor visibility, styles) and deliberately leaves the
+    # application's frame on screen — it does not clear, and it does not reset
+    # tab stops, which Go only ever writes from `Restore` at start.
+    #
+    # The state Reset undoes that this port tracks lives in `@state`; the rest
+    # (mouse modes, bracketed paste, styles) belongs to [TerminalScreen], which
+    # applications drive directly, so a [Terminal] never queued them.
     private def restore : Nil
       stop_winch
       stop_input
-      reset_tab_stops
-      if last = @last_state
-        if last.altscreen?
-          set_alt_screen(false)
-        else
-          bottom = @buf.height > 0 ? @buf.height - 1 : 0
-          @scr.move_to(0, bottom)
-          @scr.write_string("\r\e[J")
-        end
-        @scr.write_string("\e[?25h") if last.cur_hidden?
-      end
+      set_alt_screen(false) if @state.altscreen?
+      @scr.write_string("\e[?25h")
+      # Go's Reset parks the cursor on the bottom row, but it does that through
+      # the renderer's own buffer, which Stop never drains: the move is computed
+      # and then dropped, and only the state writes above reach the terminal.
+      # Take the move back out of the queue to keep the same bytes on the wire.
+      mark = @scr.buffered
+      bottom = @buf.height > 0 ? @buf.height - 1 : 0
+      @scr.move_to(0, bottom)
+      @scr.take_buffered(mark)
       @scr.flush
+      @pending_cursor = Bytes.empty
       @scr.set_position(-1, -1)
       restore_tty
-    end
-
-    private def restore_state : Nil
-      stop_input
-      # Wait for event loop to exit
-      select
-      when @evloop.receive
-      when timeout(500.milliseconds)
-      end
-      if last = @last_state
-        if last.altscreen?
-          set_alt_screen(false)
-        else
-          bottom = @buf.height > 0 ? @buf.height - 1 : 0
-          @scr.move_to(0, bottom)
-          @scr.write_string("\r\e[J")
-        end
-        @scr.write_string("\e[?25h") if last.cur_hidden?
-      end
-      @scr.flush
-      @scr.set_position(-1, -1)
     end
 
     private def start_winch : Nil

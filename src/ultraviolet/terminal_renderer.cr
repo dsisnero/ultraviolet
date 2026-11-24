@@ -1056,6 +1056,23 @@ module Ultraviolet
       @buf.size
     end
 
+    # take_buffered returns the bytes queued since `from` and drops them from the
+    # queue, so a caller can put them back later without losing their order.
+    #
+    # Go keeps two buffers: the renderer writes into the screen's buffer, and a
+    # cursor move made while flushing a frame waits in the renderer's own buffer
+    # until the next render flushes it. This port keeps one queue, so splitting
+    # the tail off is how it reproduces that deferral.
+    def take_buffered(from : Int32) : Bytes
+      return Bytes.empty if from >= @buf.size
+
+      taken = @buf.to_slice[from, @buf.size - from].dup
+      kept = @buf.to_slice[0, from].dup
+      @buf.clear
+      @buf.write(kept)
+      taken
+    end
+
     def flush : Nil
       return if @buf.size == 0
 

@@ -48,7 +48,7 @@ module SnapshotExamples
         next
       end
       begin
-        Golden.require_equal("examples/#{name}", PtyCapture.capture(binary))
+        Golden.require_equal("examples/#{name}", PtyCapture.capture_example(binary, name))
         puts "ok      #{name}"
       rescue ex
         failures += 1
