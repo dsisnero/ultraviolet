@@ -1,4 +1,4 @@
-.PHONY: build install update update_dependents spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden check-win32 check-inline-fixture inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
+.PHONY: build install update update_dependents spec test test-file lint format format-check docs build-examples check-examples smoke-examples snapshot-examples snapshot-update parity-examples decode-golden inline-golden check-win32 check-inline-fixture inventory check-go-source-parity check-go-test-parity parity strip-sidecars clean benchmark run-example help
 .PHONY: container-info container-build test-linux container-dev container-clean
 
 # Local Linux testing in a container. Apple `container` is preferred on macOS,
@@ -216,6 +216,12 @@ decode-golden:
 	@cd scripts/decode_oracle && go run . ../../spec/fixtures/decode_inputs.txt ../../spec/fixtures/decode_golden.tsv
 	@echo "Regenerated spec/fixtures/decode_golden.tsv"
 
+# Regenerate the inline cursor-movement golden with the vendored Go renderer as
+# the oracle. Needs Go; the output is committed, so CI verifies Crystal alone.
+inline-golden:
+	@cd scripts/inline_oracle && go run . ../../spec/fixtures/inline_moves_golden.tsv
+	@echo "Regenerated spec/fixtures/inline_moves_golden.tsv"
+
 # Smoke-run every example under a pseudo terminal for a moment. Type-checking
 # cannot see a crash on the first frame (a nil assumption, an unmatchable
 # guard), and that is how examples rot once they stop being run. POSIX only,
@@ -282,6 +288,7 @@ help:
 	@echo "  check-examples     - Type-check every example without building binaries"
 	@echo "  smoke-examples     - Run each example under a pty for a moment"
 	@echo "  decode-golden      - Regenerate the decoder golden from the vendored Go decoder"
+	@echo "  inline-golden      - Regenerate the inline move golden from the vendored Go renderer"
 	@echo "  snapshot-examples  - Verify each example's first frame against its golden"
 	@echo "  snapshot-update    - Regenerate the example goldens"
 	@echo "  parity-examples    - Diff each example against the vendored Go example"

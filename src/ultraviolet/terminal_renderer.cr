@@ -91,7 +91,6 @@ module Ultraviolet
     @flags : TerminalFlags
     @method : Ansi::Method
     @term : String
-    @scroll_height : Int32
     @clear : Bool
     @caps : Capabilities
     @at_phantom : Bool
@@ -123,7 +122,6 @@ module Ultraviolet
       @method = Ansi::WcWidth
       @cur = CursorState.new
       @saved = @cur
-      @scroll_height = 0
       @clear = false
       @at_phantom = false
       @oldhash = [] of UInt64
@@ -308,8 +306,7 @@ module Ultraviolet
         @cur.y = 0
       end
 
-      seq, scroll_height = move_cursor_sequence(newbuf, x, y, overwrite)
-      @scroll_height = Math.max(@scroll_height, scroll_height)
+      seq = move_cursor_sequence(newbuf, x, y, overwrite)
       @buf << seq
       @cur.x = x
       @cur.y = y
@@ -407,7 +404,10 @@ module Ultraviolet
     end
 
     def put_attr_cell(newbuf : RenderBuffer, cell : Cell?) : Nil
-      if cell && cell.zero?
+      # Zero width cells are used for wide characters split into multiple
+      # cells: they must not be written to the screen no matter what other
+      # attributes they have.
+      if cell && cell.wide_placeholder?
         return
       end
 
@@ -433,7 +433,7 @@ module Ultraviolet
 
     def put_cell_lr(newbuf : RenderBuffer, cell : Cell?) : Nil
       cur_x = @cur.x
-      if cell.nil? || !cell.zero?
+      if cell.nil? || !cell.wide_placeholder?
         @buf << Ansi::ResetAutoWrapMode
         put_attr_cell(newbuf, cell)
         @at_phantom = false
@@ -555,7 +555,7 @@ module Ultraviolet
         while j <= finish
           old_cell = old_line.at(j)
           new_cell = new_line.at(j)
-          if same == 0 && old_cell && old_cell.zero?
+          if same == 0 && (old_cell.try &.wide_placeholder?) && (new_cell.try &.wide_placeholder?)
             j += 1
             next
           end
@@ -891,13 +891,13 @@ module Ultraviolet
           if n != 0
             while n > 0
               wide = new_line.at(n + 1)
-              break if wide.nil? || !wide.zero?
+              break if wide.nil? || !wide.wide_placeholder?
               n -= 1
               o_last -= 1
             end
           elsif n >= first_cell && (cell = new_line.at(n)) && cell.width > 1
             next_cell = new_line.at(n + 1)
-            while next_cell && next_cell.zero?
+            while next_cell && next_cell.wide_placeholder?
               n += 1
               o_last += 1
               next_cell = new_line.at(n + 1)
@@ -1284,9 +1284,8 @@ module Ultraviolet
       overwrite : Bool,
       use_tabs : Bool,
       use_backspace : Bool,
-    ) : {String, Int32}
+    ) : String
       seq = String::Builder.new
-      scroll_height = 0
       overwrite_allowed = overwrite
       overwrite_allowed = false unless newbuf
 
@@ -1300,10 +1299,11 @@ module Ultraviolet
           n = ty - fy
           cud = Ansi.cursor_down(n)
           yseq = cud if yseq.empty? || cud.bytesize < yseq.bytesize
-          should_scroll = !fullscreen? && ty > @scroll_height
-          if should_scroll || n < yseq.bytesize
+          # Inline mode must scroll the screen to make room, which only a
+          # newline does; fullscreen pays for the newline only when it is
+          # cheaper than a cursor-down sequence.
+          if (@flags & TerminalFlags::Fullscreen) != TerminalFlags::Fullscreen || n < yseq.bytesize
             yseq = "\n" * n
-            scroll_height = ty
             fx = 0 if (@flags & TerminalFlags::MapNewline) == TerminalFlags::MapNewline
           end
         elsif ty < fy
@@ -1382,8 +1382,6 @@ module Ultraviolet
               if cell && cell.width > 0
                 ovw << cell.content
                 i += cell.width - 1
-              else
-                ovw << ' '
               end
               i += 1
             end
@@ -1416,17 +1414,16 @@ module Ultraviolet
         seq << xseq
       end
 
-      {seq.to_s, scroll_height}
+      seq.to_s
     end
 
     # ameba:enable Metrics/CyclomaticComplexity
 
     # ameba:disable Metrics/CyclomaticComplexity
-    private def move_cursor_sequence(newbuf : RenderBuffer?, x : Int32, y : Int32, overwrite : Bool) : {String, Int32}
+    private def move_cursor_sequence(newbuf : RenderBuffer?, x : Int32, y : Int32, overwrite : Bool) : String
       fx = @cur.x
       fy = @cur.y
       seq = ""
-      scroll_height = 0
 
       if (@flags & TerminalFlags::RelativeCursor) == TerminalFlags::None
         width = -1
@@ -1436,7 +1433,7 @@ module Ultraviolet
         width = newbuf.width if newbuf && width == -1
         seq = Ansi.cursor_position(x + 1, y + 1)
         if fx == -1 || fy == -1 || width == -1 || not_local(width, fx, fy, x, y)
-          return {seq, 0}
+          return seq
         end
       end
 
@@ -1454,32 +1451,29 @@ module Ultraviolet
         use_tabs = (i & 2) != 0
         use_backspace = (i & 1) != 0
 
-        nseq1, nscroll1 = relative_cursor_move(newbuf, fx, fy, x, y, overwrite, use_tabs, use_backspace)
+        nseq1 = relative_cursor_move(newbuf, fx, fy, x, y, overwrite, use_tabs, use_backspace)
         if (i == 0 && seq.empty?) || nseq1.bytesize < seq.bytesize
           seq = nseq1
-          scroll_height = Math.max(scroll_height, nscroll1)
         end
 
-        nseq2, nscroll2 = relative_cursor_move(newbuf, 0, fy, x, y, overwrite, use_tabs, use_backspace)
+        nseq2 = relative_cursor_move(newbuf, 0, fy, x, y, overwrite, use_tabs, use_backspace)
         nseq2 = "\r" + nseq2
         if nseq2.bytesize < seq.bytesize
           seq = nseq2
-          scroll_height = Math.max(scroll_height, nscroll2)
         end
 
         if (@flags & TerminalFlags::RelativeCursor) == TerminalFlags::None
-          nseq3, nscroll3 = relative_cursor_move(newbuf, 0, 0, x, y, overwrite, use_tabs, use_backspace)
+          nseq3 = relative_cursor_move(newbuf, 0, 0, x, y, overwrite, use_tabs, use_backspace)
           nseq3 = Ansi::CursorHomePosition + nseq3
           if nseq3.bytesize < seq.bytesize
             seq = nseq3
-            scroll_height = Math.max(scroll_height, nscroll3)
           end
         end
 
         i += 1
       end
 
-      {seq, scroll_height}
+      seq
     end
 
     # ameba:enable Metrics/CyclomaticComplexity

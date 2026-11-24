@@ -75,6 +75,16 @@ module Ultraviolet
       @content.empty? && @width == 0 && @style.zero? && @link.empty?
     end
 
+    # Reports whether this cell is the continuation column of a wide cell,
+    # marked with a zero display width.
+    #
+    # Go's `Cell.isWidePlaceholder`, which unlike `IsZero` ignores style and
+    # link: a styled zero-width cell is still a placeholder and must never be
+    # written to the screen on its own.
+    def wide_placeholder? : Bool
+      @width == 0
+    end
+
     def clone : Cell
       Cell.new(@content, @width, @style, @link)
     end

@@ -6,53 +6,56 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** inline-renderer byte parity follow-up, tracked below. The
-  [`8ecbcf0` refresh](commit_8ecbcf0.md) is complete; `v1.1.2` and `v1.1.3`
-  were released on top of it.
+- **Active plan:** none open. The [`8ecbcf0` refresh](commit_8ecbcf0.md) is
+  complete, `v1.1.2`/`v1.1.3` were released on top of it, and the inline-renderer
+  follow-up is closed by `v1.1.4`. Next work is the upstream check below.
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
   fully ported. Upstream publishes no tags, so refreshes are commit-based;
   this port nonetheless tags its own releases, because that is the only thing
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.3` tagged at `c36ff37` and pushed; `shard.yml`
-  version matches the tag. Sibling repos are locked at `1.1.3`; refresh them
-  with `make update_dependents` after each tag push. The inline fix earns the
-  next patch, `v1.1.4`.
-- **Current focus:** **inline-renderer byte parity**, opened by the `v1.1.2`
-  release. `bubbletea.cr`'s Go-fixture spec
-  (`spec/parity/v2_control_sequences_spec.cr`) fails after the bump: on the
-  frame boundary Go emits `<CR><LF><ESC>[A<ESC>[30C`, this renderer emits
-  `<CR><ESC>[30C`. The missing LF+CUU is the inline (`non-fullscreen`,
-  `relative_cursor`) path this repository's own notes already flag as
-  incomplete (see `ff48b22`: "inline frames emit only the startup handshake").
-  Nothing else regressed: the decoder/`ProgramStatusSupportEvent` release is
-  otherwise sound, and a fresh consumer install resolves and builds.
-  **Progress:** `RenderBuffer#clear`/`#clear_area`/`#fill`/`#fill_area` now mark
-  the affected lines touched exactly like Go; this removes one divergence in
-  the inline path, but the fixture still reports `<CR><ESC>[30C` instead of
-  `<CR><LF><ESC>[A<ESC>[30C`.
+- **Release state:** `v1.1.3` tagged at `c36ff37`; `v1.1.4` carries the inline
+  renderer alignment and `shard.yml` matches it. Sibling repos refresh with
+  `make update_dependents` after each tag push.
+- **Current focus:** **inline-renderer byte parity — resolved**, root-caused
+  and fixed; `v1.1.4` is the release that ships it.
+  **What it was:** `bubbletea.cr`'s Go-fixture spec
+  (`spec/parity/v2_control_sequences_spec.cr`) expected
+  `<CR><LF><ESC>[A<ESC>[30C` at a frame boundary where this renderer emitted
+  `<CR><ESC>[30C`. The expected bytes were **stale, not this port's**: they were
+  captured in Feb 2026 from ultraviolet `524a660`, whose renderer tracked a
+  `scrollHeight` and moved to a frame's last row at the end of every inline
+  render. Upstream removed both in 2026-05 (`948f4557`, `6b8d4baf`, and the
+  vendored `8ecbcf0`). Verified with Go oracles built from the vendored
+  `ultraviolet` **and** the sibling's pinned Go ultraviolet, plus bubbletea
+  v2.0.7/v2.1.0: all of them emit `<CR><ESC>[30C`, byte-identical to this
+  port. Only bubbletea v2.0.0/2.0.2 (with uv `524a660`) produced the old
+  sequence; the fixture had already mixed eras, since its kitty sequences were
+  updated to the v2.0.9 goldens while the frame boundary stayed behind. The
+  fixture is now re-derived from Go and records that provenance in the spec.
+- **Fixed in the same pass (real port drift):** the renderer still carried the
+  pre-`948f4557` inline machinery that upstream deleted:
+  `@scroll_height` (and the `should_scroll` branch that switched long inline
+  downward jumps to `CSI n B` instead of newlines — only a newline scrolls the
+  screen), the `ovw` space padding for nil cells in the overwrite
+  optimization, and `Cell#zero?` where upstream tests `isWidePlaceholder`
+  (width only) in `putAttrCell`, `putCellLR`, `putRange` and `transformLine`.
+  `Cell#wide_placeholder?` is the new predicate. Pinned by
+  `spec/terminal_renderer_inline_spec.cr` against
+  `spec/fixtures/inline_moves_golden.tsv`, which `make inline-golden`
+  regenerates from the vendored Go renderer (`scripts/inline_oracle/`).
 - **Next up, in priority order:**
-  1. **Fix the inline renderer against the Go oracle.** Compare
-     `TerminalRenderer#move`/`move_cursor_sequence` and the phantom-newline
-     handling with `vendor/ultraviolet/terminal_renderer.go`
-     (`map_newline`, `at_phantom`, the `relative_cursor` branch), until
-     `bubbletea.cr`'s fixture spec passes **without editing the fixture**.
-     `spec/testdata/examples/*.golden` must be re-derived from Go, not accepted
-     as-is: `ff48b22` updated four of them in the same commit that introduced
-     this drift.
+  1. **Release `v1.1.4`** (procedure: [Releasing](../AGENTS.md#releasing)):
+     gates are green (454 examples, 819 inventory items, 199 tests,
+     `check-examples`, `snapshot-examples`), `check-inline-fixture` now passes.
   2. **Check upstream.** `git ls-remote https://github.com/charmbracelet/ultraviolet refs/heads/main`
      — still `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and
      `ab56604`). If it moved, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port the delta in
      feature-sized phases. The recipe and phase template are in
      [commit_8ecbcf0.md](commit_8ecbcf0.md).
-  3. **Ship it, then tag a patch release.** The procedure (gates, version
-     bump, tag, `make update_dependents`, consumer check) is
-     [Releasing](../AGENTS.md#releasing) in `AGENTS.md`; it is not repeated
-     here. Untagged `src/` changes on `main` are invisible to dependents, and
-     `make update_dependents` says so. The renderer fix above earns `v1.1.4`.
-  4. **Optional: re-run the adversarial signoff** with
+  3. **Optional: re-run the adversarial signoff** with
      `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet` after a
      refresh. Last run at `ab56604`: manifests clean (819 APIs / 196 tests),
      432 examples, 0 pending, and upstream `go test ./...` green. It leaves the
@@ -70,61 +73,61 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `make test`, `make test-linux`, and `check-win32` are green.
 - **Chunk status:** `8ecbcf0` refresh complete (phases 1–4); symbol inventory
   unchanged across the delta (819 APIs, 196 tests, no ledger row changes).
-- **Last code feature commit:** `e307558` (`port: mark cleared render buffer
-  lines touched`).
+  Inline renderer re-aligned with `8ecbcf0` after the stale-fixture
+  investigation (see current focus); no new symbols, so the ledger is unchanged.
+- **Last code feature commit:** `port: align inline renderer with upstream`.
 - **Examples:** every file under `vendor/ultraviolet/examples/` has a
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-23):** `make format-check`, `make lint`
-  (58 files), `make test` (453 examples), `make inventory` (819 items),
+  (58 files), `make test` (454 examples), `make inventory` (819 items),
   `make parity` (819 APIs / 196 tests, backend `regex`), `make check-examples`,
-  and `make snapshot-examples` pass. `make check-win32` and `make test-linux`
-  were last green at `ab56604` and were not re-run for this change.
+  `make snapshot-examples`, and `make check-inline-fixture` pass. `make
+  check-win32` and `make test-linux` were last green at `ab56604` and were not
+  re-run for this change. `make snapshot-examples` is timing-sensitive for
+  `panic` (its countdown ticks against the capture window); a retry clears it.
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
 
-### Resume here: inline-renderer byte parity
+### Closed: inline-renderer byte parity
 
-**Goal:** make `bubbletea.cr`'s Go-fixture spec pass **without editing the
-fixture**, then ship the fix as `v1.1.4`.
+**Goal was:** make `bubbletea.cr`'s Go-fixture spec pass, then ship the fix as
+`v1.1.4`. It passes, and the fix is the renderer alignment described under
+**Current focus** — plus a Go-derived fixture, because the expected bytes were
+themselves stale.
 
-**Reproduce (one command):**
+**Verify (two commands):**
 
 ```bash
-make check-inline-fixture
-# BUBBLE_DIR=/path/to/bubbletea.cr make check-inline-fixture
+make check-inline-fixture   # sibling Go-fixture spec against this src/
+make inline-golden          # re-derive the inline golden from vendored Go
 ```
 
-The target temporarily swaps this checkout's `src/` into the sibling's
-`lib/ultraviolet`, runs
-`spec/parity/v2_control_sequences_spec.cr`, and restores the sibling on exit.
-It is **expected to fail until this feature is fixed**; it is a repro, not a
-default gate.
+`make check-inline-fixture` temporarily swaps this checkout's `src/` into the
+sibling's `lib/ultraviolet`, runs `spec/parity/v2_control_sequences_spec.cr`,
+and restores the sibling on exit. It passes as of `v1.1.4`.
 
-**Current expected vs actual at the frame boundary:**
+**How the stale expectation was found (for the next session):**
 
 ```text
-expected: <CR><LF><ESC>[A<ESC>[30C
-actual:   <CR><ESC>[30C
+fixture expected: <CR><LF><ESC>[A<ESC>[30C
+this port + Go:   <CR><ESC>[30C
 ```
 
-**Already landed:** `RenderBuffer#clear`, `#clear_area`, `#fill`, and
-`#fill_area` now mark touched lines like Go (`e307558`). That removed one
-divergence but did not close the fixture.
+The LF+CUU came from ultraviolet `524a660` (2026-02-05), where an inline render
+ended by moving to the frame's last row and remembered how far it had scrolled.
+Go built from the vendored `8ecbcf0` — and from the sibling's pinned Go
+ultraviolet, and from `948f4557` — emits `<CR><ESC>[30C`; only bubbletea
+v2.0.0/2.0.2 with uv `524a660` emits the old sequence. Repro recipe: a Go
+program at `temp/` with `replace github.com/charmbracelet/ultraviolet =>
+vendor/ultraviolet` and `replace charm.land/bubbletea/v2 =>
+../bubbletea.cr/vendor/bubbletea`, a memory input/output, `WithoutSignalHandler`,
+`WithWindowSize(70, 30)`, one second ticks, quit at 1.2 s. Five runs were
+byte-identical.
 
-**Next concrete investigation:** compare the trailing blank-row/phantom path in
-`TerminalRenderer#render`/`#move`/`move_cursor_sequence` and
-`TerminalScreen#flush` with `vendor/ultraviolet/terminal_renderer.go` and
-`terminal_screen.go`. Focus on why Go emits the blank-row `<LF><CUU>` and this
-renderer skips it. Re-derive any example goldens from Go; do not edit the
-fixture to accept the current bytes.
-
-**Done when:** `make check-inline-fixture` passes, then run the full gates
-(`make format-check`, `make lint`, `make test`, `make inventory`, `make parity`,
-`make check-examples`, `make snapshot-examples`), tag `v1.1.4`, and run
-`make update_dependents`.
+**Done:** gates green, `v1.1.4` tagged, dependents refreshed.
 
 ### Reset checklist
 
