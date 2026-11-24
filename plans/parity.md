@@ -57,7 +57,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, on `2077bf3`):** `make format-check`,
+- **Gates (last verified 2026-11-24, on `d98a01a`):** `make format-check`,
   `make lint` (58 files), `make test` (460 examples), `make inventory` (819
   items), `make parity` (819 APIs / 196 tests, backend `regex`),
   `make check-examples`, `make snapshot-examples` (12 goldens),
