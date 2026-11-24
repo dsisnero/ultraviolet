@@ -6,27 +6,20 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. `v1.1.4` shipped the inline-renderer parity work,
-  and two follow-up commits plus their docs commits sit **unpushed on `main`**
-  (`9ebee98`, `29bca5d`; `git log origin/main..main`): every comparable example
-  now matches Go (11/11) and the renderer/terminal output model is Go's
-  two-buffer one. They earn `v1.1.5`; the owner asked to hold the push, so push
-  and tag only when they say so.
+- **Active plan:** none open. `v1.1.5` shipped the two-buffer renderer work
+  (`9ebee98`, `29bca5d`): every comparable example matches Go byte for byte
+  (11/11) and the renderer/terminal output model is Go's two-buffer one.
 - **Next up** (priority order), details below under *Planned work*:
-  1. Push `main` and tag `v1.1.5` (release procedure in
-     [AGENTS.md](../AGENTS.md#releasing)), then `make update_dependents` and the
-     consumer check. Nothing else is needed to make it releasable; gates are
-     green on `29bca5d`.
-  2. **`Terminal` should own a `TerminalScreen`** — the last structural
-     difference from upstream. Scoped below; it changes the public shape, so it
-     is a deliberate feature, not a cleanup.
-  3. **Check upstream.** `git ls-remote
+  1. **`Terminal` should own a `TerminalScreen`** — the last structural
+     difference from upstream, and the next feature. Scoped below; it changes
+     the public shape, so it is a deliberate feature, not a cleanup.
+  2. **Check upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
-     `8ecbcf0` as of 2026-11-23 (third check, after `d9728b6` and `ab56604`).
+     `8ecbcf0` as of 2026-11-24 (fourth check, after `d9728b6` and `ab56604`).
      If it moved, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
      ([recipe](commit_8ecbcf0.md)).
-  4. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+  3. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` after a refresh (last run at `ab56604`: 819 APIs / 196
      tests clean, upstream `go test ./...` green, tree untouched).
 - **Vendored snapshot:** `8ecbcf0` (2026-11-19, `fix: use layout's own key`),
@@ -35,10 +28,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.4` tagged at `2fab221` and pushed; `shard.yml`
-  matches it, siblings were moved to `1.1.4` with `make update_dependents`, and
-  a fresh consumer install resolves `1.1.4`. `v1.1.3` was tagged at `c36ff37`.
-  Sibling repos refresh with `make update_dependents` after each tag push.
+- **Release state:** `v1.1.5` tagged at `7fda004` and pushed; `shard.yml`
+  matches it, siblings were moved to `1.1.5` with `make update_dependents`, and
+  a fresh consumer install resolves `1.1.5`. `v1.1.4` was tagged at `2fab221`;
+  `v1.1.3` at `c36ff37`. Sibling repos refresh with `make update_dependents`
+  after each tag push.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -62,7 +56,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-23, on `29bca5d`):** `make format-check`,
+- **Gates (last verified 2026-11-24, on `7fda004`):** `make format-check`,
   `make lint` (58 files), `make test` (454 examples), `make inventory` (819
   items), `make parity` (819 APIs / 196 tests, backend `regex`),
   `make check-examples`, `make snapshot-examples` (12 goldens),
@@ -112,8 +106,8 @@ pass.
 
 ### Closed: inline-renderer byte parity
 
-Shipped as `v1.1.4`, with two follow-ups on `main` (`9ebee98`, `29bca5d`) that
-are not released yet.
+Shipped as `v1.1.4`, with two follow-ups shipped as `v1.1.5` (`9ebee98`,
+`29bca5d`).
 
 **Verify (two commands):**
 
@@ -152,7 +146,7 @@ Pinned by `spec/terminal_renderer_inline_spec.cr` against
 `spec/fixtures/inline_moves_golden.tsv`, regenerated from the vendored Go
 renderer by `make inline-golden` (`scripts/inline_oracle/`).
 
-**Follow-ups on `main` after `v1.1.4` (unreleased):**
+**Follow-ups after `v1.1.4` (shipped in `v1.1.5`):**
 
 1. `9ebee98` — every comparable example matches Go (11/11; `mouse` and `panic`
    were the holdouts). `Terminal#stop` mirrors `Terminal.Stop` →
