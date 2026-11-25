@@ -20,6 +20,56 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.8] - 2026-11-24
+
+Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.7`.
+
+This release is about the input path: two silent data bugs and two complexity
+bugs, all found by diffing behaviour and timings against Go oracles built from
+the vendored tree.
+
+### Changed
+
+- **UTF-8 input decoding mirrors Go and is linear.** `EventDecoder#parse_utf8`
+  validates only the rune at the cursor and segments only the first grapheme
+  cluster, using a bounded lookahead instead of copying and segmenting the whole
+  remaining buffer per character. 7.6 KB of mixed ASCII/accented text now
+  decodes in 2.3 ms instead of 4.8 s.
+- **A valid rune in front of an invalid byte decodes as itself.** The old
+  whole-buffer decode meant any invalid byte made every following call emit
+  `UnknownEvent` until it was consumed; `"é" + 0xff + "b"` produced three
+  `UnknownEvent`s and now produces `é`, `UnknownEvent`, `b`, as Go does.
+- **Win32 input records are classified by the shared ANSI parser.** A record
+  with fewer than six parameters (`\e[0;0;97;1_`, `\e[0_`) is consumed as a
+  serialized key record, as Go reads it, instead of being forwarded verbatim.
+- **Key-up graphemes encode as Go's do.** Every kitty release sequence leads
+  with the buffer's first rune (Go's `graphemeBuf[kd][0]`), codepoints are joined
+  by byte offset, and an all-NUL grapheme still emits a sequence.
+
+### Fixed
+
+- **Bracketed paste keeps every byte.** `decode_paste_bytes` no longer uses
+  `String.new(bytes, invalid: :skip)`, which on Crystal 1.22.3 drops one valid
+  byte per kilobyte (an 8 KB paste arrived 8 bytes short); it walks the buffer a
+  rune at a time and drops what Go drops, including a *valid* U+FFFD. NUL is
+  kept.
+- **Paste no longer costs O(n²).** The paste buffer is a growable byte array
+  instead of a `Bytes` rebuilt per character: a 54 KB paste went from ~520 ms to
+  ~6 ms.
+
+### Internal
+
+- Input decoding is linear end-to-end only with `dsisnero/ansi` `5b0abcb`
+  (`first_grapheme_cluster` segments a lookahead window rather than the whole
+  string), which `shard.lock` now resolves; 7.6 KB scans in 5.5 ms instead of
+  12.7 s.
+- Six new decoder/oracle specs in `spec/terminal_reader_spec.cr` and
+  `spec/go_compatibility_spec.cr` pin the win32, paste and UTF-8 behaviour
+  against oracles built from `vendor/ultraviolet`.
+- Recorded a Crystal 1.22.3 stdlib defect for the issue tracker: `String.encode`
+  treats iconv's `E2BIG` as invalid input, so `invalid: :skip` shortens input
+  longer than 1 KB.
+
 ## [1.1.7] - 2026-11-24
 
 Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.6`.
