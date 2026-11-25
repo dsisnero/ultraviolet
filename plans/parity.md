@@ -39,11 +39,15 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.7` tagged at `789880c` and pushed; `shard.yml`
-  matches it, siblings were moved to `1.1.7` with `make update_dependents`, and
-  a fresh consumer install resolves `1.1.7`. `v1.1.6` was tagged at `f47e115`,
-  `v1.1.5` at `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`.
-  Sibling repos refresh with `make update_dependents` after each tag push.
+- **Release state:** `v1.1.8` tagged at `81ff5f3` and pushed; `shard.yml` matched
+  it, all five siblings were moved to `1.1.8` with `make update_dependents`, and
+  a fresh consumer resolves `1.1.8`. It **predates** the `ansi` bump to
+  `fe5e4ea` and the explicit `textseg` declaration (`b9775ef`), so those ride a
+  later patch: a consumer installing `1.1.8` today still builds only because
+  `uniwidth` happens to supply `textseg` — the accident the declaration removes.
+  `v1.1.7` was tagged at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
+  `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
+  refresh with `make update_dependents` after each tag push.
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
@@ -70,7 +74,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
-  and `ansi` 08621ee):**
+  and `ansi` fe5e4ea):**
   `make format-check`, `make lint` (58 files), `make test` (477 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
@@ -135,7 +139,7 @@ text):
 pinned (12.7 s → 5.0 s) because it calls `Ansi.decode_sequence` over the whole
 buffer first and that shard segmented the whole remainder per cluster too. The
 shard half is now in and has since been replaced by the shard's own splitter:
-`dsisnero/ansi` `08621ee` vendors a UAX #29 splitter (`37413c2`) with the
+`dsisnero/ansi` `fe5e4ea` (code at `08621ee`) vendors a UAX #29 splitter (`37413c2`) with the
 property table indexed by page, exposes `Ansi::Grapheme.cluster_end`, and bounds
 `DecodeSequence` parameters (`95589d2`). The full path is linear — 7.6 KB of
 mixed ASCII/accented text scans in **3.5–5.9 ms** against 12.7 s before, and a
