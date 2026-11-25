@@ -20,6 +20,23 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.10] - 2026-11-25
+
+Vendored upstream: `8ecbcf0`. Scope: one SGR reading fix.
+
+### Fixed
+
+- **SGR pens are read from parser parameters, like Go.** Go's `ReadStyle` takes
+  `ansi.Params` (a value plus a `HasMore` flag per parameter), so
+  `ansi.ReadStyleColor` can reject ambiguous colour forms and the loop then reads
+  the remaining parameters as plain attributes. The port re-split the parameter
+  string on `;` and `:`, which loses that structure. Sequences mixing the two
+  separators produced a different pen: `38;2::10:20:30` read as faint instead of
+  black, `1;31:4` dropped its underline, and `38;5::196` kept a blink.
+  `read_style(params : Ansi::Params, pen)` is now a direct port; the string
+  overload tokenises through the parser and delegates.
+  `spec/read_style_parity_spec.cr` pins Go's pen for each form.
+
 ## [1.1.9] - 2026-11-24
 
 Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.8`.
