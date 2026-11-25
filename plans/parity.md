@@ -18,7 +18,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 - **Next up** (priority order), details below under *Closed* sections:
   1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
      vendor/ultraviolet` (last run 2026-11-24, with `ansi` `4b19c7b`: 819 APIs /
-     196 tests clean, plan complete, 479 specs green, upstream `go test ./...`
+     196 tests clean, plan complete, 481 specs green, upstream `go test ./...`
      green, tree untouched). Nothing is known to be missing against `8ecbcf0`.
   2. **Optional:** upstream the Crystal stdlib finding in the paste section
      below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
@@ -76,10 +76,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
   and `ansi` 4b19c7b):**
-  `make format-check`, `make lint` (58 files), `make test` (479 examples),
+  `make format-check`, `make lint` (58 files), `make test` (481 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (479
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (481
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -135,10 +135,10 @@ was split into `fill_kitty_key_text`/`printable_key_text`/`keypad_text` to stay
 under the complexity gate — and `Key` is a struct, so the helper returns the
 filled key instead of mutating a copy.
 
-**Verified:** `make test` 479 examples, `make format-check`, `make lint` (58
+**Verified:** `make test` 481 examples, `make format-check`, `make lint` (58
 files), `make inventory` (819 items), `make parity` (819 APIs / 196 tests),
 `make check-examples`, `make snapshot-examples` (12 goldens),
-`make check-inline-fixture`, `make check-win32`, `make test-linux` (479) and
+`make check-inline-fixture`, `make check-win32`, `make test-linux` (481) and
 `make parity-examples` (11 compared, 0 differing).
 
 ### Closed: input decoding is Go-faithful and linear
@@ -704,7 +704,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 479 Crystal specs |
+| **Test coverage** | 196 Go tests | 481 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
