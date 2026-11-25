@@ -1,5 +1,4 @@
 require "base64"
-require "textseg"
 
 module Ultraviolet
   class EventDecoder
@@ -983,71 +982,23 @@ module Ultraviolet
         return {1, key}
       end
 
-      # Go only inspects the first rune (`utf8.DecodeRune`, decoder.go:1112) and
-      # then takes the first cluster of the buffer (`uniseg.FirstGraphemeCluster`,
-      # decoder.go:1117). Decoding the whole remaining buffer instead made
-      # non-ASCII input quadratic: every character copied the buffer and
-      # segmented all of it, so 3.8 KB of text took seconds.
+      # Go validates the rune at the cursor (`utf8.DecodeRune`, decoder.go:1112)
+      # and then takes the first cluster of the buffer with `uniseg`, which does
+      # not implement GB9c (decoder.go:1117). `incb: false` is that exact
+      # segmenter: an Indic conjunct splits at the virama, so "स्ते" arrives as
+      # two events, and only a valid first rune decodes as itself.
       rune_size = utf8_rune_size(buf)
       return {1, UnknownEvent.new(buf[0].chr.to_s)} if rune_size == 0
 
-      cluster = first_grapheme_cluster(buf, rune_size)
+      stop = Ansi::Grapheme.cluster_end(buf, 0, incb: false)
+      stop = rune_size if stop <= rune_size
+      cluster = String.new(buf[0, stop], "UTF-8", invalid: :skip)
       return {1, UnknownEvent.new(buf[0].chr.to_s)} if cluster.empty?
 
       codepoint = cluster.each_char.first.ord
       codepoint = KeyExtended if cluster.size > 1
 
       {cluster.bytesize, Key.new(code: codepoint, text: cluster)}
-    end
-
-    # Longest grapheme cluster lookahead, in bytes. Clusters are a few code
-    # points in practice; the window doubles for the rare longer one, such as a
-    # long ZWJ emoji sequence.
-    FIRST_CLUSTER_WINDOW = 32
-
-    # A cluster is only trusted when this much of the window follows it, so the
-    # code point after it is complete inside the window (UTF-8 is at most four
-    # bytes) and the boundary matches a whole-buffer segmentation.
-    FIRST_CLUSTER_LOOKAHEAD = 4
-
-    # Returns the text of the first grapheme cluster of *buf*, given that the
-    # first rune is *rune_size* bytes and valid. Invalid bytes end the cluster,
-    # as they do for Go's uniseg iterator.
-    private def first_grapheme_cluster(buf : Bytes, rune_size : Int32) : String
-      first_rune = String.new(buf[0, rune_size], "UTF-8")
-      window = Math.min(buf.size, FIRST_CLUSTER_WINDOW)
-
-      loop do
-        # Build a whole-rune prefix so segmentation never sees a truncated or
-        # invalid sequence.
-        limit = 0
-        while limit < buf.size && limit < window
-          size = utf8_rune_size(buf[limit, buf.size - limit])
-          break if size == 0
-          limit += size
-        end
-
-        return first_rune if limit <= rune_size
-
-        string = String.new(buf[0, limit], "UTF-8")
-        cluster = ""
-        TextSegment.each_grapheme(string) do |segment|
-          cluster = segment.str
-          break
-        end
-
-        return first_rune if cluster.empty?
-
-        # The prefix stopped at an invalid byte rather than at the window end,
-        # so the cluster cannot extend any further; likewise when the window is
-        # the whole buffer, or when enough bytes follow the cluster to settle
-        # its boundary.
-        blocked = limit < window
-        return cluster if blocked || limit == buf.size ||
-                          cluster.bytesize + FIRST_CLUSTER_LOOKAHEAD <= limit
-
-        window = Math.min(buf.size, window * 2)
-      end
     end
 
     # Byte length of the valid UTF-8 rune at the start of *buf*, or 0 when it is

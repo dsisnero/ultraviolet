@@ -1,5 +1,3 @@
-require "textseg"
-
 module Ultraviolet
   module Screen
     class Context
@@ -314,8 +312,18 @@ module Ultraviolet
         height = bounds.dy
         return {x, y} if x < 0 || y < 0 || x >= width || y >= height
 
-        TextSegment.each_grapheme(value) do |cluster|
-          grapheme = cluster.str
+        # Go walks `graphemes.FromString` (uax29, GB9c) and measures each
+        # cluster with the screen's width method (screen/context.go:328), so the
+        # segmentation here must be the GB9c one the width functions use.
+        bytes = value.to_slice
+        pos = 0
+        while pos < bytes.size
+          stop = Ansi::Grapheme.cluster_end(bytes, pos)
+          break if stop <= pos
+
+          grapheme = String.new(bytes[pos, stop - pos])
+          pos = stop
+
           if grapheme == "\n"
             x = 0
             y += 1

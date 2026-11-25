@@ -1,4 +1,3 @@
-require "textseg"
 require "uniwidth"
 require "./ansi_color"
 

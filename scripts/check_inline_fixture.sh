@@ -22,9 +22,27 @@ fi
 
 backup="$(mktemp -d "${TMPDIR:-/tmp}/uv-bubbletea-lib.XXXXXX")"
 mv "${BUBBLE_DIR}/lib/ultraviolet" "${backup}/ultraviolet"
+# `src` is copied in, so its shard requirements must come from this checkout too:
+# an ansi older than the one pinned here can lack an API `src` now uses (for
+# example `Ansi::Grapheme`), and the fixture would fail for a reason that has
+# nothing to do with the frame it is checking.
+swapped_ansi=0
+if [[ -d "${ROOT_DIR}/lib/ansi" ]]; then
+  if [[ -d "${BUBBLE_DIR}/lib/ansi" ]]; then
+    mv "${BUBBLE_DIR}/lib/ansi" "${backup}/ansi"
+  fi
+  cp -R "${ROOT_DIR}/lib/ansi" "${BUBBLE_DIR}/lib/ansi"
+  swapped_ansi=1
+fi
 restore() {
   rm -rf "${BUBBLE_DIR}/lib/ultraviolet"
   mv "${backup}/ultraviolet" "${BUBBLE_DIR}/lib/ultraviolet"
+  if [[ "${swapped_ansi}" == "1" ]]; then
+    rm -rf "${BUBBLE_DIR}/lib/ansi"
+    if [[ -d "${backup}/ansi" ]]; then
+      mv "${backup}/ansi" "${BUBBLE_DIR}/lib/ansi"
+    fi
+  fi
   rmdir "${backup}" 2>/dev/null || true
 }
 trap restore EXIT

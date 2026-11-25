@@ -227,10 +227,19 @@ module Ultraviolet
           text = String.build do |io|
             buf.each { |code| io << Ultraviolet.safe_char(code) }
           end
-          TextSegment.each_grapheme(text) do |segment|
+          # Go walks `uniseg.NewGraphemes` here (terminal_reader.go:399), which
+          # has no GB9c, so a conjunct is encoded as its two halves.
+          graphemes = text.to_slice
+          pos = 0
+          while pos < graphemes.size
+            stop = Ansi::Grapheme.cluster_end(graphemes, pos, incb: false)
+            break if stop <= pos
+            segment = String.new(graphemes[pos, stop - pos])
+            pos = stop
+
             offset = 0
             codepoints = String.build do |io|
-              segment.str.each_char do |char|
+              segment.each_char do |char|
                 unless char.ord == 0
                   io << ':' if offset > 0
                   io << char.ord

@@ -39,12 +39,12 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.8` tagged at `81ff5f3` and pushed; `shard.yml` matched
-  it, all five siblings were moved to `1.1.8` with `make update_dependents`, and
-  a fresh consumer resolves `1.1.8`. It **predates** the `ansi` bump to
-  `fe5e4ea` and the explicit `textseg` declaration (`b9775ef`), so those ride a
-  later patch: a consumer installing `1.1.8` today still builds only because
-  `uniwidth` happens to supply `textseg` — the accident the declaration removes.
+- **Release state:** `v1.1.8` tagged at `81ff5f3` and pushed; all five siblings
+  were moved to `1.1.8` with `make update_dependents`, and a fresh consumer
+  resolves `1.1.8`. It **predates** the `ansi` splitter work and the decoder's
+  move onto `Ansi::Grapheme` (`incb: false`), so those ride the next patch; that
+  patch also matters for consumers because `src` now needs an `ansi` new enough
+  to expose `Ansi::Grapheme`.
   `v1.1.7` was tagged at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
   `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
   refresh with `make update_dependents` after each tag push.
@@ -74,7 +74,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
-  and `ansi` fe5e4ea):**
+  and `ansi` 3f6576d):**
   `make format-check`, `make lint` (58 files), `make test` (477 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
@@ -137,25 +137,45 @@ text):
 
 `scan_events` on the same input was still quadratic while the `ansi` shard was
 pinned (12.7 s → 5.0 s) because it calls `Ansi.decode_sequence` over the whole
-buffer first and that shard segmented the whole remainder per cluster too. The
-shard half is now in and has since been replaced by the shard's own splitter:
-`dsisnero/ansi` `fe5e4ea` (code at `08621ee`) vendors a UAX #29 splitter (`37413c2`) with the
-property table indexed by page, exposes `Ansi::Grapheme.cluster_end`, and bounds
-`DecodeSequence` parameters (`95589d2`). The full path is linear — 7.6 KB of
-mixed ASCII/accented text scans in **3.5–5.9 ms** against 12.7 s before, and a
-54 KB paste in **3.4 ms** (`temp/bench_utf8_scale.cr`, `temp/bench_scan.cr`,
-release build). An equivalent branch written here in parallel (`85d2821`) is
-superseded; nothing depends on it.
+buffer first and that shard segmented the whole remainder per cluster too. That
+shard now vendors Go's own segmenter: `dsisnero/ansi` (`3f6576d`, code from
+`37413c2`/`08621ee`) ports `uax29`'s splitter over a page-indexed property
+table, bounds `DecodeSequence` parameters, and exposes
+`Ansi::Grapheme.cluster_end(bytes, offset, incb : Bool = true)`.
 
-**The decoder keeps `textseg`, on purpose.** Go segments twice with two
-libraries that disagree: the decoder uses `uniseg` and *splits* an Indic conjunct
-at the virama ("स्ते" is two `KeyExtended` events), while the width code uses
-`uax29` and *merges* it (GB9c, one cluster). `ansi`'s new splitter follows the
-width behaviour, so routing `parse_utf8` through it would emit one event where
-Go emits two. `shard.yml` therefore declares `textseg` — the non-GB9c segmenter
-the decoder needs — instead of leaving it to arrive by accident through `ansi`
-(it no longer does) or `uniwidth` (it still would).
-`spec/go_compatibility_spec.cr` pins the Go-decoder boundary.
+**One splitter, two modes, matching Go's two libraries.** Go segments in two
+places with libraries that disagree: the decoder and key encoding use `uniseg`,
+which has no GB9c and *splits* an Indic conjunct at the virama ("स्ते" is two
+`KeyExtended` events), while the screen and width code use `uax29`, which
+*merges* it (one cluster, 2 cells). `incb: false` is uniseg's boundary and
+`incb: true` (the default, unchanged) is uax29's, so the port now uses one
+implementation in the right mode at each site instead of carrying `textseg`:
+
+| site | mode | Go counterpart |
+|---|---|---|
+| `EventDecoder#parse_utf8` | `incb: false` | `uniseg.FirstGraphemeCluster` (decoder.go:1117) |
+| `EventScanner#encode_grapheme_bufs` | `incb: false` | `uniseg.NewGraphemes` (terminal_reader.go:399) |
+| `ScreenContext#draw_string_at` | `incb: true` | `graphemes.FromString` (screen/context.go:328) |
+
+`textseg` is gone from `src/` and from `shard.yml` (it survives in `lib/` only
+because `uniwidth` requires it itself). `spec/go_compatibility_spec.cr` pins the
+decoder side of the split, and the width invariant holds in both modes: the
+per-segment widths still sum to the 2 cells `string_width_wc("स्ते")` reports.
+
+**Verified against a fresh Go oracle, rebuilt after the migration:** 21 event
+cases (accented text, combining marks, emoji, ZWJ families, tag flags, regional
+indicators, Hangul jamo, Indic conjuncts, Prepend runs, controls between
+letters, invalid leads, truncated tails, overlongs, surrogates, max codepoint),
+13 win32 deserialize cases and 13 bracketed-paste cases — 47 lines,
+byte-identical, `total` included.
+
+**Measured** (release build): 7.6 KB of mixed ASCII/accented text scans in
+**1.1 ms** (12.7 s at the start of this work, 3.5–5.9 ms with `textseg`), plain
+4.4 KB in 0.27 ms, a 54 KB paste in 3.3 ms and 4.5 KB of win32 records in
+0.019 ms. `make check-inline-fixture` now swaps the sibling's `lib/ansi` for this
+checkout's as well: `src` is copied into that checkout, so an `ansi` older than
+the pin can lack an API `src` uses, and the fixture failed for a reason that had
+nothing to do with the frame it checks.
 
 ### Closed: bracketed paste is amortised and no longer truncates
 
