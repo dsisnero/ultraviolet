@@ -161,4 +161,33 @@ describe "Key" do
     consumed, event = decoder.decode("\x1b[O".to_slice)
     event.should be_a(Ultraviolet::BlurEvent)
   end
+
+  # Go declares these as untyped constants in an `iota` sequence
+  # (key.go:193-215), so their *values* are API and a different declaration
+  # order silently renumbers them. Every expectation below was read off the
+  # vendored Go; `KeyBackspace` is DEL, not BS, and the left/right modifier
+  # runs are Alt, Ctrl, Super, Hyper, Meta.
+  it "keeps Go's constant values" do
+    Ultraviolet::KeyBackspace.should eq 127
+    Ultraviolet::KeyTab.should eq 9
+    Ultraviolet::KeyEnter.should eq 13
+    Ultraviolet::KeyEscape.should eq 27
+    Ultraviolet::KeySpace.should eq 32
+
+    Ultraviolet::KeyLeftShift.should eq 1114238
+    Ultraviolet::KeyLeftAlt.should eq 1114239
+    Ultraviolet::KeyLeftCtrl.should eq 1114240
+    Ultraviolet::KeyLeftSuper.should eq 1114241
+    Ultraviolet::KeyLeftHyper.should eq 1114242
+    Ultraviolet::KeyLeftMeta.should eq 1114243
+
+    Ultraviolet::KeyRightShift.should eq 1114244
+    Ultraviolet::KeyRightAlt.should eq 1114245
+    Ultraviolet::KeyRightCtrl.should eq 1114246
+    Ultraviolet::KeyRightSuper.should eq 1114247
+    Ultraviolet::KeyRightHyper.should eq 1114248
+    Ultraviolet::KeyRightMeta.should eq 1114249
+    Ultraviolet::KeyIsoLevel3Shift.should eq 1114250
+    Ultraviolet::KeyIsoLevel5Shift.should eq 1114251
+  end
 end

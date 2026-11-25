@@ -3,9 +3,9 @@
 //
 // It decodes spec/fixtures/decode_inputs.txt with the *vendored* Go decoder, so
 // the expected event for each input comes from upstream rather than from the
-// Crystal port it is meant to check. Only the families that describe mouse
-// tracking and terminal size reports are formatted; anything else is reported as
-// "other" so a new input cannot silently pass.
+// Crystal port it is meant to check. The formatted families are the ones the
+// port models: keys, mouse, paste, focus, terminal responses and size reports.
+// Anything else is reported as "other" so a new input cannot silently pass.
 //
 // Regenerate with `make decode-golden`.
 package main
@@ -49,11 +49,78 @@ func signature(ev uv.Event) string {
 			args = append(args, strconv.Itoa(a))
 		}
 		return fmt.Sprintf("winop:%d:[%s]", e.Op, strings.Join(args, ","))
+	case uv.KeyPressEvent:
+		return keySignature(uv.Key(e))
+	case uv.KeyReleaseEvent:
+		// The port aliases both to one Key struct, so press and release are
+		// indistinguishable there and the golden must not distinguish them.
+		return keySignature(uv.Key(e))
+	case uv.UnknownEvent:
+		return fmt.Sprintf("unknown:%x", []byte(e))
+	case uv.UnknownSs3Event:
+		return fmt.Sprintf("unknownss3:%x", []byte(e))
+	case uv.UnknownOscEvent:
+		return fmt.Sprintf("unknownosc:%x", []byte(e))
+	case uv.UnknownDcsEvent:
+		return fmt.Sprintf("unknowndcs:%x", []byte(e))
+	case uv.UnknownSosEvent:
+		return fmt.Sprintf("unknownsos:%x", []byte(e))
+	case uv.UnknownPmEvent:
+		return fmt.Sprintf("unknownpm:%x", []byte(e))
+	case uv.UnknownApcEvent:
+		return fmt.Sprintf("unknownapc:%x", []byte(e))
+	case uv.FocusEvent:
+		return "focus"
+	case uv.BlurEvent:
+		return "blur"
+	case uv.PasteStartEvent:
+		return "pastestart"
+	case uv.PasteEndEvent:
+		return "pasteend"
+	case uv.PasteEvent:
+		return fmt.Sprintf("paste:%x", []byte(e.Content))
+	case uv.CursorPositionEvent:
+		return fmt.Sprintf("cursor:%d,%d", e.X, e.Y)
+	case uv.TerminalVersionEvent:
+		return fmt.Sprintf("version:%x", []byte(e.Name))
+	case uv.ModifyOtherKeysEvent:
+		return fmt.Sprintf("modifyotherkeys:%d", e.Mode)
+	case uv.KeyboardEnhancementsEvent:
+		return fmt.Sprintf("keyboardenhancements:%d", e.Flags)
+	case uv.KittyGraphicsEvent:
+		return fmt.Sprintf("kittygraphics:%x", e.Payload)
+	case uv.PrimaryDeviceAttributesEvent:
+		// The port aliases primary and secondary attributes to one Array(Int32),
+		// so the golden must not distinguish them.
+		return fmt.Sprintf("da:[%s]", intList(e))
+	case uv.SecondaryDeviceAttributesEvent:
+		return fmt.Sprintf("da:[%s]", intList(e))
+	case uv.TertiaryDeviceAttributesEvent:
+		return fmt.Sprintf("da3:%x", []byte(string(e)))
+	case uv.ModeReportEvent:
+		return fmt.Sprintf("modereport:%d,%d", int(e.Mode.Mode()), int(e.Value))
+	case uv.DarkColorSchemeEvent:
+		return "darkscheme"
+	case uv.LightColorSchemeEvent:
+		return "lightscheme"
 	case uv.UnknownCsiEvent:
 		return "unknowncsi"
 	default:
 		return fmt.Sprintf("other:%T", ev)
 	}
+}
+
+func keySignature(k uv.Key) string {
+	return fmt.Sprintf("key:%d,%d,%d,%d,%t:%x",
+		k.Code, int(k.Mod), k.ShiftedCode, k.BaseCode, k.IsRepeat, []byte(k.Text))
+}
+
+func intList(values []int) string {
+	parts := make([]string, 0, len(values))
+	for _, v := range values {
+		parts = append(parts, strconv.Itoa(v))
+	}
+	return strings.Join(parts, ",")
 }
 
 func main() {

@@ -155,22 +155,29 @@ module Ultraviolet
   KeyRaiseVol = KeyLowerVol + 1
   KeyMute     = KeyRaiseVol + 1
 
+  # Declaration order is Go's: these are untyped constants laid out in upstream's
+  # `iota` sequence, so a different order silently assigns different codes
+  # (leftmeta/leftsuper/leftctrl were permuted here, which made a decoded
+  # `leftctrl` compare equal to Go's `leftsuper`).
   KeyLeftShift = KeyMute + 1
-  KeyLeftCtrl  = KeyLeftShift + 1
-  KeyLeftAlt   = KeyLeftCtrl + 1
-  KeyLeftMeta  = KeyLeftAlt + 1
-  KeyLeftSuper = KeyLeftMeta + 1
+  KeyLeftAlt   = KeyLeftShift + 1
+  KeyLeftCtrl  = KeyLeftAlt + 1
+  KeyLeftSuper = KeyLeftCtrl + 1
   KeyLeftHyper = KeyLeftSuper + 1
+  KeyLeftMeta  = KeyLeftHyper + 1
 
-  KeyRightShift = KeyLeftHyper + 1
-  KeyRightCtrl  = KeyRightShift + 1
-  KeyRightAlt   = KeyRightCtrl + 1
-  KeyRightMeta  = KeyRightAlt + 1
-  KeyRightSuper = KeyRightMeta + 1
-  KeyRightHyper = KeyRightSuper + 1
+  KeyRightShift     = KeyLeftMeta + 1
+  KeyRightAlt       = KeyRightShift + 1
+  KeyRightCtrl      = KeyRightAlt + 1
+  KeyRightSuper     = KeyRightCtrl + 1
+  KeyRightHyper     = KeyRightSuper + 1
+  KeyRightMeta      = KeyRightHyper + 1
+  KeyIsoLevel3Shift = KeyRightMeta + 1
+  KeyIsoLevel5Shift = KeyIsoLevel3Shift + 1
 
-  # Common keys.
-  KeyBackspace = Ansi::BS.to_i
+  # Common keys. `KeyBackspace` is DEL (0x7F), as Go's
+  # `KeyBackspace = rune(ansi.DEL)` — 0x08 is `ctrl+h`, not backspace.
+  KeyBackspace = Ansi::DEL.to_i
   KeyTab       = Ansi::HT.to_i
   KeyEnter     = Ansi::CR.to_i
   KeyReturn    = KeyEnter
@@ -404,12 +411,14 @@ module Ultraviolet
     KeyLeftSuper => "leftsuper",
     KeyLeftHyper => "lefthyper",
 
-    KeyRightShift => "rightshift",
-    KeyRightCtrl  => "rightctrl",
-    KeyRightAlt   => "rightalt",
-    KeyRightMeta  => "rightmeta",
-    KeyRightSuper => "rightsuper",
-    KeyRightHyper => "righthyper",
+    KeyRightShift     => "rightshift",
+    KeyRightCtrl      => "rightctrl",
+    KeyRightAlt       => "rightalt",
+    KeyRightMeta      => "rightmeta",
+    KeyRightSuper     => "rightsuper",
+    KeyRightHyper     => "righthyper",
+    KeyIsoLevel3Shift => "isolevel3shift",
+    KeyIsoLevel5Shift => "isolevel5shift",
   }
 
   STRING_KEY_TYPE = {
@@ -556,6 +565,8 @@ module Ultraviolet
     "rightsuper"       => KeyRightSuper,
     "righthyper"       => KeyRightHyper,
     "rightmeta"        => KeyRightMeta,
+    "isolevel3shift"   => KeyIsoLevel3Shift,
+    "isolevel5shift"   => KeyIsoLevel5Shift,
   }
 
   def self.key_match_string(key : Key, value : String) : Bool

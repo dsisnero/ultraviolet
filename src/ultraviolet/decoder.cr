@@ -954,10 +954,18 @@ module Ultraviolet
       parse_st_terminated(Ansi::APC, '_'.ord, ->(bytes : Bytes) {
         return nil if bytes.empty?
         if bytes[0] == 'G'.ord
-          options = parse_kitty_options(bytes[1..])
+          body = bytes[1..]
+          options = parse_kitty_options(body)
+          # Go splits the body on `;` and keeps `parts[1]` as the payload, so a
+          # second `;` inside the data is dropped (decoder.go:1077-1081).
           payload = Bytes.empty
-          if idx = bytes.index(';'.ord)
-            payload = bytes[(idx + 1)..]
+          if idx = body.index(';'.ord)
+            rest = body[(idx + 1)..]
+            payload = if stop = rest.index(';'.ord)
+                        rest[0, stop]
+                      else
+                        rest
+                      end
           end
           return KittyGraphicsEvent.new(options, payload)
         end
@@ -1172,8 +1180,55 @@ module Ultraviolet
         end
       end
 
-      return KeyReleaseEvent.new(key.text, key.mod, key.code, key.shifted_code, key.base_code, key.is_repeat?) if is_release
+      key = fill_kitty_key_text(key)
+
+      # `KeyReleaseEvent` is an alias of `Key` here, so press and release differ
+      # only in the decoder's own bookkeeping.
       key
+    end
+
+    # Go fills the text from the code after parsing, before it decides whether
+    # the event is a press or a release, so a release carries its text too
+    # (decoder.go:1491-1522). Lock modifiers do not affect the text. `Key` is a
+    # struct, so the filled key is returned rather than mutated in place.
+    private def fill_kitty_key_text(key : Key) : Key
+      key_mod = key.mod & ~ModNumLock
+      return key unless print_mod?(key_mod)
+
+      if key.text.empty? && key.code >= KeyKpEqual && key.code <= KeyKpSep
+        key.text = keypad_text(key.code)
+      end
+
+      return key unless key.text.empty? && Ultraviolet.printable_char?(key.code)
+
+      key.text = printable_key_text(key, key_mod)
+      key
+    end
+
+    private def print_mod?(key_mod : KeyMod) : Bool
+      key_mod <= ModShift || key_mod == ModCapsLock || key_mod == (ModShift | ModCapsLock)
+    end
+
+    private def printable_key_text(key : Key, key_mod : KeyMod) : String
+      return Ultraviolet.safe_char(key.code).to_s if key_mod == 0
+      return Ultraviolet.safe_char(key.shifted_code).to_s if key.shifted_code != 0
+
+      char = Ultraviolet.safe_char(key.code)
+      (key_mod & (ModShift | ModCapsLock)) != 0 ? char.upcase.to_s : char.downcase.to_s
+    end
+
+    private def keypad_text(code : Int32) : String
+      case code
+      when KeyKp0..KeyKp9 then ('0'.ord + code - KeyKp0).to_u8.chr.to_s
+      when KeyKpEqual     then "="
+      when KeyKpMultiply  then "*"
+      when KeyKpPlus      then "+"
+      when KeyKpMinus     then "-"
+      when KeyKpDecimal   then "."
+      when KeyKpDivide    then "/"
+      when KeyKpSep       then ","
+      else                     ""
+      end
     end
 
     private def apply_kitty_param(param_idx : Int32, sub_idx : Int32, param : Ansi::Param, key : Key, is_release : Bool) : {Key, Bool}
@@ -1387,9 +1442,12 @@ module Ultraviolet
 
       options = {} of String => String
       String.new(data).split(',').each do |pair|
-        key, value = pair.split('=', 2)
-        next if key.empty?
-        options[key] = value || ""
+        # Go's `Options.UnmarshalText` skips an entry without `=` or with an
+        # empty value (`len(ps) != 2 || len(ps[1]) == 0`); a bare `G` has no
+        # `=`, and destructuring it used to raise IndexError.
+        key, separator, value = pair.partition('=')
+        next if separator.empty? || value.empty?
+        options[key] = value
       end
       options
     end

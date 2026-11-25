@@ -17,3 +17,51 @@
 1b5b34383b32343b38303b3331323b35363074	size:80,24 pixel:560,312
 1b5b39393974	winop:999:[]
 1b5b3939393b3174	winop:999:[1]
+61	key:97,0,0,0,false:61
+41	key:97,1,65,0,false:41
+20	key:32,0,0,0,false:20
+09	key:9,0,0,0,false:
+0d	key:13,0,0,0,false:
+7f	key:127,0,0,0,false:
+00	key:32,4,0,0,false:
+1b	key:27,0,0,0,false:
+1b1b	key:27,2,0,0,false:
+1b61	key:97,2,0,0,false:
+1b5b41	key:1114113,0,0,0,false:
+1b4f50	key:1114156,0,0,0,false:
+1b4f41	key:1114113,0,0,0,false:
+1b5b31357e	key:1114160,0,0,0,false:
+1b5b5b41	unknowncsi key:97,1,65,0,false:41
+1b5b313b3541	key:1114113,4,0,0,false:
+1b5b313b3241	key:1114113,1,0,0,false:
+1b5b313b3341	key:1114113,2,0,0,false:
+9b41	key:1114113,0,0,0,false:
+1b5b39373b3575	key:97,4,0,0,false:
+1b5b39373b313a3375	key:97,0,0,0,false:61
+1b5b39373b313a333b393775	key:97,0,0,0,false:61
+1b5b39373b353a3275	key:97,4,0,0,true:
+1b5b3e3175	unknowncsi
+1b5b32373b353b39377e	key:97,4,0,0,false:
+1b5b32373b333b39377e	key:97,2,0,0,false:
+1b5b3230307e6869	pastestart key:104,0,0,0,false:68 key:105,0,0,0,false:69
+1b5b3230307e68691b5b3230317e	pastestart key:104,0,0,0,false:68 key:105,0,0,0,false:69 pasteend
+1b5b3230317e	pasteend
+1b5b49	focus
+1b5b4f	blur
+1b5b353b313052	cursor:9,4
+1b5b3f313b323b3363	da:[1,2,3]
+1b5b3e313b323b3363	da:[1,2,3]
+1b5b3f3230323673	unknowncsi
+1b5d303b7469746c6507	unknownosc:1b5d303b7469746c6507
+1b5f473b666f6f3b414141411b5c	kittygraphics:666f6f
+1b5b	key:91,2,0,0,false:
+1b5b3f	unknown:1b5b3f
+1b4f	key:111,3,0,0,false:
+1b5d	key:93,2,0,0,false:
+1b50	key:112,3,0,0,false:
+1b5f	key:95,2,0,0,false:
+1b58	key:120,3,0,0,false:
+1b5b3939397a	unknowncsi
+1b5b3f323032363b312479	modereport:2026,1
+1b4f58	key:1114127,0,0,0,false:
+1b4f5a	unknownss3:1b4f5a

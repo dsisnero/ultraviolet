@@ -39,6 +39,56 @@ module DecodeGoldenHelper
       "size:#{event.width},#{event.height}"
     when Ultraviolet::WindowOpEvent
       "winop:#{event.op}:[#{event.args.join(',')}]"
+    when Ultraviolet::Key
+      # `KeyPressEvent` and `KeyReleaseEvent` are both aliases of `Key` here, so
+      # the golden does not distinguish them either.
+      "key:#{event.code},#{event.mod},#{event.shifted_code},#{event.base_code},#{event.is_repeat?}:#{event.text.to_slice.hexstring}"
+    when Ultraviolet::UnknownEvent
+      "unknown:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownSs3Event
+      "unknownss3:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownOscEvent
+      "unknownosc:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownDcsEvent
+      "unknowndcs:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownSosEvent
+      "unknownsos:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownPmEvent
+      "unknownpm:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::UnknownApcEvent
+      "unknownapc:#{event.value.to_slice.hexstring}"
+    when Ultraviolet::FocusEvent
+      "focus"
+    when Ultraviolet::BlurEvent
+      "blur"
+    when Ultraviolet::PasteStartEvent
+      "pastestart"
+    when Ultraviolet::PasteEndEvent
+      "pasteend"
+    when Ultraviolet::PasteEvent
+      "paste:#{event.content.to_slice.hexstring}"
+    when Ultraviolet::CursorPositionEvent
+      "cursor:#{event.x},#{event.y}"
+    when Ultraviolet::TerminalVersionEvent
+      "version:#{event.name.to_slice.hexstring}"
+    when Ultraviolet::ModifyOtherKeysEvent
+      "modifyotherkeys:#{event.mode}"
+    when Ultraviolet::KeyboardEnhancementsEvent
+      "keyboardenhancements:#{event.flags}"
+    when Ultraviolet::KittyGraphicsEvent
+      "kittygraphics:#{event.payload.hexstring}"
+    when Ultraviolet::PrimaryDeviceAttributesEvent
+      # `PrimaryDeviceAttributesEvent` and `SecondaryDeviceAttributesEvent` are
+      # both `Array(Int32)` here, so the golden does not distinguish them.
+      "da:[#{event.join(",")}]"
+    when Ultraviolet::TertiaryDeviceAttributesEvent
+      "da3:#{event.to_slice.hexstring}"
+    when Ultraviolet::ModeReportEvent
+      "modereport:#{event.mode},#{event.value}"
+    when Ultraviolet::DarkColorSchemeEvent
+      "darkscheme"
+    when Ultraviolet::LightColorSchemeEvent
+      "lightscheme"
     when Ultraviolet::UnknownCsiEvent
       "unknowncsi"
     else
@@ -61,7 +111,7 @@ module DecodeGoldenHelper
         break
       end
       case event
-      when Array
+      when Ultraviolet::MultiEvent
         event.each { |item| signatures << signature(item) }
       else
         signatures << signature(event)
@@ -88,5 +138,21 @@ describe "Decoder golden (vendored oracle)" do
 
     signatures.any?(&.starts_with?("motion:")).should be_true
     signatures.any?(&.starts_with?("pixel:")).should be_true
+  end
+
+  # The families the corpus is meant to check, so a later edit cannot shrink it
+  # back to mouse-only without failing.
+  it "covers keys, paste, focus, reports and the unknown families" do
+    signatures = DecodeGoldenHelper.golden.flat_map(&.[1])
+
+    {
+      # Paste *content* is assembled by the scanner, not the decoder, so a
+      # decoder golden can only pin the start/end markers.
+      "key:", "pastestart", "pasteend", "focus", "blur", "cursor:", "da:",
+      "modereport:", "unknowncsi", "unknownosc", "unknownss3", "unknown:",
+      "kittygraphics:",
+    }.each do |prefix|
+      signatures.any?(&.starts_with?(prefix)).should be_true, "missing #{prefix}"
+    end
   end
 end

@@ -20,3 +20,51 @@
 1b5b34383b32343b38303b3331323b35363074	in-band resize report
 1b5b39393974	unknown window op
 1b5b3939393b3174	unknown window op arg
+61	plain a
+41	plain A
+20	space
+09	tab
+0d	enter
+7f	backspace
+00	nul ctrl-at
+1b	lone esc
+1b1b	alt+esc
+1b61	alt+a
+1b5b41	up arrow
+1b4f50	ss3 f1
+1b4f41	ss3 up
+1b5b31357e	f5
+1b5b5b41	linux console f1
+1b5b313b3541	ctrl+up
+1b5b313b3241	shift+up
+1b5b313b3341	alt+up
+9b41	c1 csi up
+1b5b39373b3575	kitty ctrl+a
+1b5b39373b313a3375	kitty release a
+1b5b39373b313a333b393775	kitty release with codepoints
+1b5b39373b353a3275	kitty repeat ctrl+a
+1b5b3e3175	kitty keyboard enhancements report
+1b5b32373b353b39377e	modifyotherkeys ctrl+a
+1b5b32373b333b39377e	modifyotherkeys alt+a
+1b5b3230307e6869	paste start with text
+1b5b3230307e68691b5b3230317e	complete paste
+1b5b3230317e	paste end alone
+1b5b49	focus in
+1b5b4f	focus out
+1b5b353b313052	cursor position report
+1b5b3f313b323b3363	primary device attributes
+1b5b3e313b323b3363	secondary device attributes
+1b5b3f3230323673	mode set report
+1b5d303b7469746c6507	osc window title
+1b5f473b666f6f3b414141411b5c	kitty graphics apc
+1b5b	incomplete csi
+1b5b3f	incomplete csi prefix
+1b4f	incomplete ss3
+1b5d	incomplete osc
+1b50	incomplete dcs
+1b5f	incomplete apc
+1b58	incomplete sos
+1b5b3939397a	unknown csi
+1b5b3f323032363b312479	mode report DECRPM
+1b4f58	unknown ss3
+1b4f5a	unknown ss3 final

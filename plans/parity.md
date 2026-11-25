@@ -6,8 +6,9 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. Features closed in this stretch: input decoding is
-  Go-faithful and linear (below), bracketed paste is amortised and no longer
+- **Active plan:** none open. Features closed in this stretch: the decoder golden
+  now covers keys and protocol families and six decode divergences are fixed
+  (below), input decoding is Go-faithful and linear, bracketed paste is amortised and no longer
   truncates, and the two verification TODOs in `event_scanner.cr` are settled —
   win32 input decoding goes through the shared ANSI parser and grapheme release
   encoding leads with the buffer's first rune, both matching a Go oracle;
@@ -16,8 +17,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   non-upstream TODO**; every remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
   1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24, with `ansi` `3f6576d`: 819 APIs /
-     196 tests clean, plan complete, 477 specs green, upstream `go test ./...`
+     vendor/ultraviolet` (last run 2026-11-24, with `ansi` `4b19c7b`: 819 APIs /
+     196 tests clean, plan complete, 479 specs green, upstream `go test ./...`
      green, tree untouched). Nothing is known to be missing against `8ecbcf0`.
   2. **Optional:** upstream the Crystal stdlib finding in the paste section
      below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
@@ -75,10 +76,10 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
   and `ansi` 4b19c7b):**
-  `make format-check`, `make lint` (58 files), `make test` (477 examples),
+  `make format-check`, `make lint` (58 files), `make test` (479 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (477
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (479
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -90,6 +91,55 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
+
+### Closed: decoder golden covers keys and protocol families
+
+`spec/fixtures/decode_golden.tsv` is generated from the vendored Go decoder
+(`make decode-golden`), but its corpus only described mouse tracking and size
+reports, and the generator formatted every other event as `other:%T`. So the
+golden could not fail for a keyboard or protocol difference. The corpus now
+covers 19 → 67 inputs and the generator formats the families the port models:
+keys, paste markers, focus/blur, cursor position, DA, mode reports, kitty
+graphics, terminal version, modifyOtherKeys, keyboard enhancements, colour
+schemes, and the `unknown*` family. Two aliasing facts are recorded in both
+signatures rather than papered over: `KeyPressEvent`/`KeyReleaseEvent` and
+`PrimaryDeviceAttributesEvent`/`SecondaryDeviceAttributesEvent` are one type
+each in this port, so the golden does not distinguish them.
+
+**Six real divergences fell out of it**, all fixed:
+
+1. **`KeyBackspace` was 8, Go's is 127** (`rune(ansi.DEL)`). 8 is `ctrl+h`;
+   every backspace keystroke reported the wrong code. Now `Ansi::DEL`.
+2. **Modifier key codes were permuted.** `KeyLeftMeta`/`KeyLeftSuper`/`KeyLeftCtrl`
+   (and the right-hand run) were declared in a different order from Go's `iota`
+   sequence, so `leftmeta`, `leftsuper` and `leftctrl` had each other's values;
+   a decoded `leftctrl` compared equal to Go's `leftsuper`.
+3. **`KeyIsoLevel3Shift`/`KeyIsoLevel5Shift` did not exist**, although
+   `plans/inventory/go_port_inventory.tsv` listed both as ported — the ledger
+   only checks that the referenced file exists, not that the symbol does.
+4. **Kitty keyboard events never carried text.** Go fills `Key.Text` from the
+   code after parsing and *before* deciding press vs release, so even a release
+   of `a` has `Text: "a"`; this port left it empty. Ported, including the
+   keypad-text and shifted-case rules.
+5. **`parse_kitty_options` raised `IndexError`** on any option entry without
+   `=`: `key, value = pair.split('=', 2)` indexes a one-element array. Go skips
+   such entries (and empty values), which is what the port does now.
+6. **Kitty graphics payload kept everything after the first `;`.** Go splits the
+   body and keeps `parts[1]`, dropping later fields; the port kept the rest.
+
+A value audit backs the corpus: all **147** `Key*` constants and **20** mouse
+constants now match the vendored Go exactly (they were compared by generating
+both sides and diffing), and `spec/key_spec.cr` pins the values that were wrong,
+so a future reordering fails a spec rather than a keystroke. `parse_kitty_keyboard`
+was split into `fill_kitty_key_text`/`printable_key_text`/`keypad_text` to stay
+under the complexity gate — and `Key` is a struct, so the helper returns the
+filled key instead of mutating a copy.
+
+**Verified:** `make test` 479 examples, `make format-check`, `make lint` (58
+files), `make inventory` (819 items), `make parity` (819 APIs / 196 tests),
+`make check-examples`, `make snapshot-examples` (12 goldens),
+`make check-inline-fixture`, `make check-win32`, `make test-linux` (479) and
+`make parity-examples` (11 compared, 0 differing).
 
 ### Closed: input decoding is Go-faithful and linear
 
@@ -654,7 +704,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 477 Crystal specs |
+| **Test coverage** | 196 Go tests | 479 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
