@@ -20,6 +20,44 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.11] - 2026-11-25
+
+Vendored upstream: `8ecbcf0`. Scope: the decoder golden and the divergences it
+found.
+
+The decoder golden (`spec/fixtures/decode_golden.tsv`, regenerated from the
+vendored Go decoder by `make decode-golden`) only described mouse tracking and
+size reports, and its generator formatted every other event as `other:%T`, so it
+could not fail for a keyboard or protocol difference. The corpus now has 67
+inputs (was 19) and the generator formats keys, paste markers, focus/blur, cursor
+position, device attributes, mode reports, kitty graphics, terminal version,
+modifyOtherKeys, keyboard enhancements, colour schemes and the `unknown*`
+families. Press/release keys and primary/secondary device attributes are one type
+each in this port, so the golden does not distinguish them.
+
+### Fixed
+
+- **`KeyBackspace` is 127, not 8.** Go's is `rune(ansi.DEL)`; 8 is `ctrl+h`, so
+  every backspace reported the wrong key code.
+- **Modifier key codes were permuted.** `KeyLeftMeta`/`KeyLeftSuper`/`KeyLeftCtrl`
+  (and the right-hand run) were declared in a different order from Go's `iota`
+  sequence, so `leftctrl`/`leftsuper`/`leftmeta` held each other's values; a
+  decoded `leftctrl` compared equal to Go's `leftsuper`.
+- **`KeyIsoLevel3Shift` and `KeyIsoLevel5Shift` were missing**, although the
+  parity ledger listed both as ported.
+- **Kitty keyboard events carry text.** Go fills `Key.Text` from the code after
+  parsing and before deciding press vs release, so a release of `a` has text
+  `"a"`; the port left it empty. The keypad-text and shifted-case rules came
+  with it.
+- **`parse_kitty_options` no longer raises** on an option entry without `=`
+  (`IndexError` from destructuring a one-element split). Go skips such entries
+  and empty values, and so does this now.
+- **Kitty graphics payload matches Go**: only the field between the first and
+  second `;` is payload; Go drops later fields.
+
+All 147 `Key*` and 20 mouse constants are now compared against the vendored Go
+and match; `spec/key_spec.cr` pins the values that were wrong.
+
 ## [1.1.10] - 2026-11-25
 
 Vendored upstream: `8ecbcf0`. Scope: one SGR reading fix.
