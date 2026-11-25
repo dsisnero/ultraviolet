@@ -747,6 +747,46 @@ module Ultraviolet
           Key.new(code: 'b'.ord, text: "b"),
         ])
       end
+
+      # Go validates only the rune at the cursor (`utf8.DecodeRune`,
+      # decoder.go:1112) and then takes the first cluster of the buffer, so a
+      # valid rune in front of an invalid byte still decodes as itself. This
+      # port used to decode the whole remaining buffer, so any invalid byte made
+      # every following call emit UnknownEvent until it was consumed.
+      it "é ?0xff? b" do
+        input = Bytes[0xc3, 0xa9, 0xff, 'b'.ord]
+        reader = TestTerminalReader.new(IO::Memory.new, "dumb")
+        _total, events = reader.scan_events_public(input, true)
+        events.should eq([
+          Key.new(code: 0xe9, text: "é"),
+          UnknownEvent.new(0xff.chr.to_s),
+          Key.new(code: 'b'.ord, text: "b"),
+        ])
+      end
+
+      it "é ?0x80?" do
+        # A lone continuation byte is already consumed as a C1 control, exactly
+        # as Go decodes it (0x80 - 0x40 = 0x40, '@').
+        input = Bytes[0xc3, 0xa9, 0x80]
+        reader = TestTerminalReader.new(IO::Memory.new, "dumb")
+        _total, events = reader.scan_events_public(input, true)
+        events.should eq([
+          Key.new(code: 0xe9, text: "é"),
+          Key.new(code: '@'.ord, mod: ModCtrl | ModAlt),
+        ])
+      end
+
+      it "keeps a cluster longer than the decoder's lookahead in one event" do
+        # 28 bytes of ZWJ/flag sequence: the window starts at 32 bytes, so this
+        # exercises the growth path without splitting the cluster.
+        reader = TestTerminalReader.new(IO::Memory.new, "dumb")
+        _total, events = reader.scan_events_public("🏴󠁧󠁢󠁳󠁣󠁴󠁿".to_slice, true)
+        events.should eq([Key.new(code: KeyExtended, text: "🏴󠁧󠁢󠁳󠁣󠁴󠁿")])
+
+        reader = TestTerminalReader.new(IO::Memory.new, "dumb")
+        _total, events = reader.scan_events_public("👨‍👩‍👧‍👦".to_slice, true)
+        events.should eq([Key.new(code: KeyExtended, text: "👨‍👩‍👧‍👦")])
+      end
     end
   end
 end

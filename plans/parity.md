@@ -6,28 +6,35 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. Features closed in this stretch: bracketed paste
-  is amortised and no longer truncates (Go's `append` and Go's rune walk,
-  below), and the two verification TODOs in `event_scanner.cr` are settled —
+- **Active plan:** none open. Features closed in this stretch: input decoding is
+  Go-faithful and linear (below), bracketed paste is amortised and no longer
+  truncates, and the two verification TODOs in `event_scanner.cr` are settled —
   win32 input decoding goes through the shared ANSI parser and grapheme release
   encoding leads with the buffer's first rune, both matching a Go oracle;
   before that, `v1.1.6` made `Terminal` a facade over a `TerminalScreen` and
   `v1.1.7` made style colours keep their kind. **`src/` now carries no
   non-upstream TODO**; every remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
-  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24, after the win32 and paste fixes:
-     819 APIs / 196 tests clean, plan complete, 473 specs green, upstream
-     `go test ./...` green, tree untouched). Nothing is known to be missing
-     against `8ecbcf0`, so this is a periodic confidence check rather than
-     pending work.
-  2. **Optional:** upstream the Crystal stdlib finding in the paste section
+  1. **Bump the `ansi` shard — needed for end-to-end linear input.** The shard
+     fix is written, tested and pushed as
+     `dsisnero/ansi` branch `fix/first-grapheme-cluster-lookahead` (`85d2821`),
+     waiting for review before it lands on that repo's `main` (per the
+     shard-patch workflow). Until `shard.lock` moves, `scan_events` is still
+     quadratic on non-ASCII input through `Ansi.decode_sequence`, even though
+     `EventDecoder#decode` itself is now linear. After merging: `shards update
+     ansi`, then re-run `make test`, `make parity`, `make parity-examples`, and
+     re-measure with `temp/bench_utf8_scale.cr` (expect ~5 ms for 7.6 KB).
+  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
+     complete, 476 specs green, upstream `go test ./...` green, tree untouched).
+     Nothing is known to be missing against `8ecbcf0`.
+  3. **Optional:** upstream the Crystal stdlib finding in the paste section
      below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
      1.22.3) to crystal-lang/crystal as an issue with the reproduction. This
      port no longer calls it, so nothing is blocked.
-  3. **Watch upstream.** `git ls-remote
+  4. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
-     `8ecbcf0` as of 2026-11-24 (sixth check, after `d9728b6` and `ab56604`).
+     `8ecbcf0` as of 2026-11-24 (seventh check, after `d9728b6` and `ab56604`).
      If it moves, run a refresh: clone, diff `<old>..<new>`, write
      `plans/commit_<new>.md`, bump `vendor/`, then port in feature-sized phases
      ([recipe](commit_8ecbcf0.md)).
@@ -66,11 +73,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, with the win32 and paste fixes):**
-  `make format-check`, `make lint` (58 files), `make test` (473 examples),
+- **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes):**
+  `make format-check`, `make lint` (58 files), `make test` (476 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (473
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (476
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -81,6 +88,57 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
+
+### Closed: input decoding is Go-faithful and linear
+
+Found by benchmarking the input path against Go after the paste fix: decoding
+non-ASCII text was **quadratic**. `EventDecoder#parse_utf8` copied the whole
+remaining buffer into a `String` and then handed it to
+`TextSegment.each_grapheme`, whose constructor decodes every code point it is
+given, so each character cost O(remaining). 7.6 KB of mixed ASCII/accented
+text took **4.8 s** to decode; Go decodes the same buffer in well under a
+millisecond.
+
+Go does neither: it validates only the rune at the cursor
+(`utf8.DecodeRune`, `decoder.go:1112`) and then takes the first cluster of the
+buffer (`uniseg.FirstGraphemeCluster`, `decoder.go:1117`), both O(cluster). The
+port now mirrors that:
+
+- `utf8_rune_size` validates the first rune (truncated, overlong, surrogate and
+  >U+10FFFF sequences rejected) — Go's `DecodeRune` returning `RuneError`.
+- `first_grapheme_cluster` builds a whole-rune prefix of at most
+  `FIRST_CLUSTER_WINDOW` (32) bytes and segments only that, growing the window
+  for the rare cluster longer than it, and trusting a boundary only when
+  `FIRST_CLUSTER_LOOKAHEAD` (4) bytes of the window follow it. An invalid byte
+  ends the search, matching uniseg treating it as its own cluster.
+
+**This also fixed a parity bug it did not set out to fix.** Because the old code
+decoded the entire buffer, any invalid byte anywhere made every following call
+emit `UnknownEvent` until it was consumed: `"é" + 0xff + "b"` produced three
+`UnknownEvent`s. Go decodes the `é`, then the `0xff`, then the `b`, and so does
+this port now. Sixteen event cases — accented text, combining marks, emoji, ZWJ
+family, tag flags, regional indicators, Hangul jamo, Indic conjuncts, invalid
+leads, truncated tails, overlongs, surrogates, max codepoint — are byte-identical
+to the Go oracle, `total` included. (The oracle also showed Go splits an Indic
+conjunct at the virama, which is why this fix deliberately keeps `TextSegment`
+segmentation in the decoder instead of routing it through `Ansi`'s GB9c-aware
+helper.)
+
+**Measured** (release build, `temp/bench_decode_only.cr`, mixed ASCII/accented
+text):
+
+| buffer | before | after |
+|---|---|---|
+| 1900 B | 84.7 ms | 1.07 ms |
+| 3800 B | 605 ms | 1.38 ms |
+| 7600 B | 4787 ms | 2.31 ms |
+
+`scan_events` on the same input is still quadratic (12.7 s → 5.0 s) because it
+calls `Ansi.decode_sequence` over the whole buffer first, and the **pinned**
+`ansi` shard has the same eager-segmentation shape; that half is fixed on
+`dsisnero/ansi` branch `fix/first-grapheme-cluster-lookahead`, and until the
+lock moves this stays next-up item 1. With both patches in place the full path
+is linear: 7.6 KB in **5.5 ms** (12.7 s before).
 
 ### Closed: bracketed paste is amortised and no longer truncates
 
@@ -559,7 +617,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 473 Crystal specs |
+| **Test coverage** | 196 Go tests | 476 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |

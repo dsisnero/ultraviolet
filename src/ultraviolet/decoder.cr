@@ -983,28 +983,132 @@ module Ultraviolet
         return {1, key}
       end
 
-      begin
-        string = String.new(buf, "UTF-8")
-      rescue
-        return {1, UnknownEvent.new(buf[0].chr.to_s)}
-      end
+      # Go only inspects the first rune (`utf8.DecodeRune`, decoder.go:1112) and
+      # then takes the first cluster of the buffer (`uniseg.FirstGraphemeCluster`,
+      # decoder.go:1117). Decoding the whole remaining buffer instead made
+      # non-ASCII input quadratic: every character copied the buffer and
+      # segmented all of it, so 3.8 KB of text took seconds.
+      rune_size = utf8_rune_size(buf)
+      return {1, UnknownEvent.new(buf[0].chr.to_s)} if rune_size == 0
 
-      cluster = ""
-      TextSegment.each_grapheme(string) do |segment|
-        cluster = segment.str
-        break
-      end
-
-      if cluster.empty?
-        return {1, UnknownEvent.new(buf[0].chr.to_s)}
-      end
+      cluster = first_grapheme_cluster(buf, rune_size)
+      return {1, UnknownEvent.new(buf[0].chr.to_s)} if cluster.empty?
 
       codepoint = cluster.each_char.first.ord
-      if cluster.each_char.to_a.size > 1
-        codepoint = KeyExtended
-      end
+      codepoint = KeyExtended if cluster.size > 1
 
       {cluster.bytesize, Key.new(code: codepoint, text: cluster)}
+    end
+
+    # Longest grapheme cluster lookahead, in bytes. Clusters are a few code
+    # points in practice; the window doubles for the rare longer one, such as a
+    # long ZWJ emoji sequence.
+    FIRST_CLUSTER_WINDOW = 32
+
+    # A cluster is only trusted when this much of the window follows it, so the
+    # code point after it is complete inside the window (UTF-8 is at most four
+    # bytes) and the boundary matches a whole-buffer segmentation.
+    FIRST_CLUSTER_LOOKAHEAD = 4
+
+    # Returns the text of the first grapheme cluster of *buf*, given that the
+    # first rune is *rune_size* bytes and valid. Invalid bytes end the cluster,
+    # as they do for Go's uniseg iterator.
+    private def first_grapheme_cluster(buf : Bytes, rune_size : Int32) : String
+      first_rune = String.new(buf[0, rune_size], "UTF-8")
+      window = Math.min(buf.size, FIRST_CLUSTER_WINDOW)
+
+      loop do
+        # Build a whole-rune prefix so segmentation never sees a truncated or
+        # invalid sequence.
+        limit = 0
+        while limit < buf.size && limit < window
+          size = utf8_rune_size(buf[limit, buf.size - limit])
+          break if size == 0
+          limit += size
+        end
+
+        return first_rune if limit <= rune_size
+
+        string = String.new(buf[0, limit], "UTF-8")
+        cluster = ""
+        TextSegment.each_grapheme(string) do |segment|
+          cluster = segment.str
+          break
+        end
+
+        return first_rune if cluster.empty?
+
+        # The prefix stopped at an invalid byte rather than at the window end,
+        # so the cluster cannot extend any further; likewise when the window is
+        # the whole buffer, or when enough bytes follow the cluster to settle
+        # its boundary.
+        blocked = limit < window
+        return cluster if blocked || limit == buf.size ||
+                          cluster.bytesize + FIRST_CLUSTER_LOOKAHEAD <= limit
+
+        window = Math.min(buf.size, window * 2)
+      end
+    end
+
+    # Byte length of the valid UTF-8 rune at the start of *buf*, or 0 when it is
+    # not a valid rune: truncated, overlong, a surrogate, or above U+10FFFF.
+    # This is Go's `utf8.DecodeRune` returning RuneError.
+    private def utf8_rune_size(buf : Bytes) : Int32
+      return 0 if buf.empty?
+
+      size = utf8_sequence_size(buf[0])
+      return 0 if size == 0 || buf.size < size
+      return 0 unless utf8_continuations?(buf, size)
+      return 0 unless utf8_codepoint_valid?(utf8_codepoint(buf, size), size)
+      size
+    end
+
+    private def utf8_sequence_size(lead : UInt8) : Int32
+      if lead < 0x80
+        1
+      elsif lead >= 0xC2 && lead <= 0xDF
+        2
+      elsif lead >= 0xE0 && lead <= 0xEF
+        3
+      elsif lead >= 0xF0 && lead <= 0xF4
+        4
+      else
+        0
+      end
+    end
+
+    private def utf8_continuations?(buf : Bytes, size : Int32) : Bool
+      (1...size).all? { |k| (buf[k] & 0xC0) == 0x80 }
+    end
+
+    private def utf8_codepoint_valid?(codepoint : Int32, size : Int32) : Bool
+      case size
+      when 1
+        true
+      when 2
+        codepoint >= 0x80
+      when 3
+        codepoint >= 0x800 && (codepoint < 0xD800 || codepoint > 0xDFFF)
+      else
+        codepoint >= 0x10000 && codepoint <= 0x10FFFF
+      end
+    end
+
+    private def utf8_codepoint(buf : Bytes, size : Int32) : Int32
+      b0 = buf[0].to_i32
+      case size
+      when 1
+        b0
+      when 2
+        ((b0 & 0x1F) << 6) | (buf[1] & 0x3F)
+      when 3
+        b1 = buf[1].to_i32
+        ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (buf[2] & 0x3F)
+      else
+        b1 = buf[1].to_i32
+        b2 = buf[2].to_i32
+        ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (buf[3] & 0x3F)
+      end
     end
 
     private def parse_control(b : UInt8) : Event
