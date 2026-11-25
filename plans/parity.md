@@ -15,19 +15,15 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `v1.1.7` made style colours keep their kind. **`src/` now carries no
   non-upstream TODO**; every remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
-  1. **Release `v1.1.8`.** Four features have landed since `v1.1.7` (input
-     decoding, paste, win32 decoder/grapheme encoding, and the `ansi` bump that
-     makes the input path linear) and none are visible to consumers until the
-     tag exists. Procedure: [Releasing](../AGENTS.md#releasing).
-  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24, with the `ansi` bump: 819 APIs /
-     196 tests clean, plan complete, 476 specs green, upstream `go test ./...`
+  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` (last run 2026-11-24, with `ansi` `3f6576d`: 819 APIs /
+     196 tests clean, plan complete, 477 specs green, upstream `go test ./...`
      green, tree untouched). Nothing is known to be missing against `8ecbcf0`.
-  3. **Optional:** upstream the Crystal stdlib finding in the paste section
+  2. **Optional:** upstream the Crystal stdlib finding in the paste section
      below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
      1.22.3) to crystal-lang/crystal as an issue with the reproduction. This
      port no longer calls it, so nothing is blocked.
-  4. **Watch upstream.** `git ls-remote
+  3. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
      `8ecbcf0` as of 2026-11-24 (seventh check, after `d9728b6` and `ab56604`).
      If it moves, run a refresh: clone, diff `<old>..<new>`, write
@@ -39,12 +35,16 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.8` tagged at `81ff5f3` and pushed; all five siblings
-  were moved to `1.1.8` with `make update_dependents`, and a fresh consumer
-  resolves `1.1.8`. It **predates** the `ansi` splitter work and the decoder's
-  move onto `Ansi::Grapheme` (`incb: false`), so those ride the next patch; that
-  patch also matters for consumers because `src` now needs an `ansi` new enough
-  to expose `Ansi::Grapheme`.
+- **Release state:** `v1.1.9` tagged at `0318ec6` and pushed; `shard.yml` matches
+  it, all five siblings moved to `1.1.9` with `make update_dependents`, and a
+  fresh consumer resolves `1.1.9` with `ansi` `4b19c7b` and builds. `v1.1.8` was
+  tagged at `81ff5f3`, `v1.1.7` at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
+  `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
+  refresh with `make update_dependents` after each tag push; it now also
+  re-resolves this manifest's own `dependencies:` in each dependent, because
+  `shards update <name>` only refreshes the names it is given and a dependent
+  keeping a stale `ansi` failed to compile against `1.1.9`
+  (`undefined constant Ansi::Grapheme`).
   `v1.1.7` was tagged at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
   `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
   refresh with `make update_dependents` after each tag push.
@@ -74,7 +74,7 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
-  and `ansi` 3f6576d):**
+  and `ansi` 4b19c7b):**
   `make format-check`, `make lint` (58 files), `make test` (477 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),

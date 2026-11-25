@@ -78,6 +78,11 @@ Every release:
    commits; `DRY_RUN=1` reports without changing anything. `../bubbles` matters
    even though it reaches ultraviolet transitively through bubbletea: its lock
    still pins the old version.
+   Each dependent refreshes `ultraviolet` **plus this manifest's own
+   `dependencies:`** (`ansi`, `terminfo`, `uniwidth`, `colorful`, `mosaic`).
+   `shards update <name>` only re-resolves the names it is given, so a new
+   ultraviolet that needs a newer `ansi` would otherwise keep the dependent's
+   stale lock and fail to compile (`undefined constant Ansi::Grapheme`, once).
 5. Verify as a consumer, not from the working tree:
 
    ```bash

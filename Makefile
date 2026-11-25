@@ -71,6 +71,12 @@ DRY_RUN ?= 0
 # --tags`: dependents resolve from GitHub, so a local tag is invisible, and a
 # commit on `main` past the newest tag cannot be reached at all. DRY_RUN=1
 # reports without changing anything.
+#
+# Each dependent refreshes `ultraviolet` *and* this manifest's own
+# `dependencies:` (ansi, terminfo, uniwidth, colorful, mosaic): `shards update
+# <name>` only re-resolves the names it is given, so a new ultraviolet that
+# needs a newer `ansi` would otherwise keep the dependent's stale lock and fail
+# to compile.
 update_dependents:
 	@git fetch --quiet --tags $(UV_REMOTE) 2>/dev/null || true; \
 	newest_tag=$$(git ls-remote --tags --refs $(UV_REMOTE) 'refs/tags/v*' 2>/dev/null | sed 's|.*refs/tags/||' | grep -E '^v[0-9]' | sort -V | tail -1); \
@@ -95,6 +101,7 @@ update_dependents:
 		echo "ultraviolet newest tag = $$newest_tag ($$(echo $$tag_sha | cut -c1-7))"; \
 	fi; \
 	status=0; \
+	uv_deps=$$(awk '/^dependencies:/{f=1;next} /^[a-z]/{f=0} f && /^  [a-z0-9_]+:/{gsub(/[: ]/,""); print}' shard.yml | tr '\n' ' '); \
 	for dep in $(DEPENDENTS); do \
 		if [ ! -f "$$dep/shard.yml" ]; then echo "skip   $$dep (no shard.yml)"; continue; fi; \
 		locked_before=$$(awk '/^  ultraviolet:/{f=1;next} f&&/version:/{print $$2;exit}' "$$dep/shard.lock" 2>/dev/null || echo none); \
@@ -103,7 +110,7 @@ update_dependents:
 			continue; \
 		fi; \
 		echo "update $$dep"; \
-		( cd "$$dep" && shards update ultraviolet ) || { status=1; continue; }; \
+		( cd "$$dep" && shards update ultraviolet $$uv_deps ) || { status=1; continue; }; \
 		locked=$$(awk '/^  ultraviolet:/{f=1;next} f&&/version:/{print $$2;exit}' "$$dep/shard.lock"); \
 		case "$$locked" in \
 			"$$newest_version") echo "       $$dep now at $$newest_tag" ;; \
