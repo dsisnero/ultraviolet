@@ -15,19 +15,14 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `v1.1.7` made style colours keep their kind. **`src/` now carries no
   non-upstream TODO**; every remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
-  1. **Bump the `ansi` shard — needed for end-to-end linear input.** The shard
-     fix is written, tested and pushed as
-     `dsisnero/ansi` branch `fix/first-grapheme-cluster-lookahead` (`85d2821`),
-     waiting for review before it lands on that repo's `main` (per the
-     shard-patch workflow). Until `shard.lock` moves, `scan_events` is still
-     quadratic on non-ASCII input through `Ansi.decode_sequence`, even though
-     `EventDecoder#decode` itself is now linear. After merging: `shards update
-     ansi`, then re-run `make test`, `make parity`, `make parity-examples`, and
-     re-measure with `temp/bench_utf8_scale.cr` (expect ~5 ms for 7.6 KB).
+  1. **Release `v1.1.8`.** Four features have landed since `v1.1.7` (input
+     decoding, paste, win32 decoder/grapheme encoding, and the `ansi` bump that
+     makes the input path linear) and none are visible to consumers until the
+     tag exists. Procedure: [Releasing](../AGENTS.md#releasing).
   2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24: 819 APIs / 196 tests clean, plan
-     complete, 476 specs green, upstream `go test ./...` green, tree untouched).
-     Nothing is known to be missing against `8ecbcf0`.
+     vendor/ultraviolet` (last run 2026-11-24, with the `ansi` bump: 819 APIs /
+     196 tests clean, plan complete, 476 specs green, upstream `go test ./...`
+     green, tree untouched). Nothing is known to be missing against `8ecbcf0`.
   3. **Optional:** upstream the Crystal stdlib finding in the paste section
      below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
      1.22.3) to crystal-lang/crystal as an issue with the reproduction. This
@@ -74,7 +69,8 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes):**
+- **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
+  and the `ansi` bump):**
   `make format-check`, `make lint` (58 files), `make test` (476 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
@@ -134,12 +130,15 @@ text):
 | 3800 B | 605 ms | 1.38 ms |
 | 7600 B | 4787 ms | 2.31 ms |
 
-`scan_events` on the same input is still quadratic (12.7 s → 5.0 s) because it
-calls `Ansi.decode_sequence` over the whole buffer first, and the **pinned**
-`ansi` shard has the same eager-segmentation shape; that half is fixed on
-`dsisnero/ansi` branch `fix/first-grapheme-cluster-lookahead`, and until the
-lock moves this stays next-up item 1. With both patches in place the full path
-is linear: 7.6 KB in **5.5 ms** (12.7 s before).
+`scan_events` on the same input was still quadratic while the `ansi` shard was
+pinned (12.7 s → 5.0 s) because it calls `Ansi.decode_sequence` over the whole
+buffer first and that shard segmented the whole remainder per cluster too. The
+shard half is now in: `dsisnero/ansi` `5b0abcb` (segments the first cluster from
+a lookahead window) is pinned in `shard.lock`, and the full path is linear —
+7.6 KB of mixed ASCII/accented text in **5.47 ms** against 12.7 s before, with
+the same reproduction (`temp/bench_utf8_scale.cr`, release build). An equivalent
+branch (`85d2821`) was written here in parallel and is superseded by that commit;
+nothing depends on it.
 
 ### Closed: bracketed paste is amortised and no longer truncates
 
