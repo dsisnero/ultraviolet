@@ -32,3 +32,13 @@ dependencies:
     version: 0.8.2
   uniwidth:
     github: naqvis/uni_char_width
+  # Required directly by src/ (event decoding, styled strings, screen context).
+  # It used to arrive only through `ansi`; ansi has since vendored its own UAX #29
+  # splitter and dropped this. Declare it rather than rely on `uniwidth` pulling
+  # it in: the input decoder needs a *non-GB9c* segmenter to match Go, whose
+  # decoder uses `uniseg` and splits an Indic conjunct at the virama, while ansi's
+  # splitter (like Go's width code, via `uax29`) merges it: "स्ते" is 2 events in
+  # the Go decoder and 1 cluster in the width code.
+  textseg:
+    github: naqvis/uni_text_seg
+    version: 0.1.3

@@ -787,6 +787,21 @@ module Ultraviolet
         _total, events = reader.scan_events_public("👨‍👩‍👧‍👦".to_slice, true)
         events.should eq([Key.new(code: KeyExtended, text: "👨‍👩‍👧‍👦")])
       end
+
+      # Go's decoder segments with uniseg, which does not implement GB9c, while
+      # its width code segments with uax29, which does. The same string is two
+      # events here and one cluster in `Ansi.string_width`, and the decoder must
+      # keep the uniseg side: this is why `src` depends on `textseg` rather than
+      # on `Ansi::Grapheme.cluster_end`.
+      it "splits an Indic conjunct at the virama, as Go's decoder does" do
+        reader = TestTerminalReader.new(IO::Memory.new, "dumb")
+        _total, events = reader.scan_events_public("स्ते".to_slice, true)
+        events.should eq([
+          Key.new(code: KeyExtended, text: "स्"),
+          Key.new(code: KeyExtended, text: "ते"),
+        ])
+        Ansi.string_width_wc("स्ते").should eq(2)
+      end
     end
   end
 end

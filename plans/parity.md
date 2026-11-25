@@ -70,11 +70,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
 - **Gates (last verified 2026-11-24, with the win32, paste and decoder fixes
-  and the `ansi` bump):**
-  `make format-check`, `make lint` (58 files), `make test` (476 examples),
+  and `ansi` 08621ee):**
+  `make format-check`, `make lint` (58 files), `make test` (477 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (476
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (477
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -134,12 +134,24 @@ text):
 `scan_events` on the same input was still quadratic while the `ansi` shard was
 pinned (12.7 s → 5.0 s) because it calls `Ansi.decode_sequence` over the whole
 buffer first and that shard segmented the whole remainder per cluster too. The
-shard half is now in: `dsisnero/ansi` `5b0abcb` (segments the first cluster from
-a lookahead window) is pinned in `shard.lock`, and the full path is linear —
-7.6 KB of mixed ASCII/accented text in **5.47 ms** against 12.7 s before, with
-the same reproduction (`temp/bench_utf8_scale.cr`, release build). An equivalent
-branch (`85d2821`) was written here in parallel and is superseded by that commit;
-nothing depends on it.
+shard half is now in and has since been replaced by the shard's own splitter:
+`dsisnero/ansi` `08621ee` vendors a UAX #29 splitter (`37413c2`) with the
+property table indexed by page, exposes `Ansi::Grapheme.cluster_end`, and bounds
+`DecodeSequence` parameters (`95589d2`). The full path is linear — 7.6 KB of
+mixed ASCII/accented text scans in **3.5–5.9 ms** against 12.7 s before, and a
+54 KB paste in **3.4 ms** (`temp/bench_utf8_scale.cr`, `temp/bench_scan.cr`,
+release build). An equivalent branch written here in parallel (`85d2821`) is
+superseded; nothing depends on it.
+
+**The decoder keeps `textseg`, on purpose.** Go segments twice with two
+libraries that disagree: the decoder uses `uniseg` and *splits* an Indic conjunct
+at the virama ("स्ते" is two `KeyExtended` events), while the width code uses
+`uax29` and *merges* it (GB9c, one cluster). `ansi`'s new splitter follows the
+width behaviour, so routing `parse_utf8` through it would emit one event where
+Go emits two. `shard.yml` therefore declares `textseg` — the non-GB9c segmenter
+the decoder needs — instead of leaving it to arrive by accident through `ansi`
+(it no longer does) or `uniwidth` (it still would).
+`spec/go_compatibility_spec.cr` pins the Go-decoder boundary.
 
 ### Closed: bracketed paste is amortised and no longer truncates
 
@@ -618,7 +630,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 476 Crystal specs |
+| **Test coverage** | 196 Go tests | 477 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |
