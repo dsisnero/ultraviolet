@@ -62,7 +62,7 @@ update:
 # why every release needs a tag: an untagged commit on `main` never reaches a
 # consumer or a dependent. See the Versioning section in CHANGELOG.md.
 # Override with: make update_dependents DEPENDENTS="../lipgloss"
-DEPENDENTS ?= ../lipgloss ../bubbletea.cr ../bubbletea.cr/bubbletea-examples ../bubbles-examples
+DEPENDENTS ?= ../lipgloss ../bubbletea.cr ../bubbletea.cr/bubbletea-examples ../bubbles ../bubbles-examples
 UV_REMOTE ?= origin
 UV_BRANCH ?= main
 DRY_RUN ?= 0

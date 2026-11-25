@@ -72,10 +72,12 @@ Every release:
 3. `git commit -m "chore(release): vX.Y.Z"`, then `git tag -a vX.Y.Z -m "…"`
    and `git push origin main --follow-tags`.
 4. `make update_dependents` — moves the sibling checkouts (`../lipgloss`,
-   `../bubbletea.cr`, `../bubbletea.cr/bubbletea-examples`,
+   `../bubbletea.cr`, `../bubbletea.cr/bubbletea-examples`, `../bubbles`,
    `../bubbles-examples`) onto the new tag. It warns when `main` carries
    untagged `src/` or `shard.yml` changes and stays quiet for tooling/docs-only
-   commits; `DRY_RUN=1` reports without changing anything.
+   commits; `DRY_RUN=1` reports without changing anything. `../bubbles` matters
+   even though it reaches ultraviolet transitively through bubbletea: its lock
+   still pins the old version.
 5. Verify as a consumer, not from the working tree:
 
    ```bash

@@ -78,8 +78,9 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
-  (160 examples) and `../lipgloss` (198 examples) pass against the changed
-  `Color`. The `panic` capture used to be timing-sensitive; the harness now gives
+  (165 examples), `../lipgloss` (208 examples) and `../bubbles` (355 examples)
+  pass on the `v1.1.8` tag, and `make update_dependents` moves all five sibling
+  checkouts onto it. The `panic` capture used to be timing-sensitive; the harness now gives
   it a window longer than its tick period and cuts the language-specific report,
   so it is deterministic.
 
