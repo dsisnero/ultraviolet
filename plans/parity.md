@@ -36,19 +36,18 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   `shards` resolves. Policy: patch bumps on the `1.1` line (`1.1.2`, `1.1.3`, …)
   until upstream cuts a tag at `1.2` or above, then follow upstream's numbers.
   See the Versioning section in `CHANGELOG.md`.
-- **Release state:** `v1.1.9` tagged at `0318ec6` and pushed; `shard.yml` matches
-  it, all five siblings moved to `1.1.9` with `make update_dependents`, and a
-  fresh consumer resolves `1.1.9` with `ansi` `4b19c7b` and builds. `v1.1.8` was
-  tagged at `81ff5f3`, `v1.1.7` at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
-  `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
-  refresh with `make update_dependents` after each tag push; it now also
-  re-resolves this manifest's own `dependencies:` in each dependent, because
-  `shards update <name>` only refreshes the names it is given and a dependent
-  keeping a stale `ansi` failed to compile against `1.1.9`
-  (`undefined constant Ansi::Grapheme`).
-  `v1.1.7` was tagged at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at
-  `7fda004`, `v1.1.4` at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos
-  refresh with `make update_dependents` after each tag push.
+- **Release state:** `v1.1.11` tagged at `1302012` and pushed; `shard.yml` matches
+  it, all five siblings moved to `1.1.11` with `make update_dependents`, and a
+  fresh consumer resolves `1.1.11` (with the `ansi` commit it was tested
+  against) and reports `KeyBackspace == 127`, the corrected modifier codes, and
+  `string_width_wc("स्ते") == 2`. `v1.1.10` (style pens via parser params) was
+  tagged at `fc2fac7` and `v1.1.9` at `0318ec6`; `v1.1.8` at `81ff5f3`,
+  `v1.1.7` at `789880c`, `v1.1.6` at `f47e115`, `v1.1.5` at `7fda004`, `v1.1.4`
+  at `2fab221`, and `v1.1.3` at `c36ff37`. Sibling repos refresh with `make
+  update_dependents` after each tag push; it also re-resolves this manifest's own
+  `dependencies:` in each dependent, because `shards update <name>` only
+  refreshes the names it is given (a dependent keeping a stale `ansi` once failed
+  to compile with `undefined constant Ansi::Grapheme`).
 - **Decided: `PollReader` is wired into `Terminal`** (was item 2). Go builds a
   poll reader in `Terminal.start` (`vendor/ultraviolet/terminal.go:188`);
   Crystal's `Terminal` now does the same in `start_input` instead of wrapping
