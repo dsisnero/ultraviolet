@@ -29,3 +29,30 @@ require "../src/ultraviolet"
     {IO::FileDescriptor.new(master_fd), IO::FileDescriptor.new(slave_fd)}
   end
 {% end %}
+
+# Feeds an SGR sequence through the parser and returns the resulting pen, the
+# same path WrapWriter takes.
+def parse_pen(sequence : String) : Ultraviolet::Style
+  pen = Ultraviolet::Style.new
+  parser = Ansi::Parser.new
+  parser.set_handler(Ansi::Handler.new(
+    handle_csi: ->(cmd : Ansi::Cmd, params : Ansi::Params) do
+      pen = Ultraviolet.read_style(params, pen) if cmd == 'm'.ord
+    end
+  ))
+  parser.parse(sequence)
+  pen
+end
+
+# Returns the parser's parameters for an SGR sequence.
+def parse_params(sequence : String) : Ansi::Params
+  params : Ansi::Params? = nil
+  parser = Ansi::Parser.new
+  parser.set_handler(Ansi::Handler.new(
+    handle_csi: ->(cmd : Ansi::Cmd, got : Ansi::Params) do
+      params = got if cmd == 'm'.ord
+    end
+  ))
+  parser.parse(sequence)
+  params.not_nil!
+end

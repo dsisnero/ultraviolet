@@ -450,20 +450,117 @@ module Ultraviolet
     {value.bytesize, link}
   end
 
+  # ReadStyle reads a pen style from SGR parameters.
+  #
+  # Go parity: this is a direct port of Go ultraviolet's `ReadStyle`
+  # (styled.go). It consumes the parser's parameters, not a re-split string, so
+  # the `HasMore` flags and missing parameters survive and `ansi.ReadStyleColor`
+  # can reject the ambiguous colour forms. That matters for sequences that mix
+  # `;` and `:` separators: Go reads "38;2::10:20:30" as black because the colour
+  # parse fails, the empty parameter resets the pen, and the trailing `30` is
+  # then read as a foreground attribute.
+  # ameba:disable Metrics/CyclomaticComplexity
+  def self.read_style(params : Ansi::Params, pen : Style) : Style
+    return Style.new if params.size == 0
+
+    style = pen
+    i = 0
+    while i < params.size
+      param, has_more, _ = params.param(i, 0)
+      case param
+      when 0
+        style = Style.new
+      when 1
+        style.attrs |= Attr::BOLD
+      when 2
+        style.attrs |= Attr::FAINT
+      when 3
+        style.attrs |= Attr::ITALIC
+      when 4
+        next_param, _, next_ok = params.param(i + 1, 0)
+        if has_more && next_ok
+          # Only sub-parameters (separated by ":") carry the underline style.
+          if next_param >= 0 && next_param <= 5
+            i += 1
+            style.underline = underline_from_code(next_param)
+          end
+        else
+          style.underline = Underline::Single
+        end
+      when 5
+        style.attrs |= Attr::BLINK
+      when 6
+        style.attrs |= Attr::RAPID_BLINK
+      when 7
+        style.attrs |= Attr::REVERSE
+      when 8
+        style.attrs |= Attr::CONCEAL
+      when 9
+        style.attrs |= Attr::STRIKETHROUGH
+      when 22
+        style.attrs &= ~(Attr::BOLD | Attr::FAINT)
+      when 23
+        style.attrs &= ~Attr::ITALIC
+      when 24
+        style.underline = Underline::None
+      when 25
+        style.attrs &= ~(Attr::BLINK | Attr::RAPID_BLINK)
+      when 27
+        style.attrs &= ~Attr::REVERSE
+      when 28
+        style.attrs &= ~Attr::CONCEAL
+      when 29
+        style.attrs &= ~Attr::STRIKETHROUGH
+      when 30..37
+        style.fg = AnsiColor.basic(param - 30)
+      when 38
+        n, color = Ansi.read_style_color(params_from(params, i))
+        if n > 0
+          style.fg = color.nil? ? nil : style_color(color)
+          i += n - 1
+        end
+      when 39
+        style.fg = nil
+      when 40..47
+        style.bg = AnsiColor.basic(param - 40)
+      when 48
+        n, color = Ansi.read_style_color(params_from(params, i))
+        if n > 0
+          style.bg = color.nil? ? nil : style_color(color)
+          i += n - 1
+        end
+      when 49
+        style.bg = nil
+      when 58
+        n, color = Ansi.read_style_color(params_from(params, i))
+        if n > 0
+          style.underline_color = color.nil? ? nil : style_color(color)
+          i += n - 1
+        end
+      when 59
+        style.underline_color = nil
+      when 90..97
+        style.fg = AnsiColor.bright(param - 90)
+      when 100..107
+        style.bg = AnsiColor.bright(param - 100)
+      end
+      i += 1
+    end
+    style
+  end
+
+  # ReadStyle from an SGR parameter payload such as "1;31:4". The payload is run
+  # through the parser so it is tokenised exactly like the sequence on the wire,
+  # then handed to the parameter-based reader above.
   def self.read_style(params : String, pen : Style) : Style
     style = pen
-    if params.empty?
-      style = reset_style(style)
-      return style
-    end
-
-    tokens = params.split(';', remove_empty: false)
-    i = 0
-    while i < tokens.size
-      code, parts = parse_style_token(tokens[i])
-      style, consumed = apply_style_code(style, code, parts, tokens, i)
-      i += consumed + 1
-    end
+    parser = Ansi::Parser.new
+    parser.set_handler(Ansi::Handler.new(
+      handle_csi: ->(cmd : Ansi::Cmd, got : Ansi::Params) do
+        style = read_style(got, style) if cmd == 'm'.ord
+      end
+    ))
+    parser.parse("\e[#{params}m")
     style
   end
 
@@ -477,235 +574,33 @@ module Ultraviolet
     read_style(String.new(params), pen)
   end
 
-  private STYLE_SET_ATTR = {
-    1 => Attr::BOLD,
-    2 => Attr::FAINT,
-    3 => Attr::ITALIC,
-    5 => Attr::BLINK,
-    6 => Attr::RAPID_BLINK,
-    7 => Attr::REVERSE,
-    8 => Attr::CONCEAL,
-    9 => Attr::STRIKETHROUGH,
-  }
-
-  private STYLE_CLEAR_ATTR = {
-    22 => (Attr::BOLD | Attr::FAINT),
-    23 => Attr::ITALIC,
-    25 => (Attr::BLINK | Attr::RAPID_BLINK),
-    27 => Attr::REVERSE,
-    28 => Attr::CONCEAL,
-    29 => Attr::STRIKETHROUGH,
-  }
-
-  private def self.reset_style(style : Style) : Style
-    style.fg = nil
-    style.bg = nil
-    style.underline_color = nil
-    style.underline = Underline::None
-    style.attrs = Attr::RESET
-    style
+  # Parameters from `index` onwards, encoded the way the parser encodes them.
+  private def self.params_from(params : Ansi::Params, index : Int32) : Ansi::Params
+    Ansi::Params.new(params.to_a[index..])
   end
 
-  private def self.parse_style_token(token : String) : {Int32, Array(String)}
-    value = token.empty? ? "0" : token
-    parts = value.split(':')
-    code = parse_int_token(parts[0])
-    {code || 0, parts}
-  end
-
-  private def self.parse_int_token(token : String) : Int32?
-    return nil if token.empty?
-    i = 0
-    while i < token.bytesize && token.byte_at(i).unsafe_chr.ascii_number?
-      i += 1
-    end
-    return nil if i == 0
-    token[0, i].to_i?
-  end
-
-  private def self.apply_style_code(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32}
-    return {apply_style_reset(style, code), 0} if code == 0
-
-    style, handled = apply_style_attr(style, code)
-    return {style, 0} if handled
-
-    style, handled = apply_style_misc(style, code, parts)
-    return {style, 0} if handled
-
-    apply_style_color(style, code, parts, tokens, index)
-  end
-
-  private def self.apply_style_reset(style : Style, _code : Int32) : Style
-    reset_style(style)
-  end
-
-  private def self.apply_style_attr(style : Style, code : Int32) : {Style, Bool}
-    if attr = STYLE_SET_ATTR[code]?
-      style.attrs |= attr
-      return {style, true}
-    end
-    if attr = STYLE_CLEAR_ATTR[code]?
-      style.attrs &= ~attr
-      return {style, true}
-    end
-    {style, false}
-  end
-
-  private def self.apply_style_misc(style : Style, code : Int32, parts : Array(String)) : {Style, Bool}
-    case code
-    when 4
-      underline_code = parts.size > 1 ? (parse_int_token(parts[1]) || 1) : 1
-      style.underline = underline_from_code(underline_code)
-      {style, true}
-    when 24
-      style.underline = Underline::None
-      {style, true}
+  private def self.style_color(color : Ansi::PaletteColor) : Color
+    case color
+    when Ansi::BasicColor
+      AnsiColor.basic(color.value.to_i)
+    when Ansi::IndexedColor
+      AnsiColor.indexed(color.value.to_i)
+    when Ansi::RGBColor
+      Color.new(color.r, color.g, color.b)
+    when Ansi::TrueColor
+      r, g, b = Ansi.hex_to_rgb(color.value)
+      Color.new(r.to_u8, g.to_u8, b.to_u8)
+    when Ansi::Color
+      Color.new(color.r, color.g, color.b)
+    when Colorful::Color
+      Color.new(
+        (color.r * 255.0).round.clamp(0, 255).to_u8,
+        (color.g * 255.0).round.clamp(0, 255).to_u8,
+        (color.b * 255.0).round.clamp(0, 255).to_u8
+      )
     else
-      {style, false}
+      Color.new(0_u8, 0_u8, 0_u8)
     end
-  end
-
-  private def self.apply_style_color(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32}
-    style, handled = apply_style_basic_color(style, code)
-    return {style, 0} if handled
-
-    style, consumed = apply_style_extended_color_code(style, code, parts, tokens, index)
-    return {style, consumed} if consumed
-
-    style, handled = apply_style_bright_color(style, code)
-    return {style, 0} if handled
-
-    {style, 0}
-  end
-
-  private def self.apply_style_basic_color(style : Style, code : Int32) : {Style, Bool}
-    if code >= 30 && code <= 37
-      style.fg = AnsiColor.basic(code - 30)
-      return {style, true}
-    end
-    if code == 39
-      style.fg = nil
-      return {style, true}
-    end
-    if code >= 40 && code <= 47
-      style.bg = AnsiColor.basic(code - 40)
-      return {style, true}
-    end
-    if code == 49
-      style.bg = nil
-      return {style, true}
-    end
-    {style, false}
-  end
-
-  private def self.apply_style_extended_color_code(style : Style, code : Int32, parts : Array(String), tokens : Array(String), index : Int32) : {Style, Int32?}
-    if code == 38
-      style, consumed = apply_extended_color(style, parts, tokens, index, :fg)
-      return {style, consumed}
-    end
-    if code == 48
-      style, consumed = apply_extended_color(style, parts, tokens, index, :bg)
-      return {style, consumed}
-    end
-    if code == 58
-      style, consumed = apply_extended_color(style, parts, tokens, index, :underline)
-      return {style, consumed}
-    end
-    if code == 59
-      style.underline_color = nil
-      return {style, 0}
-    end
-    {style, nil}
-  end
-
-  private def self.apply_style_bright_color(style : Style, code : Int32) : {Style, Bool}
-    if code >= 90 && code <= 97
-      style.fg = AnsiColor.bright(code - 90)
-      return {style, true}
-    end
-    if code >= 100 && code <= 107
-      style.bg = AnsiColor.bright(code - 100)
-      return {style, true}
-    end
-    {style, false}
-  end
-
-  private def self.apply_extended_color(style : Style, parts : Array(String), tokens : Array(String), index : Int32, target : Symbol) : {Style, Int32}
-    color, _ = read_color_parts(parts)
-    if color
-      style = assign_color(style, color, target)
-      return {style, 0}
-    end
-
-    color, consumed = read_color(tokens, index + 1)
-    if color
-      style = assign_color(style, color, target)
-      return {style, consumed}
-    end
-
-    {style, 0}
-  end
-
-  private def self.assign_color(style : Style, color : Color, target : Symbol) : Style
-    case target
-    when :fg
-      style.fg = color
-    when :bg
-      style.bg = color
-    when :underline
-      style.underline_color = color
-    end
-    style
-  end
-
-  private def self.read_color_parts(parts : Array(String)) : {Color?, Int32}
-    return {nil, 0} if parts.size < 3
-    mode = parse_int_token(parts[1])
-    return {nil, 0} unless mode
-
-    if mode == 2
-      return {nil, 0} if parts.size < 5
-      r = parse_int_token(parts[2])
-      g = parse_int_token(parts[3])
-      b = parse_int_token(parts[4])
-      return {nil, 0} unless r && g && b
-      return {Color.new(r.to_u8, g.to_u8, b.to_u8), 0}
-    end
-
-    if mode == 5
-      return {nil, 0} if parts.size < 3
-      idx = parse_int_token(parts[2])
-      return {nil, 0} unless idx
-      return {AnsiColor.indexed(idx), 0}
-    end
-
-    {nil, 0}
-  end
-
-  private def self.read_color(tokens : Array(String), start_index : Int32) : {Color?, Int32}
-    return {nil, 0} if start_index >= tokens.size
-
-    mode = parse_int_token(tokens[start_index])
-    return {nil, 0} unless mode
-
-    if mode == 2
-      return {nil, 0} if start_index + 3 >= tokens.size
-      r = parse_int_token(tokens[start_index + 1])
-      g = parse_int_token(tokens[start_index + 2])
-      b = parse_int_token(tokens[start_index + 3])
-      return {nil, 0} unless r && g && b
-      color = Color.new(r.to_u8, g.to_u8, b.to_u8)
-      return {color, 4}
-    end
-
-    if mode == 5
-      return {nil, 0} if start_index + 1 >= tokens.size
-      idx = parse_int_token(tokens[start_index + 1])
-      return {nil, 0} unless idx
-      return {AnsiColor.indexed(idx), 2}
-    end
-
-    {nil, 0}
   end
 
   private def self.underline_from_code(code : Int32) : Underline
