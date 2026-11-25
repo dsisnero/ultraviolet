@@ -20,6 +20,42 @@ adopts that version number and follows upstream's releases from then on
 a mismatch lets `shard.lock` record a version that no tag provides, which
 breaks dependents on their next update.
 
+## [1.1.9] - 2026-11-24
+
+Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.8`.
+
+### Changed
+
+- **One grapheme splitter in both of Go's modes.** Go segments in two places with
+  libraries that disagree: the decoder and key encoding use `uniseg` (no GB9c, so
+  an Indic conjunct splits at the virama) while the screen and width code use
+  `uax29` (GB9c, one cluster of 2 cells). `ansi` now ports that splitter and
+  exposes `Ansi::Grapheme.cluster_end(bytes, offset, incb : Bool = true)`, so the
+  port uses it with `incb: false` in `EventDecoder#parse_utf8` and
+  `EventScanner#encode_grapheme_bufs`, and `incb: true` in
+  `ScreenContext#draw_string_at`. Boundaries are unchanged; the implementation is
+  Go's.
+- **The decoder needs no lookahead machinery.** `cluster_end` is O(cluster), so
+  the window/growth code and its two constants are gone.
+
+### Internal
+
+- `textseg` is removed from `src` and from `shard.yml`; it remains installed only
+  because `uniwidth` requires it itself, which is why the library kept compiling
+  after `ansi` dropped it.
+- `ansi` `3f6576d` (vendored UAX #29 splitter with page-indexed properties,
+  bounded `DecodeSequence` parameters) is the resolved shard. Non-ASCII input got
+  faster with it: 7.6 KB of mixed ASCII/accented text scans in 1.1 ms (3.5-5.9 ms
+  when this work started, 12.7 s before the input-path fixes), plain 4.4 KB in
+  0.27 ms, a 54 KB paste in 3.3 ms, 4.5 KB of win32 records in 0.019 ms.
+- `scripts/check_inline_fixture.sh` swaps the sibling's `lib/ansi` for this
+  checkout's along with `src`; the fixture splices `src` into another checkout,
+  so an `ansi` older than the pin made it fail for a reason unrelated to the
+  frame it checks.
+- Verified against a Go oracle rebuilt after the migration: 21 event cases, 13
+  win32 deserialize cases and 13 paste cases are byte-identical, including
+  Prepend runs, controls between letters, and Indic conjuncts.
+
 ## [1.1.8] - 2026-11-24
 
 Vendored upstream: `8ecbcf0`. Scope: work landed since `1.1.7`.
