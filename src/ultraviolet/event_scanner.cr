@@ -9,7 +9,10 @@ module Ultraviolet
     @utf16_half : Array(Bool)
     @utf16_buf : Array(Array(Int32))
     @grapheme_buf : Array(Array(Int32))
-    @paste : Bytes?
+    # Bracketed paste buffer. Go's field is a `[]byte` grown with `append`,
+    # so this is a growable array and not a fixed `Bytes`: appending to a
+    # `Bytes` copies the whole buffer, which made a large paste quadratic.
+    @paste : Array(UInt8)?
     @table : Hash(String, Key)
     @logger : Logger?
 
@@ -58,19 +61,19 @@ module Ultraviolet
             if event.is_a?(Key)
               key = event.as(Key)
               if !key.text.empty?
-                @paste = append_bytes(paste, key.text.to_slice)
+                paste.concat(key.text.to_slice)
               else
                 seq_bytes = buf[0, n]
                 is_win32 = seq_bytes.size >= 3 && seq_bytes[0] == Ansi::ESC && seq_bytes[1] == '['.ord && seq_bytes[seq_bytes.size - 1] == '_'.ord
                 if is_win32 && key.code == KeyEnter && key.code == key.base_code
-                  @paste = append_bytes(paste, "\n".to_slice)
+                  paste << '\n'.ord.to_u8
                 elsif is_win32 && key.code == key.base_code && control_char?(key.code)
-                  @paste = append_bytes(paste, Bytes.new(1, Ultraviolet.safe_char(key.code).ord.to_u8))
+                  paste << Ultraviolet.safe_char(key.code).ord.to_u8
                 elsif !is_win32
                   if esc && n <= 2 && !expired
                     return {total, events}
                   end
-                  @paste = append_bytes(paste, seq_bytes)
+                  paste.concat(seq_bytes)
                 end
               end
             elsif !expired && event.is_a?(UnknownEvent)
@@ -93,11 +96,11 @@ module Ultraviolet
           end
           events << event
         when PasteStartEvent
-          @paste = Bytes.new(0)
+          @paste = Array(UInt8).new
           events << event
         when PasteEndEvent
           if paste = @paste
-            events << PasteEvent.new(decode_paste_bytes(paste))
+            events << PasteEvent.new(decode_paste_bytes(Slice.new(paste.to_unsafe, paste.size)))
           else
             events << PasteEvent.new("")
           end
@@ -141,17 +144,22 @@ module Ultraviolet
       end
     end
 
+    # Go walks the paste buffer one rune at a time and keeps every rune that is
+    # not `utf8.RuneError`, which also drops a *valid* U+FFFD
+    # (terminal_reader.go:357). `String.new(bytes, invalid: :skip)` is not
+    # equivalent: Crystal 1.22.3 treats the transcoder's "output buffer full"
+    # as invalid input, so it silently drops a byte per kilobyte of paste, and
+    # it keeps U+FFFD rather than dropping it.
     private def decode_paste_bytes(paste_bytes : Bytes) : String
       return "" if paste_bytes.empty?
-      String.new(paste_bytes, "UTF-8", invalid: :skip)
-    end
-
-    private def append_bytes(buffer : Bytes, data : Bytes) : Bytes
-      return data if buffer.empty?
-      combined = Bytes.new(buffer.size + data.size)
-      combined.copy_from(buffer)
-      combined[buffer.size, data.size].copy_from(data)
-      combined
+      String.build do |io|
+        reader = Char::Reader.new(String.new(paste_bytes))
+        while reader.has_next?
+          char = reader.current_char
+          io << char unless char == Char::REPLACEMENT
+          reader.next_char
+        end
+      end
     end
 
     # Mirrors Go's eventScanner.deserializeWin32Input

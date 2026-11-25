@@ -6,26 +6,25 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 ## Where we are
 
-- **Active plan:** none open. Features closed in this stretch: the two
-  verification TODOs in `event_scanner.cr` are settled — win32 input decoding
-  goes through the shared ANSI parser and grapheme release encoding leads with
-  the buffer's first rune, both matching a Go oracle; before that, `v1.1.6`
-  made `Terminal` a facade over a `TerminalScreen` and `v1.1.7` made style
-  colours keep their kind. **`src/` now carries no non-upstream TODO**; every
-  remaining one is open upstream too.
+- **Active plan:** none open. Features closed in this stretch: bracketed paste
+  is amortised and no longer truncates (Go's `append` and Go's rune walk,
+  below), and the two verification TODOs in `event_scanner.cr` are settled —
+  win32 input decoding goes through the shared ANSI parser and grapheme release
+  encoding leads with the buffer's first rune, both matching a Go oracle;
+  before that, `v1.1.6` made `Terminal` a facade over a `TerminalScreen` and
+  `v1.1.7` made style colours keep their kind. **`src/` now carries no
+  non-upstream TODO**; every remaining one is open upstream too.
 - **Next up** (priority order), details below under *Closed* sections:
-  1. **Known performance divergence (not output parity):** bracketed paste is
-     quadratic here. `EventScanner#scan_events` appends each pasted character
-     with a full-copy `append_bytes`, so a 54 KB paste costs ~397 ms against a
-     release build, while Go's `append(d.paste, text...)` is amortised. Fix by
-     growing the paste buffer amortised (or an `IO::Memory`), then re-measure
-     with the bench recipe in the closed section below. Output is unaffected,
-     so `make parity-examples` should not move.
-  2. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
-     vendor/ultraviolet` (last run 2026-11-24, after the win32 fix: 819 APIs /
-     196 tests clean, plan complete, 471 specs green, upstream `go test ./...`
-     green, tree untouched). Nothing is known to be missing against `8ecbcf0`,
-     so this is a periodic confidence check rather than pending work.
+  1. **Optional:** re-run `./scripts/verify_parity_adversarial.sh .
+     vendor/ultraviolet` (last run 2026-11-24, after the win32 and paste fixes:
+     819 APIs / 196 tests clean, plan complete, 473 specs green, upstream
+     `go test ./...` green, tree untouched). Nothing is known to be missing
+     against `8ecbcf0`, so this is a periodic confidence check rather than
+     pending work.
+  2. **Optional:** upstream the Crystal stdlib finding in the paste section
+     below (`String.new(bytes, invalid: :skip)` loses a byte per kilobyte on
+     1.22.3) to crystal-lang/crystal as an issue with the reproduction. This
+     port no longer calls it, so nothing is blocked.
   3. **Watch upstream.** `git ls-remote
      https://github.com/charmbracelet/ultraviolet refs/heads/main` — still
      `8ecbcf0` as of 2026-11-24 (sixth check, after `d9728b6` and `ab56604`).
@@ -66,11 +65,11 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
   counterpart in `examples/`. `make check-examples` runs in CI and example
   binaries declare `src/**/*.cr` as prerequisites, so they cannot rot again the
   way four of them had (they no longer compiled, and nothing noticed).
-- **Gates (last verified 2026-11-24, with the win32 decoder fix):**
-  `make format-check`, `make lint` (58 files), `make test` (471 examples),
+- **Gates (last verified 2026-11-24, with the win32 and paste fixes):**
+  `make format-check`, `make lint` (58 files), `make test` (473 examples),
   `make inventory` (819 items), `make parity` (819 APIs / 196 tests, backend
   `regex`), `make check-examples`, `make snapshot-examples` (12 goldens),
-  `make check-inline-fixture`, `make check-win32`, `make test-linux` (471
+  `make check-inline-fixture`, `make check-win32`, `make test-linux` (473
   examples in the container), and `make parity-examples` (11 compared, 0
   differing, raw bytes) pass, as does
   `./scripts/verify_parity_adversarial.sh . vendor/ultraviolet`. `../bubbletea.cr`
@@ -81,6 +80,53 @@ The Go source is vendored at `vendor/ultraviolet/` (commit `8ecbcf0`).
 
 > **Synced to:** `8ecbcf0` (vendored snapshot; Crystal behavior tracks it in
 > full).
+
+### Closed: bracketed paste is amortised and no longer truncates
+
+Found while benchmarking the input path after the win32 decoder fix. Output was
+never affected, but a paste was both slow and lossy, and both were confirmed
+against a Go oracle built from `vendor/ultraviolet` (a copy under `temp/`, so
+the pinned tree stays untouched).
+
+**Quadratic appends.** `@paste` was a `Bytes` and every decoded event rebuilt it
+with `append_bytes`, copying the whole buffer per character. Go's field is a
+`[]byte` grown with `append` (`terminal_reader.go:295`). `@paste` is now an
+`Array(UInt8)` — Crystal's growable byte slice — so `concat`/`<<` append in
+amortised time and the buffer is turned into a `Bytes` view once, at
+`PasteEndEvent`. Measured on a release build, 54 KB paste:
+
+| | before | after | Go |
+|---|---|---|---|
+| 54 KB paste | 504–535 ms | 5.7–6.7 ms | 3.7 ms |
+
+Plain text (4.4 KB), escape-heavy input (10 KB) and win32 records are unchanged
+(0.52 / 0.67 / 0.04 ms before and after), so the change is confined to the paste
+path. `append_bytes` in `event_scanner.cr` existed only for the old buffer and
+is deleted; `terminal_reader.cr` keeps its own copy, where it only ever appends
+the unprocessed tail of a read.
+
+**Silent truncation.** `decode_paste_bytes` used
+`String.new(bytes, "UTF-8", invalid: :skip)`, which on **Crystal 1.22.3 drops one
+valid byte per kilobyte**: `String.encode` treats iconv's `E2BIG` ("output
+buffer full", raised once the 1 KB output buffer fills) as invalid input and
+skips a byte. An 8 KB paste arrived 8 bytes short; an ASCII reproduction is
+`String.new(("a" * 9600).to_slice, "UTF-8", invalid: :skip).bytesize # => 9591`
+(1023 bytes is intact, 1024 is intact, 1025 is one short). It is documented here
+rather than filed upstream — this port no longer calls it, and `src/` has no
+other `invalid:` conversion.
+
+The replacement is Go's own algorithm (`terminal_reader.go:357`): walk the buffer
+a rune at a time with `Char::Reader` and keep every rune that is not
+`Char::REPLACEMENT`, which is `utf8.RuneError`'s behaviour — an invalid byte is
+dropped without eating its neighbours, and a *valid* U+FFFD is dropped too,
+because Go cannot tell the two apart either. NUL is a valid rune and is kept.
+
+**Verified:** 13 paste cases are byte-identical to the oracle (hex-compared):
+ASCII, UTF-8, invalid bytes, a truncated sequence, a lone continuation byte, a
+valid U+FFFD, NUL, win32 records and escape sequences inside the paste,
+`ESC` immediately before the end marker, an empty paste, and a 9.6 KB paste.
+Two specs in `spec/terminal_reader_spec.cr` pin the truncation regression (an
+8.4 KB paste delivered intact) and the rune walk (invalid byte, U+FFFD, NUL).
 
 ### Closed: win32 input decoding and grapheme encoding match Go
 
@@ -512,7 +558,7 @@ refresh, tracked in [commit_8ecbcf0.md](commit_8ecbcf0.md).
 | Winch / SizeNotifier | ~6 APIs | Ported |
 | Screen Context | ~50 APIs | Ported |
 | Encode helpers (uv.go) | ~15 APIs | Ported |
-| **Test coverage** | 196 Go tests | 471 Crystal specs |
+| **Test coverage** | 196 Go tests | 473 Crystal specs |
 | **Source API parity** | 819 Go APIs | 776 ported, 43 intentional divergences |
 | **Test parity** | 196 Go tests | 178 ported, 18 intentional divergences |
 | **Port inventory** | 1015 items | 954 ported, 61 intentional divergences |

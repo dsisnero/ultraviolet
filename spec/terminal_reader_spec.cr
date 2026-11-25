@@ -84,6 +84,41 @@ module Ultraviolet
       ])
     end
 
+    it "delivers a large bracketed paste intact" do
+      # Regression: `String.new(bytes, invalid: :skip)` treats the transcoder's
+      # "output buffer full" as invalid input on Crystal 1.22.3 and dropped one
+      # byte per kilobyte, so an 8 KB paste arrived 8 bytes short.
+      content = "lorem ipsum " * 700
+      input = "\e[200~#{content}\e[201~"
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      _total, events = reader.scan_events_public(input.to_slice, true)
+      paste = events.compact_map(&.as?(PasteEvent)).first
+      paste.content.should eq(content)
+      paste.content.bytesize.should eq(8400)
+    end
+
+    it "drops invalid paste bytes one rune at a time, as Go does" do
+      # Go walks the buffer with utf8.DecodeRune and keeps runes that are not
+      # RuneError (terminal_reader.go:357), so an invalid byte is dropped
+      # without eating its neighbours, and a *valid* U+FFFD is dropped too.
+      invalid = (Bytes[0x1b, 0x5b, 0x32, 0x30, 0x30, 0x7e] + "a".to_slice +
+                 Bytes[0xff] + "b".to_slice + Bytes[0x1b, 0x5b, 0x32, 0x30, 0x31, 0x7e])
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      _total, events = reader.scan_events_public(invalid, true)
+      events.compact_map(&.as?(PasteEvent)).first.content.should eq("ab")
+
+      replacement = "\e[200~a\uFFFDb\e[201~"
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      _total, events = reader.scan_events_public(replacement.to_slice, true)
+      events.compact_map(&.as?(PasteEvent)).first.content.should eq("ab")
+
+      # A NUL is a valid rune, so Go keeps it.
+      nul = "\e[200~a\u0000b\e[201~"
+      reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
+      _total, events = reader.scan_events_public(nul.to_slice, true)
+      events.compact_map(&.as?(PasteEvent)).first.content.should eq("a\u0000b")
+    end
+
     it "handles win32 serialized input with surrogate pairs" do
       reader = TestTerminalReader.new(IO::Memory.new, "xterm-256color")
       # Go test case: "serialized win32 esc"
